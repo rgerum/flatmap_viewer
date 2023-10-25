@@ -197,7 +197,12 @@
                 for(let id of formData.getAll("component_ids")) {
                     for(let id2 in data.components) {
                         if(id == id2) {
-                            components.push(id)
+                            for(let sub_id of formData.getAll("subject_ids")) {
+                                if(data.components[id2].includes(1*sub_id)) {
+                                    components.push(id)
+                                    break
+                                }
+                            }
                         }
                     }
                 }
