@@ -28,9 +28,9 @@ def process_coordinates():
     x_percent = request.json.get('x_percent', 0)
     y_percent = request.json.get('y_percent', 0)
 
-    components, components_all = plotter.get_components(x_percent, y_percent)
+    x, y, components, components_all = plotter.get_components(x_percent, y_percent)
 
-    return jsonify({"message": "Coordinates received successfully!", "x_percent": x_percent, "y_percent": y_percent,
+    return jsonify({"message": "Coordinates received successfully!", "x": x, "y": y,
                     "components": components, "components_all": components_all})
 
 

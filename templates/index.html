@@ -58,6 +58,15 @@
             align-items: center;
             font-size: 0.8em;
         }
+
+        .point {
+            position: absolute;
+            display: block;
+            width: 1px;
+            height: 1px;
+            background: red;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
@@ -76,10 +85,11 @@
 
     <h2>Plot <span id="spinner">Loading...</span></h2>
     <div id="plotContainer">
-        <div id="plotImage">
+        <div id="plotImage" style="cursor: auto">
             <img src="plot0" id="plotImage0" alt="Generated Plot">
             <img src="plot" id="plotImage1" alt="Generated Plot">
             <img src="plot2" id="plotImage2" alt="Generated Plot">
+            <div class="point" id="point"></div>
         </div>
     </div>
 
@@ -97,6 +107,7 @@
             document.getElementById("spinner").style.display = "block";
             document.getElementById("plotImage1").setAttribute("src", newImageUrl);
         }
+        document.update_plot = update_plot
         document.getElementById("spinner").style.display = "none";
         document.getElementById("plotImage1").onload = function() {
             document.getElementById("spinner").style.display = "none";
@@ -177,6 +188,9 @@
             })
             .then(response => response.json())
             .then(data => {
+                document.getElementById("point").style.left = data.x + "px";
+                document.getElementById("point").style.top = data.y + "px";
+
                 var form = document.getElementById("plotForm");
                 var formData = new URLSearchParams(new FormData(form));
                 let components = []
