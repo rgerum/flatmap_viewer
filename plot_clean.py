@@ -159,7 +159,7 @@ class Plotter:
                 im += (self.mask_data[component_index] & (1 << subject_id)).astype(bool)
                 masks = masks | self.data_masks[subject_id]
             # filter by number of subjects and add to total mask
-            im1 += im > min_subject_overlap_count
+            im1 += im >= min_subject_overlap_count
 
         im1 = im1.astype(np.float32)
         im1[~masks] = np.nan
@@ -180,7 +180,7 @@ class Plotter:
             if value > 0:
                 components[id] = [subject_id for subject_id in subject_ids if value & (1 << subject_id)]
             components_all.append([int((value & (1 << subject_id)) != 0) for subject_id in subject_ids])
-        return components, components_all
+        return x, y, components, components_all
 
 
 
