@@ -32,7 +32,8 @@ all_component_ids = [
 #component_ids = np.array([  0, 1, 2])
 
 run_name = "run-9"
-
+if not os.path.exists("cache"):
+    os.mkdir("cache")
 
 def data_to_flatmap(data, subject_id):
     import cortex
@@ -72,7 +73,7 @@ def load_all():
 
     for component_id in all_component_ids:
         # if we have not yet cached the data
-        if not os.path.exists(f'component-{component_id}.npy'):
+        if not os.path.exists(f'cache/component-{component_id}.npy'):
             # we create a flatmap that contains the set bit for which subjects have a mask there for this component
             data_all = []
             # iterate over subjects
@@ -89,15 +90,15 @@ def load_all():
             # sum the data to create the bit mask
             data_all = np.sum(data_all, axis=0).astype(np.uint8)
             # store it
-            np.save(f'component-{component_id}.npy', data_all)
+            np.save(f'cache/component-{component_id}.npy', data_all)
             # store the valid voxel mask data (only for component 0 as they are the same across components)
             if component_id == 0:
-                np.save(f'component-{component_id}_data_masks.npy', data_masks)
+                np.save(f'cache/component-{component_id}_data_masks.npy', data_masks)
         else:
             # if we already have calculated the data, just load it
-            data_all = np.load(f'component-{component_id}.npy')
+            data_all = np.load(f'cache/component-{component_id}.npy')
             if component_id == 0:
-                data_masks = np.load(f'component-{component_id}_data_masks.npy')
+                data_masks = np.load(f'cache/component-{component_id}_data_masks.npy')
         data_all_components.append(data_all)
 
     data_all_components = np.stack(data_all_components)
@@ -113,9 +114,9 @@ class Plotter:
         subject_id = 0
         subject_name = f'subj0{subject_id + 1}'
 
-        if os.path.exists("layer_1.npy"):
-            im1 = np.load("layer_1.npy")
-            im2 = np.load("layer_2.npy")
+        if os.path.exists("cache/layer_1.npy"):
+            im1 = np.load("cache/layer_1.npy")
+            im2 = np.load("cache/layer_2.npy")
             self.im1 = np.array([im1, im1, im1, im1*0+1]).transpose(1, 2, 0).copy(order='C')
             self.im2 = im2
         else:
@@ -137,7 +138,7 @@ class Plotter:
                                          roi_list=roi_list)
             images = [child for child in plt.gcf().axes[0].get_children() if isinstance(child, mpl.image.AxesImage)]
             for i, im in enumerate(images):
-                np.save(f"layer_{i}.npy", np.array(im.get_array()))
+                np.save(f"cache/layer_{i}.npy", np.array(im.get_array()))
                 print("im", im.get_array().shape, im.get_clim(), im.get_extent())
             plt.show()
 
