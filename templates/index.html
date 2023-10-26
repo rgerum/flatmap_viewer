@@ -160,6 +160,7 @@
         }
 
         function update_plot() {
+            console.time("Load");
             const form = document.getElementById("plotForm");
             const formData = new URLSearchParams(new FormData(form)).toString();
             const newImageUrl = "plot?" + formData;
@@ -169,6 +170,7 @@
         document.update_plot = update_plot
         document.getElementById("plotImage1").onload = function() {
             document.getElementById("spinner").style.display = "none";
+            console.timeEnd("Load");
         }
         if(0) {
             let grid = document.getElementById("grid");
@@ -271,12 +273,15 @@
                 for(let id of formData.getAll("component_ids")) {
                     for(let id2 in data.components) {
                         if(id == id2) {
+                            let count = 0;
                             for(let sub_id of formData.getAll("subject_ids")) {
                                 if(data.components[id2].includes(1*sub_id)) {
-                                    components.push(id);
-                                    add_row(element_examples, id);
-                                    break
+                                    count += 1;
                                 }
+                            }
+                            if(count >= document.querySelector("[name=min_subject_overlap_count]").value) {
+                                components.push(id);
+                                add_row(element_examples, id);
                             }
                         }
                     }
