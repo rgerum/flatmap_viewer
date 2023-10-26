@@ -114,6 +114,8 @@ class Plotter:
         subject_id = 0
         subject_name = f'subj0{subject_id + 1}'
 
+        self.top_im = plt.imread("run-9/top_images_73k.png")
+
         if os.path.exists("cache/layer_1.npy"):
             im1 = np.load("cache/layer_1.npy")
             im2 = np.load("cache/layer_2.npy")
@@ -186,6 +188,10 @@ class Plotter:
 
 
 if __name__ == "__main__":
+    im = plt.imread("run-9/top_images_73k.png")
+    print(im.shape, im.dtype, im.max())
+    plt.imshow(im[:255, 255:255*10])
+    plt.show()
     #load_all()
-    Plotter()
+    #Plotter()
     #plot(3, subject_ids)

@@ -57,6 +57,13 @@
             flex-direction: column;
             align-items: center;
             font-size: 0.8em;
+            padding-top: 13px;
+        }
+        .check_list span {
+            transform: rotate(-90deg);
+            height: 1em;
+            width: 1em;
+            text-align: right;
         }
 
         .point {
@@ -67,10 +74,37 @@
             background: red;
             border-radius: 3px;
         }
+
+        #componentExamples {
+            width: 100%;
+            overflow-x: scroll;
+        }
+        #componentExamples div {
+            display: flex;
+        }
+
+        .spinner {
+            border: 8px solid rgba(255, 255, 255, 0.3); /* Light grey */
+            border-radius: 50%; /* Circular shape */
+            border-top: 8px solid #333; /* Dark grey */
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none; /* Hidden by default */
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
     </style>
 </head>
 <body>
-    <h2>Plot Controls</h2>
     <form id="plotForm">
         <div id="grid"></div>
         Subjects:
@@ -80,17 +114,21 @@
         <br/>
         Components:
         <div id="component_ids" class="check_list"></div>
-        <span id="clicked"></span>
     </form>
 
-    <h2>Plot <span id="spinner">Loading...</span></h2>
     <div id="plotContainer">
+
         <div id="plotImage" style="cursor: auto">
             <img src="plot0" id="plotImage0" alt="Generated Plot">
             <img src="plot" id="plotImage1" alt="Generated Plot">
             <img src="plot2" id="plotImage2" alt="Generated Plot">
             <div class="point" id="point"></div>
         </div>
+        <span id="clicked" style="position: absolute;"></span>
+        <span id="spinner" class="spinner"></span>
+    </div>
+    <div id="componentExamples">
+
     </div>
 
     <script>
@@ -100,45 +138,63 @@
         let component_count = init_data.all_component_ids.length;
         let subject_count = init_data.subject_ids.length;
 
+        function add_image(parent, src) {
+            let img = document.createElement("img");
+            img.src = src;
+            parent.appendChild(img);
+            return img;
+        }
+
+        function add_row(parent, component_id) {
+            let row = document.createElement("div");
+            parent.appendChild(row);
+            for(let i = 0; i < 11; i++) {
+                add_image(row, "top_images?top_im=" + component_id + "&top_im_index=" + i + "&skip=2");
+            }
+        }
+
         function update_plot() {
-            var form = document.getElementById("plotForm");
-            var formData = new URLSearchParams(new FormData(form)).toString();
-            var newImageUrl = "plot?" + formData;
+            const form = document.getElementById("plotForm");
+            const formData = new URLSearchParams(new FormData(form)).toString();
+            const newImageUrl = "plot?" + formData;
             document.getElementById("spinner").style.display = "block";
             document.getElementById("plotImage1").setAttribute("src", newImageUrl);
         }
         document.update_plot = update_plot
-        document.getElementById("spinner").style.display = "none";
         document.getElementById("plotImage1").onload = function() {
             document.getElementById("spinner").style.display = "none";
         }
-        let grid = document.getElementById("grid");
-        let grid_cells = [];
-        for (let i = 1; i <= subject_count; i++) {
-            let row = document.createElement("div");
-            row.className = "row";
-            grid.appendChild(row);
-            let row_list = [];
-            for (let j = 1; j <= component_count; j++) {
-                let square = document.createElement("div");
-                square.className = "square";
-                square.title = i + "," + j;
-                row.appendChild(square);
-                row_list.push(square);
+        if(0) {
+            let grid = document.getElementById("grid");
+            let grid_cells = [];
+            for (let i = 1; i <= subject_count; i++) {
+                let row = document.createElement("div");
+                row.className = "row";
+                grid.appendChild(row);
+                let row_list = [];
+                for (let j = 1; j <= component_count; j++) {
+                    let square = document.createElement("div");
+                    square.className = "square";
+                    square.title = i + "," + j;
+                    row.appendChild(square);
+                    row_list.push(square);
+                }
+                grid_cells.push(row_list);
             }
-            grid_cells.push(row_list);
+            console.log(grid_cells)
         }
-        console.log(grid_cells)
 
         function add_check_box(placeholder, name, index) {
             let label = document.createElement("label");
+            let text = document.createElement("span");
+            text.innerText = index;
+            label.appendChild(text);
             let checkbox = document.createElement("input");
             checkbox.type = "checkbox";
             checkbox.name = name;
             checkbox.value = index;
             checkbox.oninput = update_plot;
             label.title = index;
-            label.appendChild(document.createTextNode(index));
             label.appendChild(checkbox);
             placeholder.appendChild(label);
             return checkbox;
@@ -194,12 +250,15 @@
                 var form = document.getElementById("plotForm");
                 var formData = new URLSearchParams(new FormData(form));
                 let components = []
+                let element_examples = document.getElementById("componentExamples");
+                element_examples.innerHTML = "";
                 for(let id of formData.getAll("component_ids")) {
                     for(let id2 in data.components) {
                         if(id == id2) {
                             for(let sub_id of formData.getAll("subject_ids")) {
                                 if(data.components[id2].includes(1*sub_id)) {
-                                    components.push(id)
+                                    components.push(id);
+                                    add_row(element_examples, id);
                                     break
                                 }
                             }
@@ -209,14 +268,15 @@
                 document.getElementById("clicked").innerText = "Clicked: " + components
                 console.log(components)
 
-                for (var i = 1; i <= data.components_all[0].length; i++) {
-                    for (var j = 1; j <= data.components_all.length; j++) {
+                if(0) {
+                    for (var i = 1; i <= data.components_all[0].length; i++) {
+                        for (var j = 1; j <= data.components_all.length; j++) {
 
-                        if(data.components_all[j-1][i-1] == 1) {
-                           grid_cells[i-1][j-1].className = "square_active"
-                        }
-                        else {
-                            grid_cells[i-1][j-1].className = "square"
+                            if (data.components_all[j - 1][i - 1] == 1) {
+                                grid_cells[i - 1][j - 1].className = "square_active"
+                            } else {
+                                grid_cells[i - 1][j - 1].className = "square"
+                            }
                         }
                     }
                 }

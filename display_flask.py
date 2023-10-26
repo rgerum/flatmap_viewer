@@ -34,6 +34,21 @@ def process_coordinates():
                     "components": components, "components_all": components_all})
 
 
+@app.route('/top_images')
+def top_images():
+    top_im = int(request.args.get('top_im', 0))
+    top_im_index = int(request.args.get('top_im_index', 0))
+    skip = int(request.args.get('skip', 1))
+    w = 256
+    im = plotter.top_im[w*top_im:w*top_im+w, w*top_im_index:w*top_im_index+w][::skip, ::skip]
+
+    t = time.time()
+    buf = io.BytesIO()
+    plt.imsave(buf, im, format="png", cmap="turbo")
+    buf.seek(0)
+    print("time save", time.time() - t)
+    return Response(buf, content_type="image/png")
+
 @app.route('/plot')
 def plotting():
     subject_ids = [int(i) for i in request.args.getlist('subject_ids')]
