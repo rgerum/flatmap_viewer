@@ -124,7 +124,7 @@
             <img src="plot2" id="plotImage2" alt="Generated Plot">
             <div class="point" id="point"></div>
         </div>
-        <span id="clicked" style="position: absolute;"></span>
+        <span id="clicked" style="position: absolute; background: aliceblue; padding: 5px"></span>
         <span id="spinner" class="spinner"></span>
     </div>
     <div id="componentExamples">
@@ -138,9 +138,13 @@
         let component_count = init_data.all_component_ids.length;
         let subject_count = init_data.subject_ids.length;
 
-        function add_image(parent, src) {
+        function add_image(parent, src, w, h) {
             let img = document.createElement("img");
             img.src = src;
+            if(w)
+                img.width = w;
+            if(h)
+                img.height = h;
             parent.appendChild(img);
             return img;
         }
@@ -149,7 +153,7 @@
             let row = document.createElement("div");
             parent.appendChild(row);
             for(let i = 0; i < 11; i++) {
-                add_image(row, "top_images/" + component_id + "_" + i + ".png");
+                add_image(row, "top_images/" + component_id + "_" + i + ".png", 128, 128);
             }
         }
 
