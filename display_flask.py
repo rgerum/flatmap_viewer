@@ -1,4 +1,4 @@
-from flask import Flask, Response, render_template, request, jsonify
+from flask import Flask, Response, render_template, request, jsonify, send_from_directory
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
@@ -34,20 +34,14 @@ def process_coordinates():
                     "components": components, "components_all": components_all})
 
 
-@app.route('/top_images')
-def top_images():
-    top_im = int(request.args.get('top_im', 0))
-    top_im_index = int(request.args.get('top_im_index', 0))
-    skip = int(request.args.get('skip', 1))
-    w = 256
-    im = plotter.top_im[w*top_im:w*top_im+w, w*top_im_index:w*top_im_index+w][::skip, ::skip]
+# The path to your custom static files folder
+MY_STATIC_PATH = "cache_top_image"
 
-    t = time.time()
-    buf = io.BytesIO()
-    plt.imsave(buf, im, format="png", cmap="turbo")
-    buf.seek(0)
-    print("time save", time.time() - t)
-    return Response(buf, content_type="image/png")
+
+@app.route('/top_images/<path:filename>')
+def serve_static(filename):
+    return send_from_directory(MY_STATIC_PATH, filename)
+
 
 @app.route('/plot')
 def plotting():

@@ -114,8 +114,6 @@ class Plotter:
         subject_id = 0
         subject_name = f'subj0{subject_id + 1}'
 
-        self.top_im = plt.imread("run-9/top_images_73k.png")
-
         if os.path.exists("cache/layer_1.npy"):
             im1 = np.load("cache/layer_1.npy")
             im2 = np.load("cache/layer_2.npy")
@@ -186,9 +184,17 @@ class Plotter:
         return x, y, components, components_all
 
 
+def cache_images():
+    im = plt.imread("run-9/top_images_73k.png")
+    w, h, c = im.shape
+    if not os.path.exists("cache_top_image"):
+        os.mkdir("cache_top_image")
+    for i in range(0, w, 256):
+        for j in range(0, h, 256):
+            plt.imsave(f"cache_top_image/{i // 256}_{j // 256}.png", im[i:i + 256, j:j + 256, :][::2, ::2])
+
 
 if __name__ == "__main__":
-    im = plt.imread("run-9/top_images_73k.png")
     print(im.shape, im.dtype, im.max())
     plt.imshow(im[:255, 255:255*10])
     plt.show()
