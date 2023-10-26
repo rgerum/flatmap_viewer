@@ -47,7 +47,7 @@ def serve_static(filename):
 def plotting():
     subject_ids = [int(i) for i in request.args.getlist('subject_ids')]
     component_ids = [int(i) for i in request.args.getlist('component_ids')]
-    min_subject_overlap_count = int(request.args.get('min_subject_overlap_count'))
+    min_subject_overlap_count = int(request.args.get('min_subject_overlap_count', 1))
     print(subject_ids, component_ids, min_subject_overlap_count)
 
     im = plotter.plot(component_ids, subject_ids, min_subject_overlap_count)
