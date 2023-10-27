@@ -18,6 +18,7 @@
             background: #151515;
             color: #c4c4c4;
             font-family: sans;
+            margin: 10px;
         }
         #plotContainer {
             overflow: hidden;
@@ -71,6 +72,8 @@
             //top: 0;
             //left: 0;
             max-height: 100%;
+
+
         }
 
         .check_list {
@@ -107,6 +110,9 @@
             border-radius: 10px;
             background: #262626c9;
             min-height: 128px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
         }
         #componentExamples div {
             display: flex;
@@ -168,6 +174,21 @@
             font-variant: small-caps;
         }
 
+        .row_title2 {
+            position: relative; /* Make the box a position reference for the title */
+            padding-left: 30px; /* Space for the rotated title */
+            background: #393939;
+        }
+
+        .row_title2 div {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translate(4px, 50%) rotate(-90deg);
+            transform-origin: top left;
+            white-space: nowrap;
+            padding-top: 0px;
+        }
     </style>
 </head>
 <body>
@@ -231,8 +252,16 @@
 
         function add_row(parent, component_id) {
             let row = document.createElement("div");
+
+            let title = document.createElement("div");
+            title.className = "row_title2";
+            let title2 = document.createElement("div");
+            title2.innerText = component_id;
+            title.appendChild(title2);
+            row.appendChild(title);
+
             parent.appendChild(row);
-            for(let i = 0; i < 11; i++) {
+            for(let i = 1; i < 11; i++) {
                 add_image(row, "top_images/" + component_id + "_" + i + ".png", 128, 128);
             }
         }
