@@ -14,12 +14,18 @@
 
 
     <style>
+        body {
+            background: #151515;
+            color: #c4c4c4;
+            font-family: sans;
+        }
         #plotContainer {
             overflow: hidden;
             border: 1px solid black;
             width: 100%;
             height: 400px;
             position: relative;
+            border-radius: 10px;
         }
         #plotImage {
             max-width: none;
@@ -49,10 +55,22 @@
         #plotImage {
             position: relative;
         }
-        #plotImage img {
+        .image_centering {
+            margin: 0 auto;
+            /*height: 119px;
+            margin: 0 auto;
+            display: block;*/
+                display: flex;
+                justify-content: center; /* Horizontally centers the image */
+                align-items: center;     /* Vertically centers the image */
+                height: 400px;           /* Adjust as needed */
+                width: 300px;            /* Adjust as needed */
+        }
+        .image {
             position: absolute;
-            top: 0;
-            left: 0;
+            //top: 0;
+            //left: 0;
+            max-height: 100%;
         }
 
         .check_list {
@@ -86,6 +104,9 @@
         #componentExamples {
             width: 100%;
             overflow-x: scroll;
+            border-radius: 10px;
+            background: #262626c9;
+            min-height: 128px;
         }
         #componentExamples div {
             display: flex;
@@ -110,36 +131,79 @@
             100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
+        #clicked {
+            position: absolute;
+            background: #262626c9;
+            padding: 5px;
+            top: 5px;
+            border-radius: 10px;
+            left: 5px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .control_box {
+            background: #262626c9;
+            padding: 7px;
+            border-radius: 10px;
+            overflow: hidden;
+            /* margin: 5px; */
+        }
+
+        .main_column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control_box_title {
+            background: #393939;
+            width: 100%;
+            display: block;
+            margin: -10px -10px 0;
+            padding: 10px 10px 5px;
+            font-variant: small-caps;
+        }
+
     </style>
 </head>
 <body>
-    <form id="plotForm">
-        <div id="grid"></div>
-        Subjects:
-        <div id="subject_ids" class="check_list"></div>
-        Min Sub Overlap Count: <input type="number" name="min_subject_overlap_count" min="1" max="8" value="1" oninput="update_plot()">
-        <br/>
-        <br/>
-        Components:
-        <div id="component_ids" class="check_list"></div>
-        <input type="button" value="none" id="btn_select_none">
-        <input type="button" value="all" id="btn_select_all">
-    </form>
+    <div id="grid"></div>
+    <div class="main_column">
+        <form id="plotForm" class="controls">
+            <div class="control_box">
+                <span class="control_box_title">Subjects</span>
+                <div id="subject_ids" class="check_list"></div>
+                Min Sub Overlap Count: <input type="number" name="min_subject_overlap_count" min="1" max="8" value="1" oninput="update_plot()">
+            </div>
+            <div class="control_box">
+                <span class="control_box_title">Components</span>
+                <div id="component_ids" class="check_list"></div>
+                <input type="button" value="none" id="btn_select_none">
+                <input type="button" value="all" id="btn_select_all">
+            </div>
+        </form>
 
-    <div id="plotContainer">
+        <div id="plotContainer">
 
-        <div id="plotImage" style="cursor: auto">
-            <img src="plot0" id="plotImage0" alt="Generated Plot">
-            <img src="plot" id="plotImage1" alt="Generated Plot">
-            <canvas id="myCanvas" width="2274" height="1024" style="position: relative;"></canvas>
-            <img src="plot2" id="plotImage2" alt="Generated Plot">
-            <div class="point" id="point"></div>
+            <div id="plotImage" style="cursor: auto">
+                <div class="image_centering">
+                <img src="plot0" id="plotImage0" alt="Generated Plot" class="image">
+                <img src="plot" id="plotImage1" alt="Generated Plot" class="image">
+                <canvas id="myCanvas" width="2274" height="1024" style="position: relative;" class="image"></canvas>
+                <img src="plot2" id="plotImage2" alt="Generated Plot" class="image">
+                <div class="point" id="point"></div>
+                </div>
+            </div>
+            <span id="clicked"></span>
+            <span id="spinner" class="spinner"></span>
         </div>
-        <span id="clicked" style="position: absolute; background: aliceblue; padding: 5px; top: 0"></span>
-        <span id="spinner" class="spinner"></span>
-    </div>
-    <div id="componentExamples">
+        <div id="componentExamples">
 
+        </div>
     </div>
 
     <script>
@@ -255,7 +319,7 @@
 
         // Initialize panzoom
         const plotImage = document.getElementById("plotImage");
-        const panzoom = Panzoom(plotImage, { canvas: true })
+        const panzoom = Panzoom(plotImage, { canvas: true, })
         const parent = plotImage.parentElement
         // No function bind needed
         parent.addEventListener('wheel', panzoom.zoomWithWheel)
