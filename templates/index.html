@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plot with Parameters</title>
     <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.11/pako.min.js"></script>
+
+
+    <script src="js/numpy_to_js.js"></script>
+    <script src="js/flat_map.js"></script>
+    <script src="js/update_image.js"></script>
+
+
     <style>
         #plotContainer {
             overflow: hidden;
@@ -123,10 +131,11 @@
         <div id="plotImage" style="cursor: auto">
             <img src="plot0" id="plotImage0" alt="Generated Plot">
             <img src="plot" id="plotImage1" alt="Generated Plot">
+            <canvas id="myCanvas" width="2274" height="1024" style="position: relative;"></canvas>
             <img src="plot2" id="plotImage2" alt="Generated Plot">
             <div class="point" id="point"></div>
         </div>
-        <span id="clicked" style="position: absolute; background: aliceblue; padding: 5px"></span>
+        <span id="clicked" style="position: absolute; background: aliceblue; padding: 5px; top: 0"></span>
         <span id="spinner" class="spinner"></span>
     </div>
     <div id="componentExamples">
@@ -134,6 +143,11 @@
     </div>
 
     <script>
+        show_image([0, 3, 4], [0, 1, 2, 3, 4, 5, 6, 7]);
+        //loadBinary();
+    </script>
+    <script>
+
         fetch('init_data', {}).then(function(response) {
             return response.json();
         }).then(function(init_data) {
@@ -158,12 +172,23 @@
                 add_image(row, "top_images/" + component_id + "_" + i + ".png", 128, 128);
             }
         }
+        window.add_row = add_row
 
         function update_plot() {
             console.time("Load");
             const form = document.getElementById("plotForm");
-            const formData = new URLSearchParams(new FormData(form)).toString();
-            const newImageUrl = "plot?" + formData;
+            const formData = new URLSearchParams(new FormData(form));
+
+            const subject_ids = formData.getAll("subject_ids");
+            const component_ids = formData.getAll("component_ids");
+            const min_subject_overlap_count = parseInt(formData.get("min_subject_overlap_count"));
+
+            let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
+            //show_image(component_ids_array, subject_ids, min_subject_overlap_count);
+            startWorker(component_ids_array, subject_ids, min_subject_overlap_count)
+            return
+
+            const newImageUrl = "plot?" + formData.toString();
             document.getElementById("spinner").style.display = "block";
             document.getElementById("plotImage1").setAttribute("src", newImageUrl);
         }
@@ -248,6 +273,15 @@
             // Calculate click position as percentage of bounding box dimensions
             const xPercent = ((event.clientX - rect.left) / rect.width) * 100;
             const yPercent = ((event.clientY - rect.top) / rect.height) * 100;
+
+            const form = document.getElementById("plotForm");
+            const formData = new URLSearchParams(new FormData(form));
+            const subject_ids = formData.getAll("subject_ids");
+            const component_ids = formData.getAll("component_ids");
+            const min_subject_overlap_count = parseInt(formData.get("min_subject_overlap_count"));
+            let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
+            getPixelValue(component_ids_array, component_ids, subject_ids, min_subject_overlap_count, parseInt(xPercent * 2274 / 100), parseInt(yPercent * 1024 / 100));
+            return
 
              // Send the percentages to the Flask backend
             fetch('process_coordinates', {

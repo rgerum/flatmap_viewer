@@ -110,6 +110,20 @@ class Plotter:
     def __init__(self):
         self.mask_data, self.data_masks = load_all()
 
+        if 0:
+            for index, mask in enumerate(self.mask_data):
+                import gzip
+                with gzip.GzipFile(f"cache_masks/mask_data_{index}.npy.gz", "w") as f:
+                    np.save(f, mask)
+
+            mask_all = np.zeros(self.data_masks[0].shape, dtype=np.int64)
+            for index, mask in enumerate(self.data_masks):
+                mask_all += mask << index
+            import gzip
+            with gzip.GzipFile(f"cache_masks/data_masks_all.npy.gz", "w") as f:
+                np.save(f, mask_all.astype(np.uint8))
+            print("turbo", [list((np.array(plt.get_cmap("turbo")(i/8))*255).astype(np.uint8)) for i in range(9)])
+
         height = 1024
         subject_id = 0
         subject_name = f'subj0{subject_id + 1}'

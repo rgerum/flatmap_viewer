@@ -5,10 +5,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import io
 import time
+from flask_compress import Compress
+
 
 from plot_clean import Plotter, all_component_ids, subject_ids
 
 app = Flask(__name__)
+app.config["COMPRESS_REGISTER"] = False  # disable default compression of all eligible requests
+compress = Compress()
+compress.init_app(app)
+
 plotter = Plotter()
 
 @app.route('/')
@@ -38,9 +44,48 @@ def process_coordinates():
 MY_STATIC_PATH = "cache_top_image"
 
 
+@app.route('/array.npy')
+@compress.compressed()
+def serve_file():
+    return send_from_directory('.', 'array.bin')#, as_attachment=False, mimetype='application/octet-stream')
+
+
+@app.route('/array.npy.gz')
+def serve_file2():
+    with open(f"array.bin.gz", "rb") as f:
+        content = f.read()
+
+    response = Response(content)
+    response.headers['Content-Encoding'] = 'gzip'
+    response.headers['Content-Type'] = 'application/octet-stream'
+
+    return response
+
+    return send_from_directory('.', 'array.bin.gz', as_attachment=False, mimetype='application/octet-stream')
+
+@app.route('/cache_masks/<path:filename>')
+def serve_file2_folder(filename):
+    with open(f"cache_masks/{filename}", "rb") as f:
+        content = f.read()
+
+    response = Response(content)
+    response.headers['Content-Encoding'] = 'gzip'
+    response.headers['Content-Type'] = 'application/octet-stream'
+
+    return response
+
+    return send_from_directory('.', 'array.bin.gz', as_attachment=False, mimetype='application/octet-stream')
+
+
+
 @app.route('/top_images/<path:filename>')
 def serve_static(filename):
     return send_from_directory(MY_STATIC_PATH, filename)
+
+
+@app.route('/js/<path:filename>')
+def serve_static_js(filename):
+    return send_from_directory("js", filename)
 
 
 @app.route('/plot')
