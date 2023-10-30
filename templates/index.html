@@ -339,6 +339,21 @@
           if (!event.shiftKey) return
           panzoom.zoomWithWheel(event)
         })
+        plotImage.addEventListener('panzoomzoom', (event) => {
+          console.log(event.detail) // => { x: 0, y: 0, scale: 1 }
+
+            let x = document.getElementsByName("x")[0].value;
+            let y = document.getElementsByName("y")[0].value;
+            let canvas = document.getElementById("myCanvasPoint");
+            let ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.arc(x, y, 4/event.detail.scale, 0, 2 * Math.PI, false);
+            ctx.rect(0, y, canvas.width, 4/event.detail.scale);
+            ctx.rect(x, 0, 4/event.detail.scale, canvas.height);
+            ctx.fillStyle = 'red';
+            ctx.fill();
+        })
 
         function pixelValueInformation(x, y) {
             const form = document.getElementById("plotForm");

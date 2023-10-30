@@ -42,6 +42,8 @@ async function getPixelValue(component_ids_array, component_ids, subject_ids, mi
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.beginPath();
     ctx.arc(x, y, 1, 0, 2 * Math.PI, false);
+    ctx.rect(0, y, canvas.width, 1);
+    ctx.rect(x, 0, 1, canvas.height);
     ctx.fillStyle = 'red';
     ctx.fill();
 
