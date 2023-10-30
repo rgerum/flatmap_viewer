@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import os
 from pathlib import Path
 import time
+import json
 
 
 subject_ids = [0, 1, 2, 3, 4, 5, 6, 7]
@@ -31,7 +32,7 @@ all_component_ids = [
 #component_ids = np.array([  0,   1,   2,   3,   4])
 #component_ids = np.array([  0, 1, 2])
 
-run_name = "run-9"
+run_name = "run-22"
 if not os.path.exists("cache"):
     os.mkdir("cache")
 
@@ -105,6 +106,59 @@ def load_all():
     print(data_all_components.shape)
     return data_all_components,  data_masks
 
+def cache_flatmap_background(output_folder):
+    height = 1024
+    subject_id = 0
+    subject_name = f'subj0{subject_id + 1}'
+
+    initial = load_subject_component(0, 0)
+    import cortex
+    import nibabel as nib
+    from cortex.quickflat.view import composite
+
+    braindata = cortex.dataset.Vertex(initial, subject_name if space == 'fssubject' else 'fsaverage',
+                                      cmap='jet',
+                                      vmin=0, vmax=8, )
+    overlay_file = f'{subject_name}/overlays_version1.svg' if space == 'fssubject' else f'fsaverage/overlays_floc.svg'
+
+    print(cortex.options.usercfg)
+    print(cortex.database.default_filestore)
+    cortex.quickflat.make_figure(braindata, with_rois=True, with_curvature=True, with_colorbar=True,
+                                 colorbar_location=(0.01, 0.05, 0.2, 0.05),
+                                 height=height,
+                                 overlay_file=Path(cortex.database.default_filestore) / overlay_file,
+                                 roi_list=roi_list)
+    images = [child for child in plt.gcf().axes[0].get_children() if isinstance(child, mpl.image.AxesImage)]
+    im1 = np.array(images[1].get_array())
+    im1 = np.array([im1, im1, im1, im1 * 0 + 1]).transpose(1, 2, 0).copy(order='C')
+    Path(output_folder).mkdir(parents=True, exist_ok=True)
+    plt.imsave(Path(output_folder) / "background.png", im1)
+    plt.imsave(Path(output_folder) / "foreground.png", np.array(images[2].get_array()))
+
+
+def cache_masks(output_folder):
+    Path(output_folder).mkdir(parents=True, exist_ok=True)
+
+    mask_data, data_masks = load_all()
+
+    for index, mask in enumerate(mask_data):
+        np.save(Path(output_folder) /f"mask_data_{index}.npy", mask)
+        import gzip
+        with gzip.GzipFile(Path(output_folder) /f"mask_data_{index}.npy.gz", "w") as f:
+            np.save(f, mask)
+
+    mask_all = np.zeros(data_masks[0].shape, dtype=np.int64)
+    for index, mask in enumerate(data_masks):
+        mask_all += mask << index
+    np.save(Path(output_folder) / f"data_masks_all.npy", mask_all.astype(np.uint8))
+    import gzip
+    with gzip.GzipFile(Path(output_folder) / f"data_masks_all.npy.gz", "w") as f:
+        np.save(f, mask_all.astype(np.uint8))
+    print("turbo", [list((np.array(plt.get_cmap("turbo")(i / 8)) * 255).astype(np.uint8)) for i in range(9)])
+
+def create_static_content():
+    #cache_images()
+    pass
 
 class Plotter:
     def __init__(self):
@@ -133,6 +187,13 @@ class Plotter:
             im2 = np.load("cache/layer_2.npy")
             self.im1 = np.array([im1, im1, im1, im1*0+1]).transpose(1, 2, 0).copy(order='C')
             self.im2 = im2
+
+            if 0:
+                overlay_file = f'{subject_name}/overlays_version1.svg' if space == 'fssubject' else f'fsaverage/overlays_floc.svg'
+                import cortex
+                print("overlay_file", Path(cortex.database.default_filestore) / overlay_file)
+                import shutil
+                shutil.copy(Path(cortex.database.default_filestore) / overlay_file, "cache_masks/overlay.svg")
         else:
             initial = load_subject_component(0, 0)
             import cortex
@@ -198,20 +259,23 @@ class Plotter:
         return x, y, components, components_all
 
 
-def cache_images():
+def cache_images(output_folder):
+    Path(output_folder).mkdir(parents=True, exist_ok=True)
     im = plt.imread("run-9/top_images_73k.png")
     w, h, c = im.shape
     if not os.path.exists("cache_top_image"):
         os.mkdir("cache_top_image")
     for i in range(0, w, 256):
         for j in range(0, h, 256):
-            plt.imsave(f"cache_top_image/{i // 256}_{j // 256}.png", im[i:i + 256, j:j + 256, :][::2, ::2])
+            plt.imsave(Path(output_folder) / f"{i // 256}_{j // 256}.png", im[i:i + 256, j:j + 256, :][::2, ::2])
 
+def cache_component_list(output_folder):
+    Path(output_folder).mkdir(parents=True, exist_ok=True)
+    with open(Path(output_folder) / "all_component_ids.json", "w") as f:
+        json.dump({"all_component_ids": all_component_ids, "subject_ids": subject_ids}, f)
 
 if __name__ == "__main__":
-    print(im.shape, im.dtype, im.max())
-    plt.imshow(im[:255, 255:255*10])
-    plt.show()
-    #load_all()
-    #Plotter()
-    #plot(3, subject_ids)
+    cache_component_list("static_data")
+    cache_flatmap_background("static_data")
+    cache_images("static_data/component_example_images")
+    cache_masks("static_data/component_masks")
