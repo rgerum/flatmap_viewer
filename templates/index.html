@@ -11,6 +11,7 @@
     <script src="js/numpy_to_js.js"></script>
     <script src="js/flat_map.js"></script>
     <script src="js/update_image.js"></script>
+    <script src="js/form_to_url.js"></script>
 
 
     <style>
@@ -198,7 +199,9 @@
                 <div id="component_ids" class="check_list"></div>
                 <input type="button" value="none" id="btn_select_none">
                 <input type="button" value="all" id="btn_select_all">
-                <label><span>show roi</span><input type="checkbox" id="show_roi" checked onclick="toggle_roi()"></label>
+                <label><span>show roi</span><input type="checkbox" value="on"id="show_roi" name="show_roi" checked onclick="toggle_roi()"></label>
+                <input type="hidden" name="x" value="0"/>
+                <input type="hidden" name="y" value="0"/>
             </div>
         </form>
 
@@ -279,9 +282,8 @@
             let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
 
             startWorker(component_ids_array, subject_ids, min_subject_overlap_count);
-            if(last_pixel_x != undefined && last_pixel_y != undefined) {
-                pixelValueInformation(last_pixel_x, last_pixel_y);
-            }
+            pixelValueInformation(parseInt(document.getElementsByName("x")[0].value), parseInt(document.getElementsByName("y")[0].value));
+            toggle_roi();
         }
         document.update_plot = update_plot
 
@@ -311,6 +313,9 @@
         for (let i of init_data.all_component_ids) {
             add_check_box(placeholder_comp, "component_ids", i);
         }
+        restore_form_from_url();
+        update_plot();
+
         document.getElementById("btn_select_none").onclick = function() {
             for(let elem of placeholder_comp.querySelectorAll("input"))
                 elem.checked = false;
@@ -335,8 +340,6 @@
           panzoom.zoomWithWheel(event)
         })
 
-        let last_pixel_x = undefined;
-        let last_pixel_y = undefined;
         function pixelValueInformation(x, y) {
             const form = document.getElementById("plotForm");
             const formData = new URLSearchParams(new FormData(form));
@@ -345,8 +348,6 @@
             const min_subject_overlap_count = parseInt(formData.get("min_subject_overlap_count"));
             let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
             getPixelValue(component_ids_array, component_ids, subject_ids, min_subject_overlap_count, x, y);
-            last_pixel_x = x;
-            last_pixel_y = y;
         }
 
         let plotImage2 = document.getElementById("myCanvasPoint");
@@ -359,6 +360,9 @@
             let x = parseInt(xPercent * 2274 / 100);
             let y = parseInt(yPercent * 1024 / 100);
             pixelValueInformation(x, y);
+            document.getElementsByName("x")[0].value = x;
+            document.getElementsByName("y")[0].value = y;
+            form_to_url(document.querySelector('form'))
         });
 
         });
