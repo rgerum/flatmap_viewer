@@ -198,6 +198,7 @@
                 <div id="component_ids" class="check_list"></div>
                 <input type="button" value="none" id="btn_select_none">
                 <input type="button" value="all" id="btn_select_all">
+                <label><span>show roi</span><input type="checkbox" id="show_roi" checked onclick="toggle_roi()"></label>
             </div>
         </form>
 
@@ -220,6 +221,17 @@
     </div>
 
     <script>
+        function toggle_roi() {
+            let checkbox = document.getElementById("show_roi").checked;
+            console.log(document.getElementById("show_roi"), checkbox)
+            let image = document.getElementById("plotImage2");
+            if(checkbox) {
+                image.style.display = "none";
+            } else {
+                image.style.display = "block";
+            }
+
+        }
 
         fetch('static_data/all_component_ids.json', {}).then(function(response) {
             return response.json();
