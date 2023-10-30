@@ -19,7 +19,7 @@ worker.addEventListener('message', function(e) {
         element_examples.innerHTML = "";
         for(let i of e.data.pixel) {
             add_row(element_examples, i);
-            document.getElementById("clicked").innerText += " " + i + ",";
+            document.getElementById("clicked").innerText += " " + i + " (" + e.data.counts[i] + "), ";
         }
     }
 });

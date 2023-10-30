@@ -38,7 +38,7 @@ function convertIndexToBits(subject_ids) {
 async function loadAllNpyInParallel(component_ids_array) {
     let promises = [];
     for(let comp of component_ids_array)
-        promises.push(cachedLoadNpy("../static_data/component_masks/mask_data_" + comp + ".npy.gz"));
+        promises.push(cachedLoadNpy("../static_data/component_masks/mask_data_" + comp + ".npy"));
 
     return await Promise.all(promises);
 }
@@ -46,7 +46,7 @@ async function loadAllNpyInParallel(component_ids_array) {
 async function get_components(component_ids_array, component_ids, subject_ids, min_subject_overlap_count, x, y) {
     let all_bits = convertIndexToBits(subject_ids);
     let data_arrays = await loadAllNpyInParallel(component_ids_array);
-    const data_masks_all = await cachedLoadNpy("../static_data/component_masks/data_masks_all.npy.gz");
+    const data_masks_all = await cachedLoadNpy("../static_data/component_masks/data_masks_all.npy");
     let components = [];
     let i = y * data_masks_all.shape[1] + x;
 
@@ -60,13 +60,31 @@ async function get_components(component_ids_array, component_ids, subject_ids, m
     return components
 }
 
+async function get_count(component_id, subject_ids, min_subject_overlap_count) {
+    console.log("get_count", component_id, subject_ids, min_subject_overlap_count)
+    const bitCountTable = new Uint8Array(256);
+    for (let i = 0; i < 256; i++) {
+        bitCountTable[i] = countBits(i, subject_ids) >= min_subject_overlap_count;
+    }
+
+    let data_array = await loadAllNpyInParallel([component_id]);
+    let a = data_array[0].data;
+    let width = data_array[0].shape[1];
+    let height = data_array[0].shape[0];
+    let count = 0;
+    for (let i = 0; i < width * height; i++) {
+        count += bitCountTable[a[i]];
+    }
+    return count
+}
+
 async function show_image(component_ids_array, subject_ids, min_subject_overlap_count) {
     console.time("LoadBinary");
 
     let all_bits = convertIndexToBits(subject_ids);
     let data_arrays = await loadAllNpyInParallel(component_ids_array);
 
-    const data_masks_all = await cachedLoadNpy("../static_data/component_masks/data_masks_all.npy.gz");
+    const data_masks_all = await cachedLoadNpy("../static_data/component_masks/data_masks_all.npy");
 
     console.timeEnd("LoadBinary");
 

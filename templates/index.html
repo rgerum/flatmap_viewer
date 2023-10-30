@@ -266,7 +266,10 @@
 
             let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
 
-            startWorker(component_ids_array, subject_ids, min_subject_overlap_count)
+            startWorker(component_ids_array, subject_ids, min_subject_overlap_count);
+            if(last_pixel_x != undefined && last_pixel_y != undefined) {
+                pixelValueInformation(last_pixel_x, last_pixel_y);
+            }
         }
         document.update_plot = update_plot
 
@@ -320,6 +323,20 @@
           panzoom.zoomWithWheel(event)
         })
 
+        let last_pixel_x = undefined;
+        let last_pixel_y = undefined;
+        function pixelValueInformation(x, y) {
+            const form = document.getElementById("plotForm");
+            const formData = new URLSearchParams(new FormData(form));
+            const subject_ids = formData.getAll("subject_ids");
+            const component_ids = formData.getAll("component_ids");
+            const min_subject_overlap_count = parseInt(formData.get("min_subject_overlap_count"));
+            let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
+            getPixelValue(component_ids_array, component_ids, subject_ids, min_subject_overlap_count, x, y);
+            last_pixel_x = x;
+            last_pixel_y = y;
+        }
+
         let plotImage2 = document.getElementById("myCanvasPoint");
         plotImage2.addEventListener("click", function(event) {
             const rect = plotImage2.getBoundingClientRect();
@@ -327,14 +344,9 @@
             // Calculate click position as percentage of bounding box dimensions
             const xPercent = ((event.clientX - rect.left) / rect.width) * 100;
             const yPercent = ((event.clientY - rect.top) / rect.height) * 100;
-
-            const form = document.getElementById("plotForm");
-            const formData = new URLSearchParams(new FormData(form));
-            const subject_ids = formData.getAll("subject_ids");
-            const component_ids = formData.getAll("component_ids");
-            const min_subject_overlap_count = parseInt(formData.get("min_subject_overlap_count"));
-            let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
-            getPixelValue(component_ids_array, component_ids, subject_ids, min_subject_overlap_count, parseInt(xPercent * 2274 / 100), parseInt(yPercent * 1024 / 100));
+            let x = parseInt(xPercent * 2274 / 100);
+            let y = parseInt(yPercent * 1024 / 100);
+            pixelValueInformation(x, y);
         });
 
         });
