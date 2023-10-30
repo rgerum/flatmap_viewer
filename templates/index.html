@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plot with Parameters</title>
+    <title>Flatmap Viewer</title>
     <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.11/pako.min.js"></script>
 
@@ -95,15 +95,6 @@
             text-align: right;
         }
 
-        .point {
-            position: absolute;
-            display: block;
-            width: 1px;
-            height: 1px;
-            background: red;
-            border-radius: 3px;
-        }
-
         #componentExamples {
             width: 100%;
             overflow-x: scroll;
@@ -172,6 +163,8 @@
             margin: -10px -10px 0;
             padding: 10px 10px 5px;
             font-variant: small-caps;
+            text-overflow: ellipsis;
+            overflow: hidden;
         }
 
         .row_title2 {
@@ -212,11 +205,10 @@
 
             <div id="plotImage" style="cursor: auto">
                 <div class="image_centering">
-                <img src="plot0" id="plotImage0" alt="Generated Plot" class="image">
-                <img src="plot" id="plotImage1" alt="Generated Plot" class="image">
-                <canvas id="myCanvas" width="2274" height="1024" style="position: relative;" class="image"></canvas>
-                <img src="plot2" id="plotImage2" alt="Generated Plot" class="image">
-                <div class="point" id="point"></div>
+                    <img src="static_data/background.png" id="plotImage1" alt="Generated Plot" class="image">
+                    <canvas id="myCanvas" width="2274" height="1024" class="image"></canvas>
+                    <img src="static_data/foreground.png" id="plotImage2" alt="Generated Plot" class="image">
+                    <canvas id="myCanvasPoint" width="2274" height="1024"  class="image"></canvas>
                 </div>
             </div>
             <span id="clicked"></span>
@@ -228,12 +220,8 @@
     </div>
 
     <script>
-        show_image([0, 3, 4], [0, 1, 2, 3, 4, 5, 6, 7]);
-        //loadBinary();
-    </script>
-    <script>
 
-        fetch('init_data', {}).then(function(response) {
+        fetch('static_data/all_component_ids.json', {}).then(function(response) {
             return response.json();
         }).then(function(init_data) {
         let component_count = init_data.all_component_ids.length;
@@ -262,7 +250,7 @@
 
             parent.appendChild(row);
             for(let i = 1; i < 11; i++) {
-                add_image(row, "top_images/" + component_id + "_" + i + ".png", 128, 128);
+                add_image(row, "static_data/component_example_images/" + component_id + "_" + i + ".png", 128, 128);
             }
         }
         window.add_row = add_row
@@ -277,38 +265,11 @@
             const min_subject_overlap_count = parseInt(formData.get("min_subject_overlap_count"));
 
             let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
-            //show_image(component_ids_array, subject_ids, min_subject_overlap_count);
-            startWorker(component_ids_array, subject_ids, min_subject_overlap_count)
-            return
 
-            const newImageUrl = "plot?" + formData.toString();
-            document.getElementById("spinner").style.display = "block";
-            document.getElementById("plotImage1").setAttribute("src", newImageUrl);
+            startWorker(component_ids_array, subject_ids, min_subject_overlap_count)
         }
         document.update_plot = update_plot
-        document.getElementById("plotImage1").onload = function() {
-            document.getElementById("spinner").style.display = "none";
-            console.timeEnd("Load");
-        }
-        if(0) {
-            let grid = document.getElementById("grid");
-            let grid_cells = [];
-            for (let i = 1; i <= subject_count; i++) {
-                let row = document.createElement("div");
-                row.className = "row";
-                grid.appendChild(row);
-                let row_list = [];
-                for (let j = 1; j <= component_count; j++) {
-                    let square = document.createElement("div");
-                    square.className = "square";
-                    square.title = i + "," + j;
-                    row.appendChild(square);
-                    row_list.push(square);
-                }
-                grid_cells.push(row_list);
-            }
-            console.log(grid_cells)
-        }
+
 
         function add_check_box(placeholder, name, index) {
             let label = document.createElement("label");
@@ -359,7 +320,7 @@
           panzoom.zoomWithWheel(event)
         })
 
-        let plotImage2 = document.getElementById("plotImage2");
+        let plotImage2 = document.getElementById("myCanvasPoint");
         plotImage2.addEventListener("click", function(event) {
             const rect = plotImage2.getBoundingClientRect();
 
@@ -374,65 +335,6 @@
             const min_subject_overlap_count = parseInt(formData.get("min_subject_overlap_count"));
             let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
             getPixelValue(component_ids_array, component_ids, subject_ids, min_subject_overlap_count, parseInt(xPercent * 2274 / 100), parseInt(yPercent * 1024 / 100));
-            return
-
-             // Send the percentages to the Flask backend
-            fetch('process_coordinates', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    x_percent: xPercent,
-                    y_percent: yPercent
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById("point").style.left = data.x + "px";
-                document.getElementById("point").style.top = data.y + "px";
-
-                var form = document.getElementById("plotForm");
-                var formData = new URLSearchParams(new FormData(form));
-                let components = []
-                let element_examples = document.getElementById("componentExamples");
-                element_examples.innerHTML = "";
-                for(let id of formData.getAll("component_ids")) {
-                    for(let id2 in data.components) {
-                        if(id == id2) {
-                            let count = 0;
-                            for(let sub_id of formData.getAll("subject_ids")) {
-                                if(data.components[id2].includes(1*sub_id)) {
-                                    count += 1;
-                                }
-                            }
-                            if(count >= document.querySelector("[name=min_subject_overlap_count]").value) {
-                                components.push(id);
-                                add_row(element_examples, id);
-                            }
-                        }
-                    }
-                }
-                document.getElementById("clicked").innerText = "Clicked: " + components
-                console.log(components)
-
-                if(0) {
-                    for (var i = 1; i <= data.components_all[0].length; i++) {
-                        for (var j = 1; j <= data.components_all.length; j++) {
-
-                            if (data.components_all[j - 1][i - 1] == 1) {
-                                grid_cells[i - 1][j - 1].className = "square_active"
-                            } else {
-                                grid_cells[i - 1][j - 1].className = "square"
-                            }
-                        }
-                    }
-                }
-                console.log(data);
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
         });
 
         });

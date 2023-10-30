@@ -38,7 +38,7 @@ function convertIndexToBits(subject_ids) {
 async function loadAllNpyInParallel(component_ids_array) {
     let promises = [];
     for(let comp of component_ids_array)
-        promises.push(cachedLoadNpy("../cache_masks/mask_data_" + comp + ".npy.gz"));
+        promises.push(cachedLoadNpy("../static_data/component_masks/mask_data_" + comp + ".npy.gz"));
 
     return await Promise.all(promises);
 }
@@ -46,7 +46,7 @@ async function loadAllNpyInParallel(component_ids_array) {
 async function get_components(component_ids_array, component_ids, subject_ids, min_subject_overlap_count, x, y) {
     let all_bits = convertIndexToBits(subject_ids);
     let data_arrays = await loadAllNpyInParallel(component_ids_array);
-    const data_masks_all = await cachedLoadNpy("../cache_masks/data_masks_all.npy.gz");
+    const data_masks_all = await cachedLoadNpy("../static_data/component_masks/data_masks_all.npy.gz");
     let components = [];
     let i = y * data_masks_all.shape[1] + x;
 
@@ -61,13 +61,12 @@ async function get_components(component_ids_array, component_ids, subject_ids, m
 }
 
 async function show_image(component_ids_array, subject_ids, min_subject_overlap_count) {
-    get_components(component_ids_array, subject_ids, min_subject_overlap_count, 1021, 272)
     console.time("LoadBinary");
 
     let all_bits = convertIndexToBits(subject_ids);
     let data_arrays = await loadAllNpyInParallel(component_ids_array);
 
-    const data_masks_all = await cachedLoadNpy("../cache_masks/data_masks_all.npy.gz");
+    const data_masks_all = await cachedLoadNpy("../static_data/component_masks/data_masks_all.npy.gz");
 
     console.timeEnd("LoadBinary");
 
