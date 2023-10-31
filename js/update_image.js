@@ -34,7 +34,7 @@ worker.addEventListener('message', function(e) {
     }
 });
 
-async function startWorker(component_ids_array, subject_ids, min_subject_overlap_count) {
+async function startWorker(component_ids_array, subject_ids, min_subject_overlap_count, layer_ids) {
     document.getElementById("spinner").style.display = "block";
 
     // Start the worker with some data
@@ -42,11 +42,12 @@ async function startWorker(component_ids_array, subject_ids, min_subject_overlap
         type: 'image',
         component_ids_array: component_ids_array,
         subject_ids: subject_ids,
-        min_subject_overlap_count: min_subject_overlap_count
+        min_subject_overlap_count: min_subject_overlap_count,
+        layer_ids: layer_ids
     });
 }
 
-async function startWorker2(list_component_ids_array, subject_ids, min_subject_overlap_count) {
+async function startWorker2(list_component_ids_array, subject_ids, min_subject_overlap_count, layer_ids) {
     document.getElementById("spinner").style.display = "block";
 
     // Start the worker with some data
@@ -58,7 +59,7 @@ async function startWorker2(list_component_ids_array, subject_ids, min_subject_o
     });
 }
 
-async function getPixelValue(component_ids_array, component_ids, subject_ids, min_subject_overlap_count, x, y) {
+async function getPixelValue(component_ids_array, component_ids, subject_ids, min_subject_overlap_count, layer_ids, x, y) {
     let canvas = document.getElementById("myCanvasPoint");
     let ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -75,6 +76,7 @@ async function getPixelValue(component_ids_array, component_ids, subject_ids, mi
         component_ids_array: component_ids_array,
         component_ids: component_ids,
         subject_ids: subject_ids,
-        min_subject_overlap_count: min_subject_overlap_count, x: x, y: y
+        min_subject_overlap_count: min_subject_overlap_count, x: x, y: y,
+        layer_ids: layer_ids
     });
 }

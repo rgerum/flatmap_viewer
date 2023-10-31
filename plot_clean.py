@@ -36,6 +36,20 @@ run_name = "run-22"
 if not os.path.exists("cache"):
     os.mkdir("cache")
 
+
+def flatten_nested_list(nested_list):
+    # Initialize an empty list to store the flattened elements
+    flattened_list = []
+
+    # Iterate through the outer list
+    for sublist in nested_list:
+        # Iterate through each inner list
+        for item in sublist:
+            # Append each item to the flattened list
+            flattened_list.append(item)
+
+    return flattened_list
+
 def data_to_flatmap(data, subject_id):
     import cortex
     from cortex.quickflat.view import composite
@@ -60,34 +74,68 @@ def load_subject_component(subject_id, component_id):
 
     # concatenate both hemispheres
     data = np.concatenate([lh_data, rh_data], axis=1)
+
     # prepare data
     data[data == -1] = np.nan
     data[data > 0] = 1
     data[data < 0] = 1
-    data = np.nanmax(data, axis=0)
+    #print("data", data.shape, data.dtype, np.unique(data))
+    #exit()
+    data2 = np.nanmax(data, axis=0)
 
-    return data
+    return data, data2
+
 
 def load_all():
     data_all_components = []
     data_masks = []
+    mapping = None
 
     for component_id in all_component_ids:
         # if we have not yet cached the data
-        if not os.path.exists(f'cache/component-{component_id}.npy'):
+        if 1:#not os.path.exists(f'cache/component-{component_id}.npy'):
             # we create a flatmap that contains the set bit for which subjects have a mask there for this component
             data_all = []
             # iterate over subjects
             for subject_id in subject_ids:
                 # load the data
-                data = load_subject_component(subject_id, component_id)
+                dataAllLayers, data = load_subject_component(subject_id, component_id)
                 # create a flatmap from the data
-                data = data_to_flatmap(data, subject_id)
+
+                if mapping is None:
+                    print(data.shape)
+                    x = np.arange(data.shape[0])
+                    #np.random.shuffle(x)
+                    print(x.shape, x.dtype)
+                    data2 = data_to_flatmap(x, subject_id)
+
+                    data2 = data2.astype(int).flatten()
+
+                    def index_to_coordinates_mapping(arr):
+                        # Find the maximum index in the array to determine the size of the mapping list
+                        max_index = np.max(arr)
+
+                        # Initialize a list of empty lists to store the coordinates
+                        mapping = [[0] for _ in range(max_index + 1)]
+
+                        # Iterate through the numpy array and append the coordinates to the corresponding index
+                        for i in range(arr.shape[0]):
+                            index = arr[i]
+                            if index > 0:
+                                mapping[index].append(i)
+
+                        return mapping
+
+                    mapping = index_to_coordinates_mapping(data2)
+
+
+                #data = data_to_flatmap(data, subject_id)
+
                 # store the valid voxel mask but only once for each subject
                 if component_id == 0:
                     data_masks.append(~np.isnan(data))
                 # store the data, encoded as the nth bit, n being the subject number
-                data_all.append(data.astype(np.uint8) << subject_id)
+                data_all.append(dataAllLayers.ravel().astype(np.uint8) << subject_id)
             # sum the data to create the bit mask
             data_all = np.sum(data_all, axis=0).astype(np.uint8)
             # store it
@@ -104,14 +152,14 @@ def load_all():
 
     data_all_components = np.stack(data_all_components)
     print(data_all_components.shape)
-    return data_all_components,  data_masks
+    return data_all_components, data_masks, mapping
 
 def cache_flatmap_background(output_folder):
     height = 1024
     subject_id = 0
     subject_name = f'subj0{subject_id + 1}'
 
-    initial = load_subject_component(0, 0)
+    _, initial = load_subject_component(0, 0)
     import cortex
     import nibabel as nib
     from cortex.quickflat.view import composite
@@ -139,7 +187,12 @@ def cache_flatmap_background(output_folder):
 def cache_masks(output_folder):
     Path(output_folder).mkdir(parents=True, exist_ok=True)
 
-    mask_data, data_masks = load_all()
+    mask_data, data_masks, mapping = load_all()
+
+    mapping = np.array(flatten_nested_list(mapping), np.uint32)
+    np.save(Path(output_folder) / f"mapping.npy", mapping)
+    #with open(Path(output_folder) / "mapping.json", "w") as f:
+    #    json.dump(mapping, f)
 
     for index, mask in enumerate(mask_data):
         np.save(Path(output_folder) /f"mask_data_{index}.npy", mask)

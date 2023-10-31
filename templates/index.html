@@ -96,6 +96,16 @@
             text-align: right;
         }
 
+        .check_list_rows {
+            width: 277px;
+            display: flex;
+            flex-direction: column;
+        }
+        .check_list_rows label {
+            display: flex;
+            flex-direction: row;
+        }
+
         #componentExamples {
             width: 100%;
             overflow-x: scroll;
@@ -194,6 +204,11 @@
     <div class="main_column">
         <form id="plotForm" class="controls">
             <div class="control_box">
+                <span class="control_box_title">Layers</span>
+                <br/>
+                <div id="layer_ids" class="check_list_rows"></div>
+            </div>
+            <div class="control_box">
                 <span class="control_box_title">Subjects</span>
                 <div id="subject_ids" class="check_list"></div>
                 Min Sub Overlap Count: <input type="number" name="min_subject_overlap_count" min="1" max="8" value="4" oninput="update_plot()">
@@ -208,7 +223,7 @@
                 <input type="hidden" name="y" value="0"/>
             </div>
 
-            <div class="control_box">
+            <div class="control_box" style="display: none">
                 <span class="control_box_title">Concepts</span>
                 <br/>
                 <input type="checkbox" name="show_component_ids2" value="0" checked onclick="update_plot()">
@@ -241,6 +256,7 @@
     </div>
 
     <script>
+        console.log("v1")
         function toggle_roi() {
             let checkbox = document.getElementById("show_roi").checked;
             document.getElementById("plotImage2").style.display = checkbox ? "none" : "block";
@@ -285,6 +301,7 @@
 
             const subject_ids = formData.getAll("subject_ids");
             const component_ids = formData.getAll("component_ids");
+            const layer_ids = formData.getAll("layer_ids").map(x => parseInt(x));
             const min_subject_overlap_count = parseInt(formData.get("min_subject_overlap_count"));
 
             let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
@@ -295,7 +312,7 @@
             const component_ids2 = formData.getAll("component_ids2").map((x,i) => ((checked.indexOf(`${i}`) > -1 && x) ? x.split(',').map(y => parseInt(y)) : []));
             const component_index2 = component_ids2.map(x => x.map(y => init_data.all_component_ids.indexOf(y)));
 
-            startWorker(component_ids_array, subject_ids, min_subject_overlap_count);
+            startWorker(component_ids_array, subject_ids, min_subject_overlap_count, layer_ids);
             //startWorker2(component_index2, subject_ids, min_subject_overlap_count);
             pixelValueInformation(parseInt(document.getElementsByName("x")[0].value), parseInt(document.getElementsByName("y")[0].value));
             toggle_roi();
@@ -303,20 +320,32 @@
         document.update_plot = update_plot
 
 
-        function add_check_box(placeholder, name, index) {
+        function add_check_box(placeholder, name, index, index2, invert) {
             let label = document.createElement("label");
             let text = document.createElement("span");
-            text.innerText = index;
-            label.appendChild(text);
+            text.innerText = index2 || index;
             let checkbox = document.createElement("input");
             checkbox.type = "checkbox";
             checkbox.name = name;
             checkbox.value = index;
             checkbox.oninput = update_plot;
             label.title = index;
-            label.appendChild(checkbox);
+            if(invert) {
+                label.appendChild(checkbox);
+                label.appendChild(text);
+            }
+            else {
+                label.appendChild(text);
+                label.appendChild(checkbox);
+            }
             placeholder.appendChild(label);
             return checkbox;
+        }
+
+        let placeholder2 = document.getElementById("layer_ids");
+        for (let i of [0, 1, 2, 3, 4]) {
+            let checkbox = add_check_box(placeholder2, "layer_ids", i, ['white', 'layerB3', 'layerB2', 'layerB1', 'pial'][i], true);
+            checkbox.checked = true;
         }
 
         let placeholder = document.getElementById("subject_ids");
@@ -324,6 +353,7 @@
             let checkbox = add_check_box(placeholder, "subject_ids", i);
             checkbox.checked = true;
         }
+
         let placeholder_comp = document.getElementById("component_ids");
         for (let i of init_data.all_component_ids) {
             add_check_box(placeholder_comp, "component_ids", i);
@@ -374,8 +404,9 @@
             const subject_ids = formData.getAll("subject_ids");
             const component_ids = formData.getAll("component_ids");
             const min_subject_overlap_count = parseInt(formData.get("min_subject_overlap_count"));
+            const layer_ids = formData.getAll("layer_ids").map(x => parseInt(x));
             let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
-            getPixelValue(component_ids_array, component_ids, subject_ids, min_subject_overlap_count, x, y);
+            getPixelValue(component_ids_array, component_ids, subject_ids, min_subject_overlap_count, layer_ids, x, y);
         }
 
         let plotImage2 = document.getElementById("myCanvasPoint");
