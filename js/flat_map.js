@@ -56,12 +56,10 @@ async function get_components(component_ids_array, component_ids, subject_ids, m
             components.push(component_ids[parseInt(j)]);
         }
     }
-    console.log("components", components, x, y)
     return components
 }
 
 async function get_count(component_id, subject_ids, min_subject_overlap_count) {
-    console.log("get_count", component_id, subject_ids, min_subject_overlap_count)
     const bitCountTable = new Uint8Array(256);
     for (let i = 0; i < 256; i++) {
         bitCountTable[i] = countBits(i, subject_ids) >= min_subject_overlap_count;
@@ -88,8 +86,7 @@ async function show_image(component_ids_array, subject_ids, min_subject_overlap_
 
     console.timeEnd("LoadBinary");
 
-    let width = data_masks_all.shape[1];
-    let height = data_masks_all.shape[0];
+    let [height, width] = data_masks_all.shape;
 
     let data32 = new Uint32Array(width * height);
 
@@ -97,10 +94,7 @@ async function show_image(component_ids_array, subject_ids, min_subject_overlap_
     for (let i = 0; i < 256; i++) {
         bitCountTable[i] = countBits(i, subject_ids) >= min_subject_overlap_count;
     }
-    let data_arrays_d = []
-    for(let array of data_arrays) {
-        data_arrays_d.push(array.data);
-    }
+    let data_arrays_d = data_arrays.map(x => x.data);
 
     let data_masks_all_d = data_masks_all.data
     const maxColorIndex = colors.length - 1;
@@ -118,6 +112,59 @@ async function show_image(component_ids_array, subject_ids, min_subject_overlap_
         }
 
         data32[i] = packedColor[bitsCount];
+    }
+    console.timeEnd("PixelManipulationX");
+
+    return data32;
+}
+
+async function show_image2(list_component_ids_array, subject_ids, min_subject_overlap_count) {
+    console.time("LoadBinary");
+
+    let all_bits = convertIndexToBits(subject_ids);
+
+    let list_data_arrays = []
+    for(let comp of list_component_ids_array) {
+        let data_array = await loadAllNpyInParallel(comp);
+        list_data_arrays.push(data_array);
+    }
+    const data_masks_all = await cachedLoadNpy("../static_data/component_masks/data_masks_all.npy");
+
+    console.timeEnd("LoadBinary");
+
+    let [height, width] = data_masks_all.shape;
+
+    let data32 = new Uint32Array(width * height);
+
+    const bitCountTable = new Uint8Array(256);
+    for (let i = 0; i < 256; i++) {
+        bitCountTable[i] = countBits(i, subject_ids) >= min_subject_overlap_count;
+    }
+    let list_data_arrays_d = list_data_arrays.map(x => x.map(y => y.data));
+
+    let data_masks_all_d = data_masks_all.data
+    const maxColorIndex = colors.length - 1;
+
+    console.time("PixelManipulationX");
+    for (let i = 0; i < width * height; i++) {
+        if (!(data_masks_all_d[i] & all_bits))
+            continue
+
+        let bitsCount2 = 0;
+        for(let data_arrays_d of list_data_arrays_d) {
+            let bitsCount = 0;
+            for(let a of data_arrays_d) {
+                bitsCount += bitCountTable[a[i]];
+                if(bitsCount)
+                    break;
+            }
+            bitsCount2 += bitsCount;
+            if(bitsCount2 == maxColorIndex)
+                break;
+        }
+
+
+        data32[i] = packedColor[bitsCount2];
     }
     console.timeEnd("PixelManipulationX");
 

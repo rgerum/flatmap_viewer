@@ -183,6 +183,10 @@
             white-space: nowrap;
             padding-top: 0px;
         }
+
+        input[type="number"], input[type="text"] {
+            max-width: calc(100% - 10px);
+        }
     </style>
 </head>
 <body>
@@ -192,16 +196,29 @@
             <div class="control_box">
                 <span class="control_box_title">Subjects</span>
                 <div id="subject_ids" class="check_list"></div>
-                Min Sub Overlap Count: <input type="number" name="min_subject_overlap_count" min="1" max="8" value="1" oninput="update_plot()">
+                Min Sub Overlap Count: <input type="number" name="min_subject_overlap_count" min="1" max="8" value="4" oninput="update_plot()">
             </div>
             <div class="control_box">
                 <span class="control_box_title">Components</span>
                 <div id="component_ids" class="check_list"></div>
                 <input type="button" value="none" id="btn_select_none">
                 <input type="button" value="all" id="btn_select_all">
-                <label><span>show roi</span><input type="checkbox" value="on"id="show_roi" name="show_roi" checked onclick="toggle_roi()"></label>
+                <label><span>show roi</span><input type="checkbox" value="on" id="show_roi" name="show_roi" checked onclick="toggle_roi()"></label>
                 <input type="hidden" name="x" value="0"/>
                 <input type="hidden" name="y" value="0"/>
+            </div>
+
+            <div class="control_box">
+                <span class="control_box_title">Concepts</span>
+                <br/>
+                <input type="checkbox" name="show_component_ids2" value="0" checked onclick="update_plot()">
+                <input type="text" value="3,26,77,101,108,119" name="component_ids2">
+                <input type="checkbox" name="show_component_ids2" value="1" checked onclick="update_plot()">
+                <input type="text" value="5,27,78,92" name="component_ids2">
+                <input type="checkbox" name="show_component_ids2" value="2" checked onclick="update_plot()">
+                <input type="text" value="3,27,92,101,108,115" name="component_ids2">
+                <input type="checkbox" name="show_component_ids2" value="3" checked onclick="update_plot()">
+                <input type="text" value="5,26,77,78,119" name="component_ids2">
             </div>
         </form>
 
@@ -226,21 +243,12 @@
     <script>
         function toggle_roi() {
             let checkbox = document.getElementById("show_roi").checked;
-            console.log(document.getElementById("show_roi"), checkbox)
-            let image = document.getElementById("plotImage2");
-            if(checkbox) {
-                image.style.display = "block";
-            } else {
-                image.style.display = "none";
-            }
-
+            document.getElementById("plotImage2").style.display = checkbox ? "none" : "block";
         }
 
         fetch('static_data/all_component_ids.json', {}).then(function(response) {
             return response.json();
         }).then(function(init_data) {
-        let component_count = init_data.all_component_ids.length;
-        let subject_count = init_data.subject_ids.length;
 
         function add_image(parent, src, w, h) {
             let img = document.createElement("img");
@@ -281,7 +289,14 @@
 
             let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
 
+
+            const checked = formData.getAll("show_component_ids2");
+            console.log("checked", checked, checked.indexOf(0), checked.indexOf("1"))
+            const component_ids2 = formData.getAll("component_ids2").map((x,i) => ((checked.indexOf(`${i}`) > -1 && x) ? x.split(',').map(y => parseInt(y)) : []));
+            const component_index2 = component_ids2.map(x => x.map(y => init_data.all_component_ids.indexOf(y)));
+
             startWorker(component_ids_array, subject_ids, min_subject_overlap_count);
+            //startWorker2(component_index2, subject_ids, min_subject_overlap_count);
             pixelValueInformation(parseInt(document.getElementsByName("x")[0].value), parseInt(document.getElementsByName("y")[0].value));
             toggle_roi();
         }
@@ -340,8 +355,6 @@
           panzoom.zoomWithWheel(event)
         })
         plotImage.addEventListener('panzoomzoom', (event) => {
-          console.log(event.detail) // => { x: 0, y: 0, scale: 1 }
-
             let x = document.getElementsByName("x")[0].value;
             let y = document.getElementsByName("y")[0].value;
             let canvas = document.getElementById("myCanvasPoint");

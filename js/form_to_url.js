@@ -1,7 +1,6 @@
 
 function form_to_url(form) {
     const formData = new FormData(form);
-    console.log("formData", formData)
     const groupedData = {};
 
     for(let input of document.getElementsByTagName("input")) {
@@ -34,7 +33,6 @@ function form_to_url(form) {
     history.pushState(null, '', newUrl);
 }
 function link_forms() {
-    console.log("link_forms", document.querySelector('form'))
     document.querySelector('form').addEventListener('change', function() {
         form_to_url(this);
     });
@@ -45,16 +43,13 @@ function restore_form_from_url() {
 
     const checkboxes = document.querySelectorAll('input[type="checkbox"]');
     checkboxes.forEach((checkbox) => {
-        console.log("checkboxes", checkbox.name, searchParams.get(checkbox.name), searchParams.has(checkbox.name))
         if (searchParams.has(checkbox.name)) {
-            console.log("uncheck", checkbox)
             checkbox.checked = false;
         }
     });
 
     searchParams.forEach((value, key) => {
         const values = value.split(',');
-        console.log(key, values)
         if(values.length === 1 && document.querySelectorAll(`[name="${key}"]`).length === 1) {
             let val = values[0];
             const input = document.querySelector(`[name="${key}"]`);
@@ -67,7 +62,6 @@ function restore_form_from_url() {
         else {
             values.forEach(val => {
                 const input = document.querySelector(`[name="${key}"][value="${val}"]`);
-                console.log(val, input, `[name="${key}"][value="${val}"]`)
                 if (input && (input.type === 'checkbox' || input.type === 'radio')) {
                     input.checked = true;
                 } else if (input) {
