@@ -46,7 +46,15 @@ async function loadAllNpyInParallel(component_ids_array) {
     return await Promise.all(promises);
 }
 
-async function get_components(component_ids_array, component_ids, subject_ids, min_subject_overlap_count, layer_ids, x, y) {
+async function get_components({
+                                  component_ids_array,
+                                  component_ids,
+                                  subject_ids,
+                                  min_subject_overlap_count,
+                                  layer_ids,
+                                  x,
+                                  y
+                              }) {
     let [mapping, mapping_inverse] = await getMapping();
     let layer_ids_offsets = layer_ids.map((x, i) => i * voxel_count + x);
 
@@ -54,10 +62,8 @@ async function get_components(component_ids_array, component_ids, subject_ids, m
     let data_arrays = await loadAllNpyInParallel(component_ids_array);
     const data_masks_all = await cachedLoadNpy("../static_data/component_masks/data_masks_all.npy");
     let components = [];
-    let i0 = y * width + x
-    console.log("i0", i0, y, width, x);
+    let i0 = y * width + x;
     let i = mapping_inverse[i0];
-    console.log("i", i);
 
     for(let j in data_arrays) {
         let array = data_arrays[j];
@@ -75,7 +81,7 @@ async function get_components(component_ids_array, component_ids, subject_ids, m
     return components
 }
 
-async function get_count(component_id, subject_ids, min_subject_overlap_count, layer_ids) {
+async function get_count({component_id, subject_ids, min_subject_overlap_count, layer_ids}) {
     const bitCountTable = new Uint8Array(256);
     for (let i = 0; i < 256; i++) {
         bitCountTable[i] = countBits(i, subject_ids) >= min_subject_overlap_count;
@@ -117,7 +123,7 @@ async function getMapping() {
 }
 
 
-async function show_image(component_ids_array, subject_ids, min_subject_overlap_count, layer_ids) {
+async function show_image({component_ids_array, subject_ids, min_subject_overlap_count, layer_ids}) {
     console.time("LoadBinary2");
     let [mapping, mapping_inverse] = await getMapping();
     console.timeEnd("LoadBinary2");
@@ -128,6 +134,7 @@ async function show_image(component_ids_array, subject_ids, min_subject_overlap_
     let data_arrays = await loadAllNpyInParallel(component_ids_array);
 
     const data_masks_all = await cachedLoadNpy("../static_data/component_masks/data_masks_all.npy");
+    const curvature = (await cachedLoadNpy("../static_data/curvature.npy")).data;
 
     console.timeEnd("LoadBinary");
 
@@ -135,6 +142,7 @@ async function show_image(component_ids_array, subject_ids, min_subject_overlap_
     let voxel_count = data_masks_all.shape[0];
 
     let data32 = new Uint32Array(width * height);
+    let data32_colors = new Float64Array(voxel_count * 3);
 
     const bitCountTable = new Uint8Array(256);
     for (let i = 0; i < 256; i++) {
@@ -149,8 +157,19 @@ async function show_image(component_ids_array, subject_ids, min_subject_overlap_
 
     console.time("PixelManipulationX");
     for(let i = 0; i < voxel_count; i++) {
-        if (!(data_masks_all_d[i] & all_bits))
-                continue
+        if (!(data_masks_all_d[i] & all_bits)) {
+            if(curvature[i] > 0) {
+                data32_colors[i * 3 + 0] = 0.62;
+                data32_colors[i * 3 + 1] = 0.62;
+                data32_colors[i * 3 + 2] = 0.62;
+            }
+            else {
+                data32_colors[i * 3 + 0] = 0.37;
+                data32_colors[i * 3 + 1] = 0.37;
+                data32_colors[i * 3 + 2] = 0.37;
+            }
+            continue
+        }
 
         let bitsCount = 0;
         for(let a of data_arrays_d) {
@@ -166,11 +185,15 @@ async function show_image(component_ids_array, subject_ids, min_subject_overlap_
 
         for (let ii of mapping[i]) {
             data32[ii] = packedColor[bitsCount];
+            data32_colors[i * 3 + 0] = colors[bitsCount][0]/255;
+            data32_colors[i * 3 + 1] = colors[bitsCount][1]/255;
+            data32_colors[i * 3 + 2] = colors[bitsCount][2]/255;
+
         }
     }
     console.timeEnd("PixelManipulationX");
 
-    return data32;
+    return [data32, data32_colors];
 }
 
 async function show_image2(list_component_ids_array, subject_ids, min_subject_overlap_count, layer_ids) {

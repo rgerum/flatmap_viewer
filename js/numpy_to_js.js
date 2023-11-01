@@ -18,12 +18,20 @@ async function loadNpy(url) {
     const dtype = header.descr;
     const shape = header.shape;
 
-    if (dtype !== '|u1' && dtype !== '|b1') {
+    let data;
+    console.log(dtype)
+    if (dtype === '|u1' || dtype === '|b1') {
+        data = new Uint8Array(arrayBuffer, 10 + headerLength);
+    }
+    else if(dtype === '<f4') {
+        data = new Float32Array(arrayBuffer, 10 + headerLength);
+    }
+    else if(dtype === '<i4') {
+        data = new Int32Array(arrayBuffer, 10 + headerLength);
+    }
+    else {
         throw new Error('Unsupported dtype. Only Uint8 is supported.', dtype);
     }
-
-    // Extract the data as Uint8Array
-    const data = new Uint8Array(arrayBuffer, 10 + headerLength);
 
     return {
         dtype: dtype,

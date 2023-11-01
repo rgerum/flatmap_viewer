@@ -108,7 +108,8 @@ def load_all():
                     #np.random.shuffle(x)
                     print(x.shape, x.dtype)
                     data2 = data_to_flatmap(x, subject_id)
-
+                    #print(x.shape[0]/2)
+                    #exit()
                     data2 = data2.astype(int).flatten()
 
                     def index_to_coordinates_mapping(arr):
@@ -328,7 +329,29 @@ def cache_component_list(output_folder):
         json.dump({"all_component_ids": all_component_ids, "subject_ids": subject_ids}, f)
 
 if __name__ == "__main__":
-    cache_component_list("static_data")
+    #cache_component_list("static_data")
     cache_flatmap_background("static_data")
-    cache_images("static_data/component_example_images")
-    cache_masks("static_data/component_masks")
+    #cache_images("static_data/component_example_images")
+    #cache_masks("static_data/component_masks")
+
+    import cortex
+
+    curv_vertices = cortex.db.get_surfinfo("fsaverage")
+    np.save(f"static_data/curvature.npy", curv_vertices.data)
+
+    # flat, inflated, pia, wm
+    def store_3d_data(name):
+        pt, vtx = cortex.db.get_surf("fsaverage", name, merge=True, nudge=True)
+        print(pt.shape, pt.dtype, np.mean(pt, axis=0), np.max(pt, axis=0), np.min(pt, axis=0))
+        # center
+        pt -= (np.max(pt, axis=0)+np.min(pt, axis=0))/2
+
+        # rotate as the viewer has z axis pointing out of the plane
+        pt = np.ascontiguousarray(pt[:, [0, 2, 1]])
+
+        np.save(f"static_data/pt_{name}.npy", pt/100)
+        np.save(f"static_data/vtx.npy", vtx)
+
+
+    store_3d_data("flat")
+    #[store_3d_data(name) for name in ["flat", "inflated", "pia", "wm"]]

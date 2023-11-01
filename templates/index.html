@@ -24,8 +24,8 @@
         #plotContainer {
             overflow: hidden;
             border: 1px solid black;
-            width: 100%;
-            height: 400px;
+            /*width: 100%;
+            height: 400px;*/
             position: relative;
             border-radius: 10px;
         }
@@ -45,7 +45,7 @@
             width: 10px;
             height: 10px;
             border: 1px solid black;
-            background: gray;
+            background: rgb(128, 128, 128);
         }
         .square_active {
             display: table-cell;
@@ -197,6 +197,82 @@
         input[type="number"], input[type="text"] {
             max-width: calc(100% - 10px);
         }
+
+        .flex-row {
+            display: flex;
+            flex-direction: row;
+            gap: 10px
+        }
+        .flex-row>div {
+            width: 100%;
+        }
+        .round-corner {
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid black;
+            background: #151515;
+            position: relative;
+        }
+
+
+        .slidecontainer {
+            width: 100px; /* Width of the outside container */
+            max-width: 80%;
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+}
+
+        .slider_marker {
+            height: 8px;
+              width: 1px;
+              background: #bbb;
+              position: absolute;
+              top: 5px;
+        }
+
+/* The slider itself */
+.slider {
+  -webkit-appearance: none;  /* Override default CSS styles */
+  appearance: none;
+  width: 100%; /* Full-width */
+  height: 8px; /* Specified height */
+  background: #262626c9; /* Grey background */
+  outline: none; /* Remove outline */
+  opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+  -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+  transition: opacity .2s;
+    border-radius: 10px;
+}
+
+/* Mouse-over effects */
+.slider:hover {
+  opacity: 1; /* Fully shown on mouse-over */
+}
+
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Override default look */
+  appearance: none;
+  width: 13px; /* Set a specific slider handle width */
+  height: 13px; /* Slider handle height */
+  background: #242424; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+}
+
+.slider::-moz-range-thumb {
+  width: 13px; /* Set a specific slider handle width */
+  height: 13px; /* Slider handle height */
+  background: #242424; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+}
+
+
+.slider_buttons {
+	bottom: 30px;
+	position: absolute;
+	left: 10px;
+}
     </style>
 </head>
 <body>
@@ -237,26 +313,43 @@
             </div>
         </form>
 
-        <div id="plotContainer">
+        <div class="flex-row">
+            <div id="plotContainer">
 
-            <div id="plotImage" style="cursor: auto">
-                <div class="image_centering">
-                    <img src="static_data/background.png" id="plotImage1" alt="Generated Plot" class="image">
-                    <canvas id="myCanvas" width="2274" height="1024" class="image"></canvas>
-                    <img src="static_data/foreground.png" id="plotImage2" alt="Generated Plot" class="image">
-                    <canvas id="myCanvasPoint" width="2274" height="1024"  class="image"></canvas>
+                <div id="plotImage" style="cursor: auto">
+                    <div class="image_centering">
+                        <img src="static_data/background.png" id="plotImage1" alt="Generated Plot" class="image">
+                        <canvas id="myCanvas" width="2274" height="1024" class="image"></canvas>
+                        <img src="static_data/foreground.png" id="plotImage2" alt="Generated Plot" class="image">
+                        <canvas id="myCanvasPoint" width="2274" height="1024"  class="image"></canvas>
+                    </div>
+                </div>
+                <span id="clicked"></span>
+                <span id="spinner" class="spinner"></span>
+            </div>
+            <div class="round-corner">
+                <canvas id="plot3d"></canvas>
+                <div class="slider_buttons">
+                    <button class="slider_button" onclick="document.animateShapeChange(0)">0</button>
+                    <button class="slider_button" onclick="document.animateShapeChange(100)">1</button>
+                    <button class="slider_button" onclick="document.animateShapeChange(200)">2</button>
+                    <button class="slider_button" onclick="document.animateShapeChange(300)">3</button>
+                </div>
+                <div class="slidecontainer">
+                    <div class="slider_marker" style="left: 33%"></div>
+                    <div class="slider_marker" style="left: 66%"></div>
+                    <input type="range" class="slider" id="shape" name="shape" min="0" max="300" value="0" oninput="document.set_shape(this.value)">
                 </div>
             </div>
-            <span id="clicked"></span>
-            <span id="spinner" class="spinner"></span>
         </div>
+
         <div id="componentExamples">
 
         </div>
     </div>
 
     <script>
-        console.log("v1")
+
         function toggle_roi() {
             let checkbox = document.getElementById("show_roi").checked;
             document.getElementById("plotImage2").style.display = checkbox ? "none" : "block";
@@ -265,6 +358,35 @@
         fetch('static_data/all_component_ids.json', {}).then(function(response) {
             return response.json();
         }).then(function(init_data) {
+
+        function get_form_data() {
+            const form = document.getElementById("plotForm");
+            const formData = new URLSearchParams(new FormData(form));
+
+            const subject_ids = formData.getAll("subject_ids");
+            const component_ids = formData.getAll("component_ids");
+            const layer_ids = formData.getAll("layer_ids").map(x => parseInt(x));
+            const min_subject_overlap_count = parseInt(formData.get("min_subject_overlap_count"));
+
+            let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
+
+            const checked = formData.getAll("show_component_ids2");
+            const component_ids2 = formData.getAll("component_ids2").map((x,i) => ((checked.indexOf(`${i}`) > -1 && x) ? x.split(',').map(y => parseInt(y)) : []));
+            const component_index2 = component_ids2.map(x => x.map(y => init_data.all_component_ids.indexOf(y)));
+
+            let x = parseInt(document.getElementsByName("x")[0].value);
+            let y = parseInt(document.getElementsByName("y")[0].value)
+
+            return {
+                component_ids_array,
+                component_ids,
+                subject_ids,
+                min_subject_overlap_count,
+                layer_ids,
+                x,
+                y,
+            }
+        }
 
         function add_image(parent, src, w, h) {
             let img = document.createElement("img");
@@ -296,25 +418,11 @@
 
         function update_plot() {
             console.time("Load");
-            const form = document.getElementById("plotForm");
-            const formData = new URLSearchParams(new FormData(form));
+            let form_data = get_form_data();
 
-            const subject_ids = formData.getAll("subject_ids");
-            const component_ids = formData.getAll("component_ids");
-            const layer_ids = formData.getAll("layer_ids").map(x => parseInt(x));
-            const min_subject_overlap_count = parseInt(formData.get("min_subject_overlap_count"));
-
-            let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
-
-
-            const checked = formData.getAll("show_component_ids2");
-            console.log("checked", checked, checked.indexOf(0), checked.indexOf("1"))
-            const component_ids2 = formData.getAll("component_ids2").map((x,i) => ((checked.indexOf(`${i}`) > -1 && x) ? x.split(',').map(y => parseInt(y)) : []));
-            const component_index2 = component_ids2.map(x => x.map(y => init_data.all_component_ids.indexOf(y)));
-
-            startWorker(component_ids_array, subject_ids, min_subject_overlap_count, layer_ids);
+            startWorker(form_data);
             //startWorker2(component_index2, subject_ids, min_subject_overlap_count);
-            pixelValueInformation(parseInt(document.getElementsByName("x")[0].value), parseInt(document.getElementsByName("y")[0].value));
+            pixelValueInformation();
             toggle_roi();
         }
         document.update_plot = update_plot
@@ -398,15 +506,9 @@
             ctx.fill();
         })
 
-        function pixelValueInformation(x, y) {
-            const form = document.getElementById("plotForm");
-            const formData = new URLSearchParams(new FormData(form));
-            const subject_ids = formData.getAll("subject_ids");
-            const component_ids = formData.getAll("component_ids");
-            const min_subject_overlap_count = parseInt(formData.get("min_subject_overlap_count"));
-            const layer_ids = formData.getAll("layer_ids").map(x => parseInt(x));
-            let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
-            getPixelValue(component_ids_array, component_ids, subject_ids, min_subject_overlap_count, layer_ids, x, y);
+        function pixelValueInformation() {
+            let form_data = get_form_data();
+            getPixelValue(form_data);
         }
 
         let plotImage2 = document.getElementById("myCanvasPoint");
@@ -418,13 +520,148 @@
             const yPercent = ((event.clientY - rect.top) / rect.height) * 100;
             let x = parseInt(xPercent * 2274 / 100);
             let y = parseInt(yPercent * 1024 / 100);
-            pixelValueInformation(x, y);
             document.getElementsByName("x")[0].value = x;
             document.getElementsByName("y")[0].value = y;
+
+            pixelValueInformation();
             form_to_url(document.querySelector('form'))
         });
 
         });
+    </script>
+
+
+    <script src="js/numpy_to_js.js"></script>
+    <script type="module">
+        import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r132/build/three.module.js';
+        import {OrbitControls} from 'https://threejsfundamentals.org/threejs/resources/threejs/r132/examples/jsm/controls/OrbitControls.js';
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x151515);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({canvas: document.querySelector("#plot3d")});
+        document.renderer = renderer;
+        document.camera = camera;
+
+        let pt = await loadNpy("static_data/pt_flat.npy");
+        let vtx = await loadNpy("static_data/vtx.npy");
+
+        let pt2 = await loadNpy("static_data/pt_inflated.npy");
+        let pt3 = await loadNpy("static_data/pt_pia.npy");
+        let pt4 = await loadNpy("static_data/pt_wm.npy");
+
+        function addMesh() {
+            // Define your points and vertices
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(pt.shape[0]*3), 3));
+            geometry.setIndex( Array.prototype.slice.call(vtx.data) );
+            geometry.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array(pt2.data), 3 ) );
+
+            const material = new THREE.MeshBasicMaterial({vertexColors: true, side: THREE.DoubleSide});
+            const mesh = new THREE.Mesh( geometry, material );
+            scene.add(mesh);
+
+            let last_shape_index = 100;
+            function set_shape(index) {
+                last_shape_index = index;
+                index /= 100;
+                let pt_a = [pt, pt2, pt3, pt4][Math.floor(index)];
+                let pt_b = [pt, pt2, pt3, pt4][Math.ceil(index)];
+                let f = index % 1;
+                let array = mesh.geometry.getAttribute('position').array;
+                for (let i = 0; i < array.length; i += 1) {
+                    array[i] = pt_a.data[i]*(1-f) + pt_b.data[i] * f;
+                }
+                mesh.geometry.getAttribute('position').needsUpdate = true;
+            }
+
+            var currentAnimationFrame = null;
+
+            function animateShapeChange(endIndex) {
+                let duration = 300;
+                let startIndex = last_shape_index;
+
+                // Cancel any ongoing animation
+                if (currentAnimationFrame) {
+                    cancelAnimationFrame(currentAnimationFrame);
+                }
+
+                var startTime = null;
+
+                function animate(time) {
+                    // Initialize the start time
+                    if (!startTime) {
+                        startTime = time;
+                    }
+
+                    // Calculate the progress (time elapsed) as a percentage of duration
+                    var progress = (time - startTime) / duration;
+
+                    // Clamp progress to [0, 1]
+                    progress = Math.min(1, progress);
+
+                    // Calculate the current index based on progress
+                    var currentIndex = startIndex + (endIndex - startIndex) * progress;
+
+                    // Call your set_shape function
+                    set_shape(currentIndex);
+                    document.getElementById("shape").value = currentIndex
+
+                    // Continue animation until progress reaches 1 (100%)
+                    if (progress < 1) {
+                        currentAnimationFrame = requestAnimationFrame(animate);
+                    } else {
+                        currentAnimationFrame = null;
+                    }
+                }
+
+                // Start the animation
+                currentAnimationFrame = requestAnimationFrame(animate);
+            }
+
+            document.animateShapeChange = animateShapeChange;
+            document.set_shape = set_shape;
+
+            function set_mesh_colors(c) {
+                mesh.geometry.getAttribute('color').array.set(c);
+                mesh.geometry.getAttribute('color').needsUpdate = true;
+            }
+            document.set_mesh_colors = set_mesh_colors;
+        }
+        addMesh();
+
+        camera.position.z = 1.5;
+
+        // Set up orbit controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.update();
+
+        // Animation loop
+        const animate = () => {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        };
+
+        animate();
+
+        function onWindowResize() {
+            let container = document.querySelector("#plot3d").parentElement;
+            let width = container.clientWidth;
+            let height = container.clientHeight;
+
+            // Update camera aspect ratio
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+
+            // Update renderer size
+            renderer.setSize(width, height);
+        }
+        document.onWindowResize = onWindowResize
+        document.onWindowResize();
+
+        // Add a resize event listener
+        window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
 </html>

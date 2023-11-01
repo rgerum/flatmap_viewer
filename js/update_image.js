@@ -6,11 +6,14 @@ worker.addEventListener('message', function(e) {
         let canvas = document.getElementById("myCanvas");
         let ctx = canvas.getContext("2d");
 
+        document.set_mesh_colors(e.data.data32_colors)
+
         const processedImageData = new ImageData(new Uint8ClampedArray(e.data.image.buffer), canvas.width, canvas.height);
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.putImageData(processedImageData, 0, 0);
         document.getElementById("spinner").style.display = "none";
+
     }
     if(e.data.type === 'image2') {
         document.getElementById("spinner").style.display = "none";
@@ -34,16 +37,13 @@ worker.addEventListener('message', function(e) {
     }
 });
 
-async function startWorker(component_ids_array, subject_ids, min_subject_overlap_count, layer_ids) {
+async function startWorker(form_data) {
     document.getElementById("spinner").style.display = "block";
 
     // Start the worker with some data
     worker.postMessage({
         type: 'image',
-        component_ids_array: component_ids_array,
-        subject_ids: subject_ids,
-        min_subject_overlap_count: min_subject_overlap_count,
-        layer_ids: layer_ids
+        ...form_data
     });
 }
 
@@ -59,7 +59,9 @@ async function startWorker2(list_component_ids_array, subject_ids, min_subject_o
     });
 }
 
-async function getPixelValue(component_ids_array, component_ids, subject_ids, min_subject_overlap_count, layer_ids, x, y) {
+async function getPixelValue(form_data) {
+    let x = form_data.x;
+    let y = form_data.y;
     let canvas = document.getElementById("myCanvasPoint");
     let ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -73,10 +75,6 @@ async function getPixelValue(component_ids_array, component_ids, subject_ids, mi
     // Start the worker with some data
     worker.postMessage({
         type: 'pixel',
-        component_ids_array: component_ids_array,
-        component_ids: component_ids,
-        subject_ids: subject_ids,
-        min_subject_overlap_count: min_subject_overlap_count, x: x, y: y,
-        layer_ids: layer_ids
+        ...form_data
     });
 }
