@@ -20,6 +20,8 @@ worker.addEventListener('message', function(e) {
         let canvas = document.getElementById("myCanvas");
         let ctx = canvas.getContext("2d");
 
+        document.set_mesh_colors(e.data.data32_colors);
+
         const processedImageData = new ImageData(new Uint8ClampedArray(e.data.image.buffer), canvas.width, canvas.height);
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -30,6 +32,8 @@ worker.addEventListener('message', function(e) {
         document.getElementById("clicked").innerText = "Clicked: ";
         let element_examples = document.getElementById("componentExamples");
         element_examples.innerHTML = "";
+        document.getElementsByName("x")[0].value = e.data.x;
+        document.getElementsByName("y")[0].value = e.data.y;
         for(let i of e.data.pixel) {
             add_row(element_examples, i);
             document.getElementById("clicked").innerText += " " + i + " (" + e.data.counts[i] + "), ";
@@ -47,17 +51,17 @@ async function startWorker(form_data) {
     });
 }
 
-async function startWorker2(list_component_ids_array, subject_ids, min_subject_overlap_count, layer_ids) {
+async function startWorker2(form_data) {
     document.getElementById("spinner").style.display = "block";
 
     // Start the worker with some data
     worker.postMessage({
         type: 'image2',
-        list_component_ids_array: list_component_ids_array,
-        subject_ids: subject_ids,
-        min_subject_overlap_count: min_subject_overlap_count
+        ...form_data
     });
 }
+
+
 
 async function getPixelValue(form_data) {
     let x = form_data.x;

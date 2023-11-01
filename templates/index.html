@@ -279,6 +279,7 @@
     <div id="grid"></div>
     <div class="main_column">
         <form id="plotForm" class="controls">
+            <input type="hidden" name="show_groups" value="0"/>
             <div class="control_box">
                 <span class="control_box_title">Layers</span>
                 <br/>
@@ -289,7 +290,7 @@
                 <div id="subject_ids" class="check_list"></div>
                 Min Sub Overlap Count: <input type="number" name="min_subject_overlap_count" min="1" max="8" value="4" oninput="update_plot()">
             </div>
-            <div class="control_box">
+            <div class="control_box" id="box_components">
                 <span class="control_box_title">Components</span>
                 <div id="component_ids" class="check_list"></div>
                 <input type="button" value="none" id="btn_select_none">
@@ -297,9 +298,10 @@
                 <label><span>show roi</span><input type="checkbox" value="on" id="show_roi" name="show_roi" checked onclick="toggle_roi()"></label>
                 <input type="hidden" name="x" value="0"/>
                 <input type="hidden" name="y" value="0"/>
+                <input type="hidden" name="voxel" value="0"/>
             </div>
 
-            <div class="control_box" style="display: none">
+            <div class="control_box" id="box_concepts" style="display: none">
                 <span class="control_box_title">Concepts</span>
                 <br/>
                 <input type="checkbox" name="show_component_ids2" value="0" checked onclick="update_plot()">
@@ -349,7 +351,7 @@
     </div>
 
     <script>
-
+        let zoom_scale = 1;
         function toggle_roi() {
             let checkbox = document.getElementById("show_roi").checked;
             document.getElementById("plotImage2").style.display = checkbox ? "none" : "block";
@@ -358,6 +360,7 @@
         fetch('static_data/all_component_ids.json', {}).then(function(response) {
             return response.json();
         }).then(function(init_data) {
+
 
         function get_form_data() {
             const form = document.getElementById("plotForm");
@@ -375,16 +378,21 @@
             const component_index2 = component_ids2.map(x => x.map(y => init_data.all_component_ids.indexOf(y)));
 
             let x = parseInt(document.getElementsByName("x")[0].value);
-            let y = parseInt(document.getElementsByName("y")[0].value)
+            let y = parseInt(document.getElementsByName("y")[0].value);
+            let voxel = parseInt(document.getElementsByName("voxel")[0].value);
+            let show_groups = parseInt(document.getElementsByName("show_groups")[0].value)
 
             return {
                 component_ids_array,
                 component_ids,
+                component_index2,
                 subject_ids,
                 min_subject_overlap_count,
                 layer_ids,
                 x,
                 y,
+                voxel,
+                show_groups,
             }
         }
 
@@ -420,7 +428,10 @@
             console.time("Load");
             let form_data = get_form_data();
 
-            startWorker(form_data);
+            if(form_data.show_groups)
+                startWorker2(form_data);
+            else
+                startWorker(form_data);
             //startWorker2(component_index2, subject_ids, min_subject_overlap_count);
             pixelValueInformation();
             toggle_roi();
@@ -467,6 +478,10 @@
             add_check_box(placeholder_comp, "component_ids", i);
         }
         restore_form_from_url();
+        if(document.querySelector("[name=show_groups]").value != "0") {
+            document.getElementById("box_components").style.display = "none";
+            document.getElementById("box_concepts").style.display = "";
+        }
         update_plot();
 
         document.getElementById("btn_select_none").onclick = function() {
@@ -492,27 +507,36 @@
           if (!event.shiftKey) return
           panzoom.zoomWithWheel(event)
         })
-        plotImage.addEventListener('panzoomzoom', (event) => {
-            let x = document.getElementsByName("x")[0].value;
+
+
+            function updatePointDisplay() {
+                        let x = document.getElementsByName("x")[0].value;
             let y = document.getElementsByName("y")[0].value;
             let canvas = document.getElementById("myCanvasPoint");
             let ctx = canvas.getContext("2d");
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.beginPath();
-            ctx.arc(x, y, 4/event.detail.scale, 0, 2 * Math.PI, false);
-            ctx.rect(0, y, canvas.width, 4/event.detail.scale);
-            ctx.rect(x, 0, 4/event.detail.scale, canvas.height);
+            ctx.arc(x, y, 4/zoom_scale, 0, 2 * Math.PI, false);
+            ctx.rect(0, y, canvas.width, 4/zoom_scale);
+            ctx.rect(x, 0, 4/zoom_scale, canvas.height);
             ctx.fillStyle = 'red';
             ctx.fill();
+            }
+        plotImage.addEventListener('panzoomzoom', (event) => {
+            zoom_scale = event.detail.scale;
+            updatePointDisplay();
         })
 
         function pixelValueInformation() {
             let form_data = get_form_data();
+            console.log("form_data", form_data.voxel)
             getPixelValue(form_data);
+            updatePointDisplay();
         }
+        document.pixelValueInformation = pixelValueInformation
 
         let plotImage2 = document.getElementById("myCanvasPoint");
-        plotImage2.addEventListener("click", function(event) {
+        plotImage2.addEventListener("click", async function(event) {
             const rect = plotImage2.getBoundingClientRect();
 
             // Calculate click position as percentage of bounding box dimensions
@@ -522,6 +546,11 @@
             let y = parseInt(yPercent * 1024 / 100);
             document.getElementsByName("x")[0].value = x;
             document.getElementsByName("y")[0].value = y;
+            let voxel = await getPixelVoxel(x, y);
+            document.set_active_voxel(voxel);
+            document.getElementsByName("voxel")[0].value = voxel;
+
+            console.log("pixel clicked", x, y, voxel);
 
             pixelValueInformation();
             form_to_url(document.querySelector('form'))
@@ -539,6 +568,7 @@
         scene.background = new THREE.Color(0x151515);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const dom_elem = document.querySelector("#plot3d");
         const renderer = new THREE.WebGLRenderer({canvas: document.querySelector("#plot3d")});
         document.renderer = renderer;
         document.camera = camera;
@@ -573,6 +603,7 @@
                     array[i] = pt_a.data[i]*(1-f) + pt_b.data[i] * f;
                 }
                 mesh.geometry.getAttribute('position').needsUpdate = true;
+                update_active_voxel();
             }
 
             var currentAnimationFrame = null;
@@ -627,8 +658,9 @@
                 mesh.geometry.getAttribute('color').needsUpdate = true;
             }
             document.set_mesh_colors = set_mesh_colors;
+            return mesh;
         }
-        addMesh();
+        let mesh = addMesh();
 
         camera.position.z = 1.5;
 
@@ -636,12 +668,85 @@
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.update();
 
+        // Create a raycaster and a vector to hold the mouse click position
+        var raycaster = new THREE.Raycaster();
+        var mouse = new THREE.Vector2();
+
+        // Add a click event listener to the canvas
+        renderer.domElement.addEventListener('click', onDocumentMouseClick, false);
+
+
         // Animation loop
         const animate = () => {
             requestAnimationFrame(animate);
             controls.update();
             renderer.render(scene, camera);
         };
+
+        const material2 = new THREE.MeshBasicMaterial({color: 0xff0000});  // greenish blue
+        const cube = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.01, 0.01), material2);
+        cube.position.set(0, 0, 0.5)
+        scene.add(cube);
+
+        let lw = 0.005
+        const cube2 = new THREE.Mesh(new THREE.BoxGeometry(10, lw, lw), material2);
+        cube2.position.set(0, 0, 0.5)
+        scene.add(cube2);
+        const cube3 = new THREE.Mesh(new THREE.BoxGeometry(lw, 10, lw), material2);
+        cube3.position.set(0, 0, 0.5)
+        scene.add(cube3);
+        const cube4 = new THREE.Mesh(new THREE.BoxGeometry(lw, lw, 10), material2);
+        cube4.position.set(0, 0, 0.5)
+        scene.add(cube4);
+
+        // Function to handle mouse click event
+function onDocumentMouseClick(event) {
+    // Calculate mouse position in normalized device coordinates (-1 to +1)
+    var canvasBounds = renderer.domElement.getBoundingClientRect();
+
+    // Adjust for canvas position and normalize mouse position to -1 to +1 range
+    mouse.x = ((event.clientX - canvasBounds.left) / canvasBounds.width) * 2 - 1;
+    mouse.y = - ((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1;
+
+    console.log(onDocumentMouseClick, mouse)
+
+    // Update the picking ray with the camera and mouse position
+    raycaster.setFromCamera(mouse, camera);
+
+    // Calculate objects intersecting the picking ray
+    var intersects = raycaster.intersectObject(mesh);
+
+    if (intersects.length > 0) {
+        // Get the first intersected object
+        var intersection = intersects[0];
+        console.log(intersects)
+
+        // Get the closest vertex (you can also loop through vertices to find the closest one)
+        var vertexIndex = intersection.face.a;
+        set_active_voxel(vertexIndex);
+        document.getElementsByName("voxel")[0].value = vertexIndex;
+        document.pixelValueInformation();
+    }
+}
+let active_voxel = undefined;
+function set_active_voxel(vertexIndex) {
+    console.log("set_active_voxel", vertexIndex)
+    active_voxel = vertexIndex;
+    update_active_voxel();
+}
+document.set_active_voxel = set_active_voxel
+function update_active_voxel() {
+    let a = mesh.geometry.getAttribute('position').array
+    console.log("update_active_voxel", active_voxel, a[active_voxel*3])
+    var clickedVertex = a[active_voxel*3];
+    var clickedVertex1 = a[active_voxel*3+1];
+    var clickedVertex3 = a[active_voxel*3+2];
+
+    cube.position.set(clickedVertex, clickedVertex1, clickedVertex3);
+    cube2.position.set(clickedVertex, clickedVertex1, clickedVertex3);
+    cube3.position.set(clickedVertex, clickedVertex1, clickedVertex3);
+    cube4.position.set(clickedVertex, clickedVertex1, clickedVertex3);
+}
 
         animate();
 

@@ -328,6 +328,47 @@ def cache_component_list(output_folder):
     with open(Path(output_folder) / "all_component_ids.json", "w") as f:
         json.dump({"all_component_ids": all_component_ids, "subject_ids": subject_ids}, f)
 
+
+def rotate_point_around_axis(point, axis, theta):
+    """
+    Rotates a point in 3D space around a given axis ('x', 'y', or 'z').
+
+    :param point: List or array-like representing the point [x, y, z]
+    :param axis: Char representing the axis ('x', 'y', or 'z')
+    :param theta: Angle of rotation in radians
+    :return: Rotated point as a list [x', y', z']
+    """
+    # Ensure the point is a NumPy array
+    point = np.asarray(point)
+
+    # Define the rotation matrices for each axis
+    if axis.lower() == 'x':
+        R = np.array([
+            [1, 0, 0],
+            [0, np.cos(theta), -np.sin(theta)],
+            [0, np.sin(theta), np.cos(theta)]
+        ])
+    elif axis.lower() == 'y':
+        R = np.array([
+            [np.cos(theta), 0, np.sin(theta)],
+            [0, 1, 0],
+            [-np.sin(theta), 0, np.cos(theta)]
+        ])
+    elif axis.lower() == 'z':
+        R = np.array([
+            [np.cos(theta), -np.sin(theta), 0],
+            [np.sin(theta), np.cos(theta), 0],
+            [0, 0, 1]
+        ])
+    else:
+        raise ValueError("The axis must be 'x', 'y', or 'z'")
+
+    # Multiply the rotation matrix with the point to get the rotated point
+    rotated_point = np.dot(point, R)
+
+    return rotated_point
+
+
 if __name__ == "__main__":
     #cache_component_list("static_data")
     cache_flatmap_background("static_data")
@@ -340,18 +381,26 @@ if __name__ == "__main__":
     np.save(f"static_data/curvature.npy", curv_vertices.data)
 
     # flat, inflated, pia, wm
-    def store_3d_data(name):
+    def store_3d_data(name, f=1):
         pt, vtx = cortex.db.get_surf("fsaverage", name, merge=True, nudge=True)
         print(pt.shape, pt.dtype, np.mean(pt, axis=0), np.max(pt, axis=0), np.min(pt, axis=0))
         # center
         pt -= (np.max(pt, axis=0)+np.min(pt, axis=0))/2
 
         # rotate as the viewer has z axis pointing out of the plane
-        pt = np.ascontiguousarray(pt[:, [0, 2, 1]])
+        #if name != "flat":
+        #pt = np.ascontiguousarray(pt[:, [2, 1, 0]])
+        pt = rotate_point_around_axis(pt, "z", np.pi/2)
+        pt = rotate_point_around_axis(pt, "x", np.pi/2)
+        pt = rotate_point_around_axis(pt, "y", np.pi/2)
+        pt[:, 0] *= -1
+        pt = np.ascontiguousarray(pt, dtype=np.float32)
 
-        np.save(f"static_data/pt_{name}.npy", pt/100)
-        np.save(f"static_data/vtx.npy", vtx)
+        np.save(f"static_data/pt_{name}.npy", pt/100*f)
+        #np.save(f"static_data/vtx.npy", vtx)
 
 
-    store_3d_data("flat")
+    #store_3d_data("flat")
+    #store_3d_data("pia", f=1.2)
+    store_3d_data("wm", f=1.25)
     #[store_3d_data(name) for name in ["flat", "inflated", "pia", "wm"]]

@@ -46,6 +46,22 @@ async function loadAllNpyInParallel(component_ids_array) {
     return await Promise.all(promises);
 }
 
+async function getPixelVoxel(x, y) {
+    let i0 = y * width + x;
+    let [mapping, mapping_inverse] = await getMapping();
+    let voxel = mapping_inverse[i0];
+    return voxel
+}
+
+async function getVoxelPixel({voxel}) {
+    console.log("mapping", mapping)
+    console.log("voxel", voxel)
+    let index = mapping[voxel][0];
+    let x = index % width;
+    let y = Math.floor(index / width);
+    return [x, y]
+}
+
 async function get_components({
                                   component_ids_array,
                                   component_ids,
@@ -185,20 +201,20 @@ async function show_image({component_ids_array, subject_ids, min_subject_overlap
 
         for (let ii of mapping[i]) {
             data32[ii] = packedColor[bitsCount];
-            data32_colors[i * 3 + 0] = colors[bitsCount][0]/255;
-            data32_colors[i * 3 + 1] = colors[bitsCount][1]/255;
-            data32_colors[i * 3 + 2] = colors[bitsCount][2]/255;
-
         }
+        data32_colors[i * 3 + 0] = colors[bitsCount][0]/255;
+        data32_colors[i * 3 + 1] = colors[bitsCount][1]/255;
+        data32_colors[i * 3 + 2] = colors[bitsCount][2]/255;
     }
     console.timeEnd("PixelManipulationX");
 
     return [data32, data32_colors];
 }
 
-async function show_image2(list_component_ids_array, subject_ids, min_subject_overlap_count, layer_ids) {
+async function show_image2({component_index2, subject_ids, min_subject_overlap_count, layer_ids}) {
+    console.log("component_index2", component_index2);
     console.time("LoadBinary2");
-    let mapping = await getMapping();
+    let [mapping, mapping_inverse] = await getMapping();
     console.timeEnd("LoadBinary2");
 
     console.time("LoadBinary");
@@ -206,11 +222,12 @@ async function show_image2(list_component_ids_array, subject_ids, min_subject_ov
     let all_bits = convertIndexToBits(subject_ids);
 
     let list_data_arrays = []
-    for(let comp of list_component_ids_array) {
+    for(let comp of component_index2) {
         let data_array = await loadAllNpyInParallel(comp);
         list_data_arrays.push(data_array);
     }
     const data_masks_all = await cachedLoadNpy("../static_data/component_masks/data_masks_all.npy");
+    const curvature = (await cachedLoadNpy("../static_data/curvature.npy")).data;
 
     console.timeEnd("LoadBinary");
 
@@ -218,6 +235,7 @@ async function show_image2(list_component_ids_array, subject_ids, min_subject_ov
     let voxel_count = data_masks_all.shape[0];
 
     let data32 = new Uint32Array(width * height);
+    let data32_colors = new Float64Array(voxel_count * 3);
 
     const bitCountTable = new Uint8Array(256);
     for (let i = 0; i < 256; i++) {
@@ -228,18 +246,38 @@ async function show_image2(list_component_ids_array, subject_ids, min_subject_ov
     let data_masks_all_d = data_masks_all.data
     const maxColorIndex = colors.length - 1;
 
-     let layer_ids_offsets = layer_ids.map((x, i) => i * voxel_count + x);
+    let layer_ids_offsets = layer_ids.map((x, i) => i * voxel_count + x);
 
     console.time("PixelManipulationX");
-    for (let i = 0; i < width * height; i++) {
-        if (!(data_masks_all_d[i] & all_bits))
+    console.log("mapping", mapping)
+    for (let i = 0; i < voxel_count; i++) {
+        if (!(data_masks_all_d[i] & all_bits)) {
+            if(curvature[i] > 0) {
+                data32_colors[i * 3 + 0] = 0.62;
+                data32_colors[i * 3 + 1] = 0.62;
+                data32_colors[i * 3 + 2] = 0.62;
+            }
+            else {
+                data32_colors[i * 3 + 0] = 0.37;
+                data32_colors[i * 3 + 1] = 0.37;
+                data32_colors[i * 3 + 2] = 0.37;
+            }
             continue
+        }
 
         let bitsCount2 = 0;
         for(let data_arrays_d of list_data_arrays_d) {
             let bitsCount = 0;
             for(let a of data_arrays_d) {
-                bitsCount += bitCountTable[a[i]];
+                let b = 0;
+                for(let index_layer_offset of layer_ids_offsets) {
+                    if(bitCountTable[a[i+index_layer_offset]]) {
+                        b += 1;
+                        break
+                    }
+                }
+                bitsCount += b;
+                //bitsCount += bitCountTable[a[i]];
                 if(bitsCount)
                     break;
             }
@@ -248,10 +286,14 @@ async function show_image2(list_component_ids_array, subject_ids, min_subject_ov
                 break;
         }
 
-
-        data32[i] = packedColor[bitsCount2];
+        for (let ii of mapping[i]) {
+            data32[ii] = packedColor[bitsCount2];
+        }
+        data32_colors[i * 3 + 0] = colors[bitsCount2][0]/255;
+        data32_colors[i * 3 + 1] = colors[bitsCount2][1]/255;
+        data32_colors[i * 3 + 2] = colors[bitsCount2][2]/255;
     }
     console.timeEnd("PixelManipulationX");
 
-    return data32;
+    return [data32, data32_colors];
 }

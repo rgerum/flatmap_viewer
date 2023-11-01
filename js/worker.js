@@ -10,12 +10,13 @@ self.addEventListener('message', async function(e) {
         self.postMessage({image: data32, type: 'image', data32_colors});
     }
     if(e.data.type === 'image2') {
-         const outputData = await show_image2(e.data.list_component_ids_array, e.data.subject_ids, e.data.min_subject_overlap_count, e.data.layer_ids);
+         const [data32, data32_colors] = await show_image2(e.data);
 
         // Post the result back to the main thread
-        self.postMessage({image: outputData, type: 'image2'});
+        self.postMessage({image: data32, type: 'image2', data32_colors});
     }
     if(e.data.type === 'pixel') {
+        [e.data.x, e.data.y] = await getVoxelPixel(e.data);
         let pixel = await get_components(e.data);
 
         let counts = {};
@@ -25,6 +26,6 @@ self.addEventListener('message', async function(e) {
         }
 
         // Post the result back to the main thread
-        self.postMessage({pixel: pixel, type: 'pixel', counts: counts});
+        self.postMessage({pixel: pixel, type: 'pixel', counts: counts, x: e.data.x, y: e.data.y});
     }
 });
