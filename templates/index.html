@@ -358,6 +358,19 @@
             document.getElementById("plotImage2").style.display = checkbox ? "none" : "block";
         }
 
+        function set_active_voxel(voxel) {
+            document.active_voxel = voxel;
+            document.getElementsByName("voxel")[0].value = voxel;
+            form_to_url(document.querySelector('form'));
+
+            // Create a new event
+            var myEvent = new Event('voxel_changed');
+
+            // Dispatch the event
+            window.dispatchEvent(myEvent);
+        }
+        document.set_active_voxel = set_active_voxel
+
         fetch('static_data/all_component_ids.json', {}).then(function(response) {
             return response.json();
         }).then(function(init_data) {
@@ -509,20 +522,23 @@
           panzoom.zoomWithWheel(event)
         })
 
-
-            function updatePointDisplay() {
-                        let x = document.getElementsByName("x")[0].value;
+        function updatePointDisplay() {
+            let active_voxel = document.active_voxel;
+            let x = document.getElementsByName("x")[0].value;
             let y = document.getElementsByName("y")[0].value;
             let canvas = document.getElementById("myCanvasPoint");
             let ctx = canvas.getContext("2d");
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.beginPath();
-            ctx.arc(x, y, 4/zoom_scale, 0, 2 * Math.PI, false);
-            ctx.rect(0, y, canvas.width, 4/zoom_scale);
-            ctx.rect(x, 0, 4/zoom_scale, canvas.height);
-            ctx.fillStyle = 'red';
-            ctx.fill();
+            if(active_voxel !== -1) {
+                ctx.beginPath();
+                ctx.arc(x, y, 4 / zoom_scale, 0, 2 * Math.PI, false);
+                ctx.rect(0, y, canvas.width, 4 / zoom_scale);
+                ctx.rect(x, 0, 4 / zoom_scale, canvas.height);
+                ctx.fillStyle = 'red';
+                ctx.fill();
             }
+        }
+
         plotImage.addEventListener('panzoomzoom', (event) => {
             zoom_scale = event.detail.scale;
             updatePointDisplay();
@@ -530,7 +546,6 @@
 
         function pixelValueInformation() {
             let form_data = get_form_data();
-            console.log("form_data", form_data.voxel)
             getPixelValue(form_data);
             updatePointDisplay();
         }
@@ -550,11 +565,10 @@
             let voxel = await getPixelVoxel(x, y);
             document.set_active_voxel(voxel);
             document.getElementsByName("voxel")[0].value = voxel;
+        });
 
-            console.log("pixel clicked", x, y, voxel);
-
+        window.addEventListener('voxel_changed', function(e) {
             pixelValueInformation();
-            form_to_url(document.querySelector('form'))
         });
 
         });
@@ -575,7 +589,10 @@
         document.camera = camera;
 
         let pt = await loadNpy("static_data/pt_flat.npy");
-        let vtx = await loadNpy("static_data/vtx_flat.npy");
+        let vtx_flat = await loadNpy("static_data/vtx_flat.npy");
+        vtx_flat = Array.prototype.slice.call(vtx_flat.data);
+        let vtx = await loadNpy("static_data/vtx.npy");
+        vtx = Array.prototype.slice.call(vtx.data)
 
         let pt2 = await loadNpy("static_data/pt_inflated.npy");
         let pt3 = await loadNpy("static_data/pt_pia.npy");
@@ -585,7 +602,7 @@
             // Define your points and vertices
             const geometry = new THREE.BufferGeometry();
             geometry.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(pt.shape[0]*3), 3));
-            geometry.setIndex( Array.prototype.slice.call(vtx.data) );
+            geometry.setIndex( vtx );
             geometry.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array(pt2.data), 3 ) );
 
             const material = new THREE.MeshBasicMaterial({vertexColors: true, side: THREE.DoubleSide});
@@ -594,7 +611,11 @@
 
             let last_shape_index = 100;
             function set_shape(index) {
-                last_shape_index = index;
+                if(index < 100 && last_shape_index >= 100)
+                    mesh.geometry.setIndex( vtx_flat );
+                if(index >= 100 && last_shape_index < 100)
+                    mesh.geometry.setIndex( vtx );
+                last_shape_index = parseInt(index);
                 index /= 100;
                 let pt_a = [pt, pt2, pt3, pt4][Math.floor(index)];
                 let pt_b = [pt, pt2, pt3, pt4][Math.ceil(index)];
@@ -709,8 +730,6 @@ function onDocumentMouseClick(event) {
     mouse.x = ((event.clientX - canvasBounds.left) / canvasBounds.width) * 2 - 1;
     mouse.y = - ((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1;
 
-    console.log(onDocumentMouseClick, mouse)
-
     // Update the picking ray with the camera and mouse position
     raycaster.setFromCamera(mouse, camera);
 
@@ -720,33 +739,35 @@ function onDocumentMouseClick(event) {
     if (intersects.length > 0) {
         // Get the first intersected object
         var intersection = intersects[0];
-        console.log(intersects)
 
         // Get the closest vertex (you can also loop through vertices to find the closest one)
         var vertexIndex = intersection.face.a;
-        set_active_voxel(vertexIndex);
-        document.getElementsByName("voxel")[0].value = vertexIndex;
-        document.pixelValueInformation();
+        document.set_active_voxel(vertexIndex);
+    }
+    else {
+        document.set_active_voxel(-1);
     }
 }
-let active_voxel = undefined;
-function set_active_voxel(vertexIndex) {
-    console.log("set_active_voxel", vertexIndex)
-    active_voxel = vertexIndex;
-    update_active_voxel();
-}
-document.set_active_voxel = set_active_voxel
-function update_active_voxel() {
-    let a = mesh.geometry.getAttribute('position').array
-    console.log("update_active_voxel", active_voxel, a[active_voxel*3])
-    var clickedVertex = a[active_voxel*3];
-    var clickedVertex1 = a[active_voxel*3+1];
-    var clickedVertex3 = a[active_voxel*3+2];
 
-    cube.position.set(clickedVertex, clickedVertex1, clickedVertex3);
-    cube2.position.set(clickedVertex, clickedVertex1, clickedVertex3);
-    cube3.position.set(clickedVertex, clickedVertex1, clickedVertex3);
-    cube4.position.set(clickedVertex, clickedVertex1, clickedVertex3);
+window.addEventListener('voxel_changed', function(e) {
+    update_active_voxel();
+});
+
+function update_active_voxel() {
+    let active_voxel = document.active_voxel;
+
+    var [x, y, z] = [-1000, -1000, -1000]
+    if(active_voxel !== -1) {
+        let a = mesh.geometry.getAttribute('position').array
+        x = a[active_voxel*3];
+        y = a[active_voxel*3+1];
+        z = a[active_voxel*3+2];
+    }
+
+    for(let obj of [cube, cube2, cube3, cube4]) {
+        obj.position.set(x, y, z);
+
+    }
 }
 
         animate();
