@@ -82,8 +82,57 @@ def load_subject_component(subject_id, component_id):
     #print("data", data.shape, data.dtype, np.unique(data))
     #exit()
     data2 = np.nanmax(data, axis=0)
+    data[np.isnan(data)] = 0
 
     return data, data2
+
+def save_gzip(data, filename):
+    import gzip
+    with gzip.GzipFile(filename, "w") as f:
+        np.save(f, data)
+
+def get_bit_lookout(subject_ids, min_subject_overlap_count):
+    def count_bits(number, positions):
+        count = 0
+        for position in positions:
+            if (number & (1 << position)) != 0:
+                count += 1
+        return count
+
+    bit_count_table = [count_bits(i, subject_ids) >= min_subject_overlap_count for i in range(256)]
+    return bit_count_table
+
+def get_voxel_count(a, layer_count):
+    voxel_count = 327684
+    layer_ids_offsets = [
+        0,
+        327684,
+        655368,
+        983052,
+        1310736
+    ][:layer_count]
+    mask_new = np.zeros(voxel_count, dtype=np.uint8)
+    bitCountTable = get_bit_lookout(subject_ids, 4)
+    for i in range(voxel_count):
+        mask_pix = 0
+        for index_layer_offset in layer_ids_offsets:
+            mask_pix |= a[i + index_layer_offset]
+        mask_new[i] = bitCountTable[mask_pix]
+    return mask_new
+
+
+def load_all_new(output_folder):
+    for index, component_id in enumerate(all_component_ids):
+        print(component_id)
+        data_all = []
+        # iterate over subjects
+        for subject_id in subject_ids:
+            # load the data
+            dataAllLayers, data = load_subject_component(subject_id, component_id)
+            data_all.append(dataAllLayers.ravel().astype(np.uint8) << subject_id)
+
+        mask = np.sum(data_all, axis=0).astype(np.uint8)
+        np.save(Path(output_folder) / f"mask_data_{index}.npy", mask)
 
 
 def load_all():
@@ -92,6 +141,7 @@ def load_all():
     mapping = None
 
     for component_id in all_component_ids:
+        print(component_id)
         # if we have not yet cached the data
         if 1:#not os.path.exists(f'cache/component-{component_id}.npy'):
             # we create a flatmap that contains the set bit for which subjects have a mask there for this component
@@ -100,6 +150,10 @@ def load_all():
             for subject_id in subject_ids:
                 # load the data
                 dataAllLayers, data = load_subject_component(subject_id, component_id)
+
+                #print(dataAllLayers.shape, dataAllLayers[0, :100], np.unique(dataAllLayers), data.shape, data[ :100])
+                #dataAllLayers[0] = data
+                #exit()
                 # create a flatmap from the data
 
                 if mapping is None:
@@ -371,10 +425,12 @@ def rotate_point_around_axis(point, axis, theta):
 
 if __name__ == "__main__":
     #cache_component_list("static_data")
-    cache_flatmap_background("static_data")
+    #cache_flatmap_background("static_data")
     #cache_images("static_data/component_example_images")
     #cache_masks("static_data/component_masks")
 
+    load_all_new("static_data/component_masks")
+    exit()
     import cortex
 
     curv_vertices = cortex.db.get_surfinfo("fsaverage")

@@ -54,8 +54,6 @@ async function getPixelVoxel(x, y) {
 }
 
 async function getVoxelPixel({voxel}) {
-    console.log("mapping", mapping)
-    console.log("voxel", voxel)
     let index = mapping[voxel][0];
     let x = index % width;
     let y = Math.floor(index / width);
@@ -123,6 +121,7 @@ async function get_count({component_id, subject_ids, min_subject_overlap_count, 
 let mapping = undefined;
 let mapping_inverse = undefined;
 async function getMapping() {
+    console.time("LoadBinary2");
     if(!mapping) {
         mapping = await (await fetch("../static_data/component_masks/mapping.json")).json();
 
@@ -135,14 +134,13 @@ async function getMapping() {
             }
         }
     }
+    console.timeEnd("LoadBinary2");
     return [mapping, mapping_inverse]
 }
 
 
 async function show_image({component_ids_array, subject_ids, min_subject_overlap_count, layer_ids}) {
-    console.time("LoadBinary2");
     let [mapping, mapping_inverse] = await getMapping();
-    console.timeEnd("LoadBinary2");
 
     console.time("LoadBinary");
 
@@ -156,6 +154,7 @@ async function show_image({component_ids_array, subject_ids, min_subject_overlap
 
     let [height, width] = [1024, 2274]//data_masks_all.shape;
     let voxel_count = data_masks_all.shape[0];
+    console.log("voxel_count", voxel_count)
 
     let data32 = new Uint32Array(width * height);
     let data32_colors = new Float64Array(voxel_count * 3);
@@ -169,7 +168,8 @@ async function show_image({component_ids_array, subject_ids, min_subject_overlap
     let data_masks_all_d = data_masks_all.data
     const maxColorIndex = colors.length - 1;
 
-    let layer_ids_offsets = layer_ids.map((x, i) => i * voxel_count + x);
+    let layer_ids_offsets = layer_ids.map((x, i) => i * voxel_count);
+    console.log("layer_ids_offsets", layer_ids_offsets, layer_ids);
 
     console.time("PixelManipulationX");
     for(let i = 0; i < voxel_count; i++) {
@@ -189,12 +189,11 @@ async function show_image({component_ids_array, subject_ids, min_subject_overlap
 
         let bitsCount = 0;
         for(let a of data_arrays_d) {
+            let mask_pix = 0
             for(let index_layer_offset of layer_ids_offsets) {
-                if(bitCountTable[a[i+index_layer_offset]]) {
-                    bitsCount += 1;
-                    break
-                }
+                mask_pix |= a[i + index_layer_offset]
             }
+            bitsCount += bitCountTable[mask_pix];
             if(bitsCount === maxColorIndex)
                 break;
         }
@@ -212,10 +211,7 @@ async function show_image({component_ids_array, subject_ids, min_subject_overlap
 }
 
 async function show_image2({component_index2, subject_ids, min_subject_overlap_count, layer_ids}) {
-    console.log("component_index2", component_index2);
-    console.time("LoadBinary2");
     let [mapping, mapping_inverse] = await getMapping();
-    console.timeEnd("LoadBinary2");
 
     console.time("LoadBinary");
 
@@ -249,7 +245,6 @@ async function show_image2({component_index2, subject_ids, min_subject_overlap_c
     let layer_ids_offsets = layer_ids.map((x, i) => i * voxel_count + x);
 
     console.time("PixelManipulationX");
-    console.log("mapping", mapping)
     for (let i = 0; i < voxel_count; i++) {
         if (!(data_masks_all_d[i] & all_bits)) {
             if(curvature[i] > 0) {

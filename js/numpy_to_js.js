@@ -19,7 +19,6 @@ async function loadNpy(url) {
     const shape = header.shape;
 
     let data;
-    console.log(dtype)
     if (dtype === '|u1' || dtype === '|b1') {
         data = new Uint8Array(arrayBuffer, 10 + headerLength);
     }
