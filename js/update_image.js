@@ -2,7 +2,6 @@ const worker = new Worker('js/worker.js');
 
 worker.addEventListener('message', function(e) {
     if(e.data.type === 'image') {
-        document.getElementById("spinner").style.display = "none";
         let canvas = document.getElementById("myCanvas");
         let ctx = canvas.getContext("2d");
 
@@ -12,11 +11,11 @@ worker.addEventListener('message', function(e) {
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.putImageData(processedImageData, 0, 0);
-        document.getElementById("spinner").style.display = "none";
+
+        document.querySelectorAll(".spinner").forEach(x => x.style.display = "none");
 
     }
     if(e.data.type === 'image2') {
-        document.getElementById("spinner").style.display = "none";
         let canvas = document.getElementById("myCanvas");
         let ctx = canvas.getContext("2d");
 
@@ -26,7 +25,7 @@ worker.addEventListener('message', function(e) {
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.putImageData(processedImageData, 0, 0);
-        document.getElementById("spinner").style.display = "none";
+        document.querySelectorAll(".spinner").forEach(x => x.style.display = "block");
     }
     if(e.data.type === 'pixel') {
         document.getElementById("clicked").innerText = "Clicked: ";
@@ -42,7 +41,7 @@ worker.addEventListener('message', function(e) {
 });
 
 async function startWorker(form_data) {
-    document.getElementById("spinner").style.display = "block";
+    document.querySelectorAll(".spinner").forEach(x => x.style.display = "block");
 
     // Start the worker with some data
     worker.postMessage({
@@ -52,7 +51,7 @@ async function startWorker(form_data) {
 }
 
 async function startWorker2(form_data) {
-    document.getElementById("spinner").style.display = "block";
+    document.querySelectorAll(".spinner").forEach(x => x.style.display = "block");
 
     // Start the worker with some data
     worker.postMessage({
