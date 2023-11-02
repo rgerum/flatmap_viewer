@@ -249,6 +249,7 @@ def save_3D_data():
     # flat, inflated, pia, wm
     def store_3d_data(name, f=1, name_vertex=None):
         pt, vtx = cortex.db.get_surf("fsaverage", name, merge=True, nudge=True)
+        pt = pt / 100 * f
         print(pt.shape, pt.dtype, np.mean(pt, axis=0), np.max(pt, axis=0), np.min(pt, axis=0))
         # center
         pt -= (np.max(pt, axis=0) + np.min(pt, axis=0)) / 2
@@ -262,7 +263,7 @@ def save_3D_data():
             pt[:, 0] *= -1
             pt = np.ascontiguousarray(pt, dtype=np.float32)
 
-        np.save(f"static_data/pt_{name}.npy", pt / 100 * f)
+        np.save(f"static_data/pt_{name}.npy", pt)
         if name_vertex is not None:
             np.save(f"static_data/{name_vertex}.npy", vtx)
 
