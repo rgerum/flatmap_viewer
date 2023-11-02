@@ -122,6 +122,8 @@ def get_voxel_count(a, layer_count):
 
 
 def load_all_new(output_folder):
+    Path(output_folder).mkdir(parents=True, exist_ok=True)
+
     for index, component_id in enumerate(all_component_ids):
         print(component_id)
         data_all = []
@@ -133,6 +135,37 @@ def load_all_new(output_folder):
 
         mask = np.sum(data_all, axis=0).astype(np.uint8)
         np.save(Path(output_folder) / f"mask_data_{index}.npy", mask)
+
+
+def cache_mapping_voxel_pixel(output_folder):
+    Path(output_folder).mkdir(parents=True, exist_ok=True)
+
+    component_id = all_component_ids[0]
+    subject_id = subject_ids[0]
+
+    # load the data
+    dataAllLayers, data = load_subject_component(subject_id, component_id)
+
+    x = np.arange(data.shape[0])
+    data2 = data_to_flatmap(x, subject_id)
+    data2[np.isnan(data2)] = -1
+    np.save(Path(output_folder) / "mapping_map.npy", data2.astype(np.int32).ravel())
+
+def load_all_new_mask(output_folder):
+    Path(output_folder).mkdir(parents=True, exist_ok=True)
+
+    component_id = all_component_ids[0]
+    data_masks = []
+    # iterate over subjects
+    for subject_id in subject_ids:
+        # load the data
+        dataAllLayers, data = load_subject_component(subject_id, component_id)
+        data_masks.append(~np.isnan(data))
+
+    mask_all = np.zeros(data_masks[0].shape, dtype=np.int64)
+    for index, mask in enumerate(data_masks):
+        mask_all += mask << index
+    np.save(Path(output_folder) / f"data_masks_all.npy", mask_all.astype(np.uint8))
 
 
 def load_all():
@@ -427,9 +460,11 @@ if __name__ == "__main__":
     #cache_component_list("static_data")
     #cache_flatmap_background("static_data")
     #cache_images("static_data/component_example_images")
-    #cache_masks("static_data/component_masks")
+    ####cache_masks("static_data/component_masks")
 
     load_all_new("static_data/component_masks")
+    cache_mapping_voxel_pixel("static_data/component_masks")
+    load_all_new_mask("static_data/component_masks")
     exit()
     import cortex
 
