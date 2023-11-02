@@ -29,7 +29,7 @@ async function loadNpy(url) {
         data = new Int32Array(arrayBuffer, 10 + headerLength);
     }
     else {
-        throw new Error('Unsupported dtype. Only Uint8 is supported.', dtype);
+        throw new Error('Unsupported dtype. Only Uint8 is supported. Got' + dtype);
     }
 
     return {

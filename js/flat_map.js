@@ -46,6 +46,14 @@ async function loadAllNpyInParallel(component_ids_array) {
     return await Promise.all(promises);
 }
 
+function getBitCountTable(subject_ids, min_subject_overlap_count) {
+    const bitCountTable = new Uint8Array(256);
+    for (let i = 0; i < 256; i++) {
+        bitCountTable[i] = countBits(i, subject_ids) >= min_subject_overlap_count;
+    }
+    return bitCountTable
+}
+
 async function getPixelVoxel(x, y) {
     let i0 = y * width + x;
     let [mapping, mapping_inverse] = await getMapping();
@@ -72,69 +80,60 @@ async function get_components({
     let [mapping, mapping_inverse] = await getMapping();
     let layer_ids_offsets = layer_ids.map((x, i) => i * voxel_count + x);
 
-    let all_bits = convertIndexToBits(subject_ids);
     let data_arrays = await loadAllNpyInParallel(component_ids_array);
-    const data_masks_all = await cachedLoadNpy("../static_data/component_masks/data_masks_all.npy");
     let components = [];
     let i0 = y * width + x;
     let i = mapping_inverse[i0];
 
     for(let j in data_arrays) {
-        let array = data_arrays[j];
+        let a = data_arrays[j].data;
+        let mask_pix = 0;
         for(let index_layer_offset of layer_ids_offsets) {
-            if(countBits(array.data[i+index_layer_offset], subject_ids) >= min_subject_overlap_count) {
-                components.push(component_ids[parseInt(j)]);
-                break
-            }
+            mask_pix |= a[i + index_layer_offset]
         }
-
-        //if(countBits(array.data[i], subject_ids) >= min_subject_overlap_count) {
-        //    components.push(component_ids[parseInt(j)]);
-        //}
+        if(countBits(mask_pix, subject_ids) >= min_subject_overlap_count) {
+            components.push(component_ids[parseInt(j)]);
+        }
     }
     return components
 }
 
 async function get_count({component_id, subject_ids, min_subject_overlap_count, layer_ids}) {
-    const bitCountTable = new Uint8Array(256);
-    for (let i = 0; i < 256; i++) {
-        bitCountTable[i] = countBits(i, subject_ids) >= min_subject_overlap_count;
-    }
+    const bitCountTable = getBitCountTable(subject_ids, min_subject_overlap_count);
 
-    let layer_ids_offsets = layer_ids.map((x, i) => i * voxel_count + x);
+    let layer_ids_offsets = layer_ids.map((x, i) => i * voxel_count);
 
     let data_array = await loadAllNpyInParallel([component_id]);
     let a = data_array[0].data;
     let count = 0;
     for (let i = 0; i < voxel_count; i++) {
+        let mask_pix = 0;
         for(let index_layer_offset of layer_ids_offsets) {
-            if(bitCountTable[a[i+index_layer_offset]]) {
-                count += 1;
-                break
-            }
+            mask_pix |= a[i + index_layer_offset]
         }
-        //count += bitCountTable[a[i]];
+        count += bitCountTable[mask_pix];
     }
     return count
 }
 
 let mapping = undefined;
 let mapping_inverse = undefined;
-async function getMapping() {
-    console.time("LoadBinary2");
-    if(!mapping) {
-        mapping = await (await fetch("../static_data/component_masks/mapping.json")).json();
 
-        let [height, width] = [1024, 2274]//data_masks_all.shape;
-        let voxel_count = 327684;
-        mapping_inverse = new Uint32Array(width * height);
+async function getMapping() {
+    console.time("LoadBinary3");
+    if(!mapping) {
+        mapping_inverse = (await loadNpy("../static_data/component_masks/mapping_map.npy")).data;
+        mapping = [];
         for(let i = 0; i < voxel_count; i++) {
-            for(let mm of mapping[i]) {
-                mapping_inverse[mm] = i;
-            }
+            mapping.push([]);
+        }
+        for(let i = 0; i < width*height; i++) {
+            let index = mapping_inverse[i];
+            if(index >= 0)
+                mapping[mapping_inverse[i]].push(i);
         }
     }
-    console.timeEnd("LoadBinary2");
+    console.timeEnd("LoadBinary3");
     return [mapping, mapping_inverse]
 }
 
@@ -159,17 +158,13 @@ async function show_image({component_ids_array, subject_ids, min_subject_overlap
     let data32 = new Uint32Array(width * height);
     let data32_colors = new Float64Array(voxel_count * 3);
 
-    const bitCountTable = new Uint8Array(256);
-    for (let i = 0; i < 256; i++) {
-        bitCountTable[i] = countBits(i, subject_ids) >= min_subject_overlap_count;
-    }
+    const bitCountTable = getBitCountTable(subject_ids, min_subject_overlap_count);
     let data_arrays_d = data_arrays.map(x => x.data);
 
     let data_masks_all_d = data_masks_all.data
     const maxColorIndex = colors.length - 1;
 
     let layer_ids_offsets = layer_ids.map((x, i) => i * voxel_count);
-    console.log("layer_ids_offsets", layer_ids_offsets, layer_ids);
 
     console.time("PixelManipulationX");
     for(let i = 0; i < voxel_count; i++) {
@@ -233,10 +228,7 @@ async function show_image2({component_index2, subject_ids, min_subject_overlap_c
     let data32 = new Uint32Array(width * height);
     let data32_colors = new Float64Array(voxel_count * 3);
 
-    const bitCountTable = new Uint8Array(256);
-    for (let i = 0; i < 256; i++) {
-        bitCountTable[i] = countBits(i, subject_ids) >= min_subject_overlap_count;
-    }
+    const bitCountTable = getBitCountTable(subject_ids, min_subject_overlap_count);
     let list_data_arrays_d = list_data_arrays.map(x => x.map(y => y.data));
 
     let data_masks_all_d = data_masks_all.data
@@ -264,15 +256,11 @@ async function show_image2({component_index2, subject_ids, min_subject_overlap_c
         for(let data_arrays_d of list_data_arrays_d) {
             let bitsCount = 0;
             for(let a of data_arrays_d) {
-                let b = 0;
+                let mask_pix = 0;
                 for(let index_layer_offset of layer_ids_offsets) {
-                    if(bitCountTable[a[i+index_layer_offset]]) {
-                        b += 1;
-                        break
-                    }
+                    mask_pix |= a[i + index_layer_offset]
                 }
-                bitsCount += b;
-                //bitsCount += bitCountTable[a[i]];
+                bitsCount += bitCountTable[mask_pix];
                 if(bitsCount)
                     break;
             }
