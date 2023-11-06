@@ -30,7 +30,7 @@ all_component_ids = [
        122, 123, 124, 125, 126, 127]
 
 
-run_name = "run-22"
+run_name = "run-23"
 if not os.path.exists("cache"):
     os.mkdir("cache")
 
@@ -286,9 +286,9 @@ if __name__ == "__main__":
     #cache_flatmap_background("static_data")
     #cache_images("static_data/component_example_images")
 
-    #load_all_new("static_data/component_masks")
+    load_all_new(f"static_data/component_masks/{run_name}")
     #cache_mapping_voxel_pixel("static_data/component_masks")
     #load_all_new_mask("static_data/component_masks")
 
     #save_3D_data()
-    print_colormap("turbo")
+    #print_colormap("turbo")

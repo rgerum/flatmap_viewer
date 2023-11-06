@@ -278,6 +278,11 @@
         <form id="plotForm" class="controls">
             <input type="hidden" name="show_groups" value="0"/>
             <div class="control_box">
+                <span class="control_box_title">Runs</span>
+                <br/>
+                <div id="runs" class="check_list_rows"></div>
+            </div>
+            <div class="control_box">
                 <span class="control_box_title">Layers</span>
                 <br/>
                 <div id="layer_ids" class="check_list_rows"></div>
@@ -364,6 +369,7 @@
             const subject_ids = formData.getAll("subject_ids");
             const component_ids = formData.getAll("component_ids");
             const layer_ids = formData.getAll("layer_ids").map(x => parseInt(x));
+            const runs = formData.get("runs");
             const min_subject_overlap_count = parseInt(formData.get("min_subject_overlap_count"));
 
             let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
@@ -384,6 +390,7 @@
                 subject_ids,
                 min_subject_overlap_count,
                 layer_ids,
+                runs,
                 x,
                 y,
                 voxel,
@@ -434,12 +441,14 @@
         document.update_plot = update_plot
 
 
-        function add_check_box(placeholder, name, index, index2, invert) {
+        function add_check_box(placeholder, name, index, index2, invert, radio) {
             let label = document.createElement("label");
             let text = document.createElement("span");
             text.innerText = index2 || index;
             let checkbox = document.createElement("input");
             checkbox.type = "checkbox";
+            if(radio)
+                checkbox.type = "radio";
             checkbox.name = name;
             checkbox.value = index;
             checkbox.oninput = update_plot;
@@ -454,6 +463,12 @@
             }
             placeholder.appendChild(label);
             return checkbox;
+        }
+
+        let placeholder3 = document.getElementById("runs");
+        for (let i of [0, 1, 2]) {
+            let checkbox = add_check_box(placeholder3, "runs", ['run-9', 'run-22', 'run-23'][i], undefined, true, true);
+            checkbox.checked = true;
         }
 
         let placeholder2 = document.getElementById("layer_ids");

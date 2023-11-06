@@ -38,10 +38,10 @@ function convertIndexToBits(subject_ids) {
     return all_bits
 }
 
-async function loadAllNpyInParallel(component_ids_array) {
+async function loadAllNpyInParallel(component_ids_array, runs) {
     let promises = [];
     for(let comp of component_ids_array)
-        promises.push(cachedLoadNpy("../static_data/component_masks/mask_data_" + comp + ".npy"));
+        promises.push(cachedLoadNpy(`../static_data/component_masks/${runs}/mask_data_${comp}.npy`));
 
     return await Promise.all(promises);
 }
@@ -61,10 +61,11 @@ async function get_components({
                                   min_subject_overlap_count,
                                   layer_ids,
                                   voxel,
+                                  runs,
                               }) {
     let layer_ids_offsets = layer_ids.map(x => x * voxel_count);
 
-    let data_arrays = await loadAllNpyInParallel(component_ids_array);
+    let data_arrays = await loadAllNpyInParallel(component_ids_array, runs);
     let components = [];
     let i = voxel;
 
@@ -81,12 +82,12 @@ async function get_components({
     return components
 }
 
-async function get_count({component_id, subject_ids, min_subject_overlap_count, layer_ids}) {
+async function get_count({component_id, subject_ids, min_subject_overlap_count, layer_ids, runs}) {
     const bitCountTable = getBitCountTable(subject_ids, min_subject_overlap_count);
 
     let layer_ids_offsets = layer_ids.map(x => x * voxel_count);
 
-    let data_array = await loadAllNpyInParallel([component_id]);
+    let data_array = await loadAllNpyInParallel([component_id], runs);
     let a = data_array[0].data;
     let count = 0;
     for (let i = 0; i < voxel_count; i++) {
@@ -103,12 +104,13 @@ async function get_count({component_id, subject_ids, min_subject_overlap_count, 
 
 
 
-async function show_image({component_ids_array, subject_ids, min_subject_overlap_count, layer_ids}) {
+async function show_image({component_ids_array, subject_ids, min_subject_overlap_count, layer_ids, runs}) {
+    console.log("show image", runs)
     const all_bits = convertIndexToBits(subject_ids);
     const bitCountTable = getBitCountTable(subject_ids, min_subject_overlap_count);
 
     console.time("LoadBinary");
-    const data_arrays = await loadAllNpyInParallel(component_ids_array);
+    const data_arrays = await loadAllNpyInParallel(component_ids_array, runs);
     const data_masks_all = await cachedLoadNpy("../static_data/component_masks/data_masks_all.npy");
     console.timeEnd("LoadBinary");
 
@@ -148,14 +150,14 @@ async function show_image({component_ids_array, subject_ids, min_subject_overlap
     return data32_index;
 }
 
-async function show_image2({component_index2, subject_ids, min_subject_overlap_count, layer_ids}) {
+async function show_image2({component_index2, subject_ids, min_subject_overlap_count, layer_ids, runs}) {
     let all_bits = convertIndexToBits(subject_ids);
     const bitCountTable = getBitCountTable(subject_ids, min_subject_overlap_count);
 
     console.time("LoadBinary");
     let list_data_arrays = []
     for(let comp of component_index2) {
-        let data_array = await loadAllNpyInParallel(comp);
+        let data_array = await loadAllNpyInParallel(comp, runs);
         list_data_arrays.push(data_array);
     }
     const data_masks_all = await cachedLoadNpy("../static_data/component_masks/data_masks_all.npy");

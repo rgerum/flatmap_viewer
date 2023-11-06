@@ -20,7 +20,7 @@ export async function initScene({dom_elem}) {
     document.renderer = renderer;
     document.camera = camera;
 
-    camera.position.z = 1.5;
+    camera.position.z = 1.7;
     console.log("camera", camera)
 
     // Set up orbit controls
