@@ -253,10 +253,10 @@ export async function add_brain({scene,
         }
         mesh.geometry.computeVertexNormals(); // This is important for diffuse shading
         mesh.geometry.getAttribute('position').needsUpdate = true;
-        //update_active_voxel();
+        update_active_voxel();
     }
     function set_shape_animated(endIndex) {
-        let duration = 300;
+        let duration = 500;
         let startIndex = last_shape_index;
 
         animateShapeChange(duration, (progress) => {
@@ -265,7 +265,8 @@ export async function add_brain({scene,
 
             // Call your set_shape function
             set_shape(currentIndex);
-            document.getElementById("shape").value = currentIndex
+            console.log("shape", currentIndex)
+            document.getElementById("shape").value = currentIndex * 100;
         })
     }
 
@@ -324,6 +325,26 @@ export async function add_brain({scene,
         mesh.geometry.getAttribute('color').needsUpdate = true;
         console.timeEnd("set_voxel_data");
     }
+
+    function set_voxel_data_reset() {
+        console.time("set_voxel_data")
+        let array = mesh.geometry.getAttribute('color').array;
+        for(let i = 0; i < curvature.length; i += 1) {
+            if(curvature[i] > 0) {
+                array[i * 3 + 0] = 0.62;
+                array[i * 3 + 1] = 0.62;
+                array[i * 3 + 2] = 0.62;
+            }
+            else {
+                array[i * 3 + 0] = 0.37;
+                array[i * 3 + 1] = 0.37;
+                array[i * 3 + 2] = 0.37;
+            }
+        }
+        mesh.geometry.getAttribute('color').needsUpdate = true;
+        console.timeEnd("set_voxel_data");
+    }
+    set_voxel_data_reset();
 
     document.set_mesh_colors = set_mesh_colors;
 
