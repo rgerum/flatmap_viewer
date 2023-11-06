@@ -181,4 +181,3 @@ export function add_2D_view(dom_elem) {
         set_voxel_selected,
     }
 }
-console.log(add_2D_view)

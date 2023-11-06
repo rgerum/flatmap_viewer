@@ -20,15 +20,16 @@ export async function initScene({dom_elem}) {
     document.renderer = renderer;
     document.camera = camera;
 
-    camera.position.z = 1.7;
-    console.log("camera", camera)
+    camera.position.z = -1.7;
+    camera.position.z = -1.590;
+    camera.position.x = -0.601;
 
     // Set up orbit controls
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.update();
+    scene.controls = controls;
 
-
-// Animation loop
+    // Animation loop
     const light = new THREE.PointLight(0xffffff, 1, 100);
     light.position.set(10, 10, -10);
     scene.add(light);
@@ -60,70 +61,92 @@ export async function initScene({dom_elem}) {
     document.onWindowResize = onWindowResize
     document.onWindowResize();
 
-// Add a resize event listener
+    // Add a resize event listener
     window.addEventListener('resize', onWindowResize, false);
 
 
-// Animation control variable
+    // Animation control variable
     var animationRequestID = null;
 
+
     function animateCamera(targetPos, lookAtTarget, duration) {
-// Cancel any ongoing animation
+        controls.update();
+        controls.enabled = false;
+        //var targetPosition = new THREE.Vector3(0, 0, 2);
+        //var lookAtTarget = new THREE.Vector3(0, 0, 0);
+        //var duration = 2000; // 2000 ms
+
+        // Cancel any ongoing animation
         if (animationRequestID) {
             cancelAnimationFrame(animationRequestID);
         }
 
-// Get initial position and orientation
+        // Get initial position and orientation
         var initialPos = camera.position.clone();
         var initialSpherical = new THREE.Spherical().setFromVector3(initialPos);
         var targetSpherical = new THREE.Spherical().setFromVector3(targetPos);
+        let phi = [initialSpherical.phi, targetSpherical.phi];
+        let theta = [initialSpherical.theta, targetSpherical.theta];
+        console.log(theta, theta[1] - theta[0])
+        if(theta[1] - theta[0] > Math.PI) {
+            theta[1] -= 2 * Math.PI;
+        }
+        if(theta[1] - theta[0] < -Math.PI) {
+            theta[1] += 2 * Math.PI;
+        }
+        console.log(theta, theta[1] - theta[0])
+        duration = Math.max(
+            Math.abs(theta[1] - theta[0]) * 1000,
+            Math.abs(phi[1] - phi[0]) * 1000);
 
-// Get initial and target look-at position
+        // Get initial and target look-at position
         var initialLookAt = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
         var targetLookAt = lookAtTarget.clone().sub(initialPos).normalize();
 
-// Start time
+        // Start time
         var startTime = Date.now();
 
 
-
-
-// Animation loop
+        // Animation loop
         function animate() {
-// Calculate elapsed time and progress
+            // Calculate elapsed time and progress
             var elapsedTime = Date.now() - startTime;
             var progress = elapsedTime / duration;
 
-// Check if the animation is complete
+            // Check if the animation is complete
             if (progress >= 1) {
+                controls.reset();
                 camera.position.copy(targetPos);
                 camera.lookAt(lookAtTarget);
+                console.log("target", targetPos, lookAtTarget);
                 renderer.render(scene, camera);
+                controls.enabled = true;
+                window.controls = controls
                 return;
             }
 
-// Interpolate spherical coordinates
+            // Interpolate spherical coordinates
             var interpolatedSpherical = new THREE.Spherical(
                 THREE.MathUtils.lerp(initialSpherical.radius, targetSpherical.radius, progress),
-                THREE.MathUtils.lerp(initialSpherical.phi, targetSpherical.phi, progress),
-                THREE.MathUtils.lerp(initialSpherical.theta, targetSpherical.theta, progress)
+                THREE.MathUtils.lerp(phi[0], phi[1], progress),
+                THREE.MathUtils.lerp(theta[0], theta[1], progress)
             );
 
-// Interpolate look-at position
+            // Interpolate look-at position
             var currentLookAt = new THREE.Vector3().lerpVectors(initialLookAt, targetLookAt, progress);
-            console.log(interpolatedSpherical, currentLookAt)
+            //console.log(interpolatedSpherical, currentLookAt)
 
-// Update camera position and orientation
+            // Update camera position and orientation
             camera.position.setFromSpherical(interpolatedSpherical);
-            camera.lookAt(currentLookAt);
-//camera.lookAt(lookAtTarget);
+            //camera.lookAt(currentLookAt);
+            camera.lookAt(lookAtTarget);
 
-// Render and request next frame
+            // Render and request next frame
             renderer.render(scene, camera);
             animationRequestID = requestAnimationFrame(animate);
         }
 
-// Start the animation
+        // Start the animation
         animate();
     }
 
@@ -256,6 +279,32 @@ export async function add_brain({scene,
         update_active_voxel();
     }
     function set_shape_animated(endIndex) {
+        if(endIndex === 0) {
+            animateCamera( new THREE.Vector3(0, 0, -2), new THREE.Vector3(0, 0, 0), 2000);
+            scene.controls.mouseButtons = {
+                LEFT: THREE.MOUSE.PAN,
+                MIDDLE: THREE.MOUSE.DOLLY,
+                RIGHT: THREE.MOUSE.ROTATE
+            }
+            scene.controls.touches = {
+                ONE: THREE.TOUCH.PAN,
+                TWO: THREE.TOUCH.DOLLY_PAN
+            }
+        }
+        else {
+            if(last_shape_index === 0) {
+                animateCamera( new THREE.Vector3(-0.6, 0, -1.59), new THREE.Vector3(0, 0, 0), 2000);
+            }
+            scene.controls.mouseButtons = {
+                LEFT: THREE.MOUSE.ROTATE,
+                MIDDLE: THREE.MOUSE.DOLLY,
+                RIGHT: THREE.MOUSE.PAN
+            }
+            scene.controls.touches = {
+                ONE: THREE.TOUCH.ROTATE,
+                TWO: THREE.TOUCH.DOLLY_PAN
+            }
+        }
         let duration = 500;
         let startIndex = last_shape_index;
 
@@ -265,7 +314,6 @@ export async function add_brain({scene,
 
             // Call your set_shape function
             set_shape(currentIndex);
-            console.log("shape", currentIndex)
             document.getElementById("shape").value = currentIndex * 100;
         })
     }
@@ -391,8 +439,9 @@ export async function add_brain({scene,
 
         for (let obj of [cube, cube2, cube3, cube4]) {
             obj.position.set(x, y, z);
-
         }
+        if(last_shape_index === 0)
+            cube4.position.set(0, 0, -10000);
     }
     //
 

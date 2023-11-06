@@ -98,7 +98,6 @@ async function get_count({component_id, subject_ids, min_subject_overlap_count, 
 
 
 async function show_image({component_ids_array, subject_ids, min_subject_overlap_count, layer_ids, runs}) {
-    console.log("show image", runs)
     const all_bits = convertIndexToBits(subject_ids);
     const bitCountTable = getBitCountTable(subject_ids, min_subject_overlap_count);
 
