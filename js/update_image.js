@@ -6,32 +6,8 @@ worker.addEventListener('message', function(e) {
         var myEvent = new CustomEvent('voxel_data_changed',  { detail: {image: e.data.data32_index} });
         window.dispatchEvent(myEvent);
 
-        /*
-        let canvas = document.getElementById("myCanvas");
-        let ctx = canvas.getContext("2d");
-
-        //document.set_mesh_colors(e.data.data32_colors)
-        window.brain_3d.set_voxel_data(e.data.data32_index);
-
-        const processedImageData = new ImageData(new Uint8ClampedArray(e.data.image.buffer), canvas.width, canvas.height);
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.putImageData(processedImageData, 0, 0);
-        */
         document.querySelectorAll(".spinner").forEach(x => x.style.display = "none");
 
-    }
-    if(e.data.type === 'image2') {
-        let canvas = document.getElementById("myCanvas");
-        let ctx = canvas.getContext("2d");
-
-        document.set_mesh_colors(e.data.data32_colors);
-
-        const processedImageData = new ImageData(new Uint8ClampedArray(e.data.image.buffer), canvas.width, canvas.height);
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.putImageData(processedImageData, 0, 0);
-        document.querySelectorAll(".spinner").forEach(x => x.style.display = "block");
     }
     if(e.data.type === 'pixel') {
         document.getElementById("clicked").innerText = "Clicked: ";

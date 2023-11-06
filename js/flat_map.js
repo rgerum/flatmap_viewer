@@ -149,31 +149,23 @@ async function show_image({component_ids_array, subject_ids, min_subject_overlap
 }
 
 async function show_image2({component_index2, subject_ids, min_subject_overlap_count, layer_ids}) {
-    let [mapping, mapping_inverse] = await getMapping();
+    let all_bits = convertIndexToBits(subject_ids);
+    const bitCountTable = getBitCountTable(subject_ids, min_subject_overlap_count);
 
     console.time("LoadBinary");
-
-    let all_bits = convertIndexToBits(subject_ids);
-
     let list_data_arrays = []
     for(let comp of component_index2) {
         let data_array = await loadAllNpyInParallel(comp);
         list_data_arrays.push(data_array);
     }
     const data_masks_all = await cachedLoadNpy("../static_data/component_masks/data_masks_all.npy");
-    const curvature = (await cachedLoadNpy("../static_data/curvature.npy")).data;
-
     console.timeEnd("LoadBinary");
 
-    let [height, width] = [1024, 2274]//data_masks_all.shape;
     let voxel_count = data_masks_all.shape[0];
 
-    let data32 = new Uint32Array(width * height);
-    let data32_colors = new Float64Array(voxel_count * 3);
+    const data32_index = new Int32Array(voxel_count);
 
-    const bitCountTable = getBitCountTable(subject_ids, min_subject_overlap_count);
     let list_data_arrays_d = list_data_arrays.map(x => x.map(y => y.data));
-
     let data_masks_all_d = data_masks_all.data
     const maxColorIndex = colors.length - 1;
 
@@ -182,16 +174,7 @@ async function show_image2({component_index2, subject_ids, min_subject_overlap_c
     console.time("PixelManipulationX");
     for (let i = 0; i < voxel_count; i++) {
         if (!(data_masks_all_d[i] & all_bits)) {
-            if(curvature[i] > 0) {
-                data32_colors[i * 3 + 0] = 0.62;
-                data32_colors[i * 3 + 1] = 0.62;
-                data32_colors[i * 3 + 2] = 0.62;
-            }
-            else {
-                data32_colors[i * 3 + 0] = 0.37;
-                data32_colors[i * 3 + 1] = 0.37;
-                data32_colors[i * 3 + 2] = 0.37;
-            }
+            data32_index[i] = -1;
             continue
         }
 
@@ -208,18 +191,13 @@ async function show_image2({component_index2, subject_ids, min_subject_overlap_c
                     break;
             }
             bitsCount2 += bitsCount;
-            if(bitsCount2 == maxColorIndex)
+            if(bitsCount2 === maxColorIndex)
                 break;
         }
 
-        for (let ii of mapping[i]) {
-            data32[ii] = packedColor[bitsCount2];
-        }
-        data32_colors[i * 3 + 0] = colors[bitsCount2][0]/255;
-        data32_colors[i * 3 + 1] = colors[bitsCount2][1]/255;
-        data32_colors[i * 3 + 2] = colors[bitsCount2][2]/255;
+        data32_index[i] = bitsCount2;
     }
     console.timeEnd("PixelManipulationX");
 
-    return [data32, data32_colors];
+    return data32_index;
 }
