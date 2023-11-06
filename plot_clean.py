@@ -260,8 +260,10 @@ def save_3D_data():
             pt = rotate_point_around_axis(pt, "z", np.pi / 2)
             pt = rotate_point_around_axis(pt, "x", np.pi / 2)
             pt = rotate_point_around_axis(pt, "y", np.pi / 2)
-            pt[:, 0] *= -1
+            #pt[:, 0] *= -1
             pt = np.ascontiguousarray(pt, dtype=np.float32)
+        else:
+            pt[:, 0] *= -1
 
         np.save(f"static_data/pt_{name}.npy", pt)
         if name_vertex is not None:
@@ -273,6 +275,12 @@ def save_3D_data():
     store_3d_data("wm", f=1.25)
 
 
+def print_colormap(cmap_name):
+    cmap = plt.get_cmap(cmap_name)
+    data = cmap(np.linspace(0, 1, 256))
+    print(list(data[:,:3].ravel()))
+
+
 if __name__ == "__main__":
     #cache_component_list("static_data")
     #cache_flatmap_background("static_data")
@@ -282,4 +290,5 @@ if __name__ == "__main__":
     #cache_mapping_voxel_pixel("static_data/component_masks")
     #load_all_new_mask("static_data/component_masks")
 
-    save_3D_data()
+    #save_3D_data()
+    print_colormap("turbo")

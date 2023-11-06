@@ -13,7 +13,6 @@
     <script src="js/update_image.js"></script>
     <script src="js/form_to_url.js"></script>
 
-
     <style>
         body {
             background: #151515;
@@ -213,8 +212,6 @@
             background: #151515;
             position: relative;
         }
-
-
         .slidecontainer {
             width: 100px; /* Width of the outside container */
             max-width: 80%;
@@ -318,14 +315,7 @@
         <div class="flex-row">
             <div id="plotContainer">
 
-                <div id="plotImage" style="cursor: auto">
-                    <div class="image_centering">
-                        <img src="static_data/background.png" id="plotImage1" alt="Generated Plot" class="image">
-                        <canvas id="myCanvas" width="2274" height="1024" class="image"></canvas>
-                        <img src="static_data/foreground.png" id="plotImage2" alt="Generated Plot" class="image">
-                        <canvas id="myCanvasPoint" width="2274" height="1024"  class="image"></canvas>
-                    </div>
-                </div>
+                <div id="plotImage" style="cursor: auto"></div>
                 <span id="clicked"></span>
                 <span class="spinner"></span>
             </div>
@@ -337,10 +327,10 @@
                 </div>
 
                 <div class="slider_buttons">
-                    <button class="slider_button" onclick="document.animateShapeChange(0)">0</button>
-                    <button class="slider_button" onclick="document.animateShapeChange(1)">1</button>
-                    <button class="slider_button" onclick="document.animateShapeChange(2)">2</button>
-                    <button class="slider_button" onclick="document.animateShapeChange(3)">3</button>
+                    <button class="slider_button" onclick="brain_3d.set_shape_animated(0)">0</button>
+                    <button class="slider_button" onclick="brain_3d.set_shape_animated(1)">1</button>
+                    <button class="slider_button" onclick="brain_3d.set_shape_animated(2)">2</button>
+                    <button class="slider_button" onclick="brain_3d.set_shape_animated(3)">3</button>
                 </div>
                 <div class="slidecontainer">
                     <div class="slider_marker" style="left: 33%"></div>
@@ -351,9 +341,7 @@
             </div>
         </div>
 
-        <div id="componentExamples">
-
-        </div>
+        <div id="componentExamples"></div>
     </div>
 
     <script>
@@ -363,22 +351,10 @@
             document.getElementById("plotImage2").style.display = checkbox ? "none" : "block";
         }
 
-        function set_active_voxel(voxel) {
-            document.active_voxel = voxel;
-            document.getElementsByName("voxel")[0].value = voxel;
-            form_to_url(document.querySelector('form'));
-
-            // Create a new event
-            var myEvent = new Event('voxel_changed');
-
-            // Dispatch the event
-            window.dispatchEvent(myEvent);
-        }
-        document.set_active_voxel = set_active_voxel
-
         fetch('static_data/all_component_ids.json', {}).then(function(response) {
             return response.json();
         }).then(function(init_data) {
+
 
 
         function get_form_data() {
@@ -453,7 +429,7 @@
                 startWorker(form_data);
             //startWorker2(component_index2, subject_ids, min_subject_overlap_count);
             pixelValueInformation();
-            toggle_roi();
+            //toggle_roi();
         }
         document.update_plot = update_plot
 
@@ -514,65 +490,13 @@
             update_plot();
         }
 
-        // Initialize panzoom
-        const plotImage = document.getElementById("plotImage");
-        const panzoom = Panzoom(plotImage, { canvas: true, })
-        const parent = plotImage.parentElement
-        // No function bind needed
-        parent.addEventListener('wheel', panzoom.zoomWithWheel)
-
-        // This demo binds to shift + wheel
-        parent.addEventListener('wheel', function(event) {
-          if (!event.shiftKey) return
-          panzoom.zoomWithWheel(event)
-        })
-
-        function updatePointDisplay() {
-            let active_voxel = document.active_voxel;
-            let x = document.getElementsByName("x")[0].value;
-            let y = document.getElementsByName("y")[0].value;
-            let canvas = document.getElementById("myCanvasPoint");
-            let ctx = canvas.getContext("2d");
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if(active_voxel !== -1) {
-                ctx.beginPath();
-                ctx.arc(x, y, 4 / zoom_scale, 0, 2 * Math.PI, false);
-                ctx.rect(0, y, canvas.width, 4 / zoom_scale);
-                ctx.rect(x, 0, 4 / zoom_scale, canvas.height);
-                ctx.fillStyle = 'red';
-                ctx.fill();
-            }
-        }
-
-        plotImage.addEventListener('panzoomzoom', (event) => {
-            zoom_scale = event.detail.scale;
-            updatePointDisplay();
-        })
-
         function pixelValueInformation() {
             let form_data = get_form_data();
             getPixelValue(form_data);
-            updatePointDisplay();
         }
-        document.pixelValueInformation = pixelValueInformation
 
-        let plotImage2 = document.getElementById("myCanvasPoint");
-        plotImage2.addEventListener("click", async function(event) {
-            const rect = plotImage2.getBoundingClientRect();
-
-            // Calculate click position as percentage of bounding box dimensions
-            const xPercent = ((event.clientX - rect.left) / rect.width) * 100;
-            const yPercent = ((event.clientY - rect.top) / rect.height) * 100;
-            let x = parseInt(xPercent * 2274 / 100);
-            let y = parseInt(yPercent * 1024 / 100);
-            document.getElementsByName("x")[0].value = x;
-            document.getElementsByName("y")[0].value = y;
-            let voxel = await getPixelVoxel(x, y);
-            document.set_active_voxel(voxel);
-            document.getElementsByName("voxel")[0].value = voxel;
-        });
-
-        window.addEventListener('voxel_changed', function(e) {
+        window.addEventListener('voxel_selected_changed', async function(e) {
+            document.getElementsByName("voxel")[0].value = e.detail.voxel;
             pixelValueInformation();
         });
 
@@ -581,258 +505,44 @@
 
 
     <script src="js/numpy_to_js.js"></script>
+    <script type="module" scr="js/3D_view.js"></script>
+
+
     <script type="module">
-        import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r132/build/three.module.js';
-        import {OrbitControls} from 'https://threejsfundamentals.org/threejs/resources/threejs/r132/examples/jsm/controls/OrbitControls.js';
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x151515);
+        import { add_2D_view } from './js/2D_view.js';
+        const view = add_2D_view(document.getElementById("plotImage"));
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const dom_elem = document.querySelector("#plot3d");
-        const renderer = new THREE.WebGLRenderer({canvas: document.querySelector("#plot3d")});
-        document.renderer = renderer;
-        document.camera = camera;
+        window.addEventListener('voxel_data_changed', async function(e) {
+            await view.set_voxel_data(e.detail.image);
+        });
 
-        let pt = await loadNpy("static_data/pt_flat.npy");
-        let vtx_flat = await loadNpy("static_data/vtx_flat.npy");
-        vtx_flat = Array.prototype.slice.call(vtx_flat.data);
-        let vtx = await loadNpy("static_data/vtx.npy");
-        vtx = Array.prototype.slice.call(vtx.data)
+        window.addEventListener('voxel_selected_changed', async function(e) {
+            await view.set_voxel_selected(e.detail);
+        });
+    </script>
 
-        let pt2 = await loadNpy("static_data/pt_inflated.npy");
-        let pt3 = await loadNpy("static_data/pt_pia.npy");
-        let pt4 = await loadNpy("static_data/pt_wm.npy");
+    <script type="module">
+        import { initScene, add_brain } from './js/3D_view.js'
+        const scene = await initScene({
+            dom_elem: document.getElementById('plot3d'),
+        });
+        let brain_3d = await add_brain({scene,
+            pt_flat: "static_data/pt_flat.npy",
+            faces_flat: "static_data/vtx_flat.npy",
+            pt_inflated: "static_data/pt_inflated.npy",
+            faces_inflated: "static_data/vtx.npy",
+            pt_pia: "static_data/pt_pia.npy",
+            pt_wm: "static_data/pt_wm.npy",
+        });
+        window.brain_3d = brain_3d;
 
-        function addMesh() {
-            // Define your points and vertices
-            const geometry = new THREE.BufferGeometry();
-            geometry.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(pt.shape[0]*3), 3));
-            geometry.setIndex( vtx );
-            geometry.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array(pt2.data), 3 ) );
+        window.addEventListener('voxel_data_changed', async function(e) {
+            await brain_3d.set_voxel_data(e.detail.image);
+        });
 
-            const material = new THREE.MeshBasicMaterial({vertexColors: true, side: THREE.DoubleSide});
-            const mesh = new THREE.Mesh( geometry, material );
-            scene.add(mesh);
-
-            let last_shape_index = 1;
-            let pivot = 0;
-            function set_pivot(index) {
-                pivot = index;
-                set_shape(last_shape_index);
-            }
-            function set_shape(index) {
-                let p = pivot;
-                if(index < 1)
-                    p = pivot * index;
-                if(index < 1 && last_shape_index >= 1)
-                    mesh.geometry.setIndex( vtx_flat );
-                if(index >= 1 && last_shape_index < 1)
-                    mesh.geometry.setIndex( vtx );
-                last_shape_index = index;
-                let pt_a = [pt, pt2, pt3, pt4][Math.floor(index)];
-                let pt_b = [pt, pt2, pt3, pt4][Math.ceil(index)];
-                let f = index % 1;
-                let array = mesh.geometry.getAttribute('position').array;
-                /*for (let i = 0; i < array.length; i += 1) {
-                    array[i] = pt_a.data[i]*(1-f) + pt_b.data[i] * f;
-                }*/
-                for(let i = 0; i < array.length; i += 3) {
-                    let point = [0, 0, 0];
-                    for(let j = 0; j < 3; j += 1)
-                        point[j] = pt_a.data[i + j]*(1-f) + pt_b.data[i + j] * f;
-                    if(i >= array.length/2)
-                        point = rotateAroundY(point, 90*p, -1.2, p)//-0.00240851 -0.2672709   0.22112776
-                    else
-                        point = rotateAroundY(point, -90*p, -1.2, p)//-0.00240851 -0.2672709   0.22112776
-                    for(let j = 0; j < 3; j += 1)
-                        array[i + j] = point[j];
-                }
-                mesh.geometry.getAttribute('position').needsUpdate = true;
-                update_active_voxel();
-            }
-            //set_shape(last_shape_index);
-            var currentAnimationFrame = null;
-
-            function rotateAroundY(point, angleDegrees, a, f) {
-                // Convert angle to radians
-                const theta = angleDegrees * Math.PI / 180.0;
-
-                // Translate the point to the origin by subtracting (0, 0, a)
-                const [x, y, z] = [point[0], point[1], point[2] - a];
-
-                // Perform the rotation around the y-axis
-                let xPrime = x * Math.cos(theta) + z * Math.sin(theta);
-                let yPrime = y;  // y-coordinate remains unchanged
-                let zPrime = -x * Math.sin(theta) + z * Math.cos(theta);
-
-                // Translate the point back to the original position by adding (0, 0, a)
-                const finalX = xPrime;
-                const finalY = yPrime;
-                const finalZ = zPrime + a * (1-f);
-
-                return [finalX, finalY, finalZ];
-            }
-
-            function animateShapeChange(endIndex) {
-                let duration = 300;
-                let startIndex = last_shape_index;
-
-                // Cancel any ongoing animation
-                if (currentAnimationFrame) {
-                    cancelAnimationFrame(currentAnimationFrame);
-                }
-
-                var startTime = null;
-
-                function animate(time) {
-                    // Initialize the start time
-                    if (!startTime) {
-                        startTime = time;
-                    }
-
-                    // Calculate the progress (time elapsed) as a percentage of duration
-                    var progress = (time - startTime) / duration;
-
-                    // Clamp progress to [0, 1]
-                    progress = Math.min(1, progress);
-
-                    // Calculate the current index based on progress
-                    var currentIndex = startIndex + (endIndex - startIndex) * progress;
-
-                    // Call your set_shape function
-                    set_shape(currentIndex);
-                    document.getElementById("shape").value = currentIndex
-
-                    // Continue animation until progress reaches 1 (100%)
-                    if (progress < 1) {
-                        currentAnimationFrame = requestAnimationFrame(animate);
-                    } else {
-                        currentAnimationFrame = null;
-                    }
-                }
-
-                // Start the animation
-                currentAnimationFrame = requestAnimationFrame(animate);
-            }
-
-            document.animateShapeChange = animateShapeChange;
-            document.set_pivot = set_pivot;
-            document.set_shape = set_shape;
-
-            function set_mesh_colors(c) {
-                mesh.geometry.getAttribute('color').array.set(c);
-                mesh.geometry.getAttribute('color').needsUpdate = true;
-            }
-            document.set_mesh_colors = set_mesh_colors;
-            return mesh;
-        }
-        let mesh = addMesh();
-
-        camera.position.z = 1.5;
-
-        // Set up orbit controls
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.update();
-
-        // Create a raycaster and a vector to hold the mouse click position
-        var raycaster = new THREE.Raycaster();
-        var mouse = new THREE.Vector2();
-
-        // Add a click event listener to the canvas
-        renderer.domElement.addEventListener('click', onDocumentMouseClick, false);
-
-
-        // Animation loop
-        const animate = () => {
-            requestAnimationFrame(animate);
-            controls.update();
-            renderer.render(scene, camera);
-        };
-
-        const material2 = new THREE.MeshBasicMaterial({color: 0xff0000});  // greenish blue
-        const cube = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.01, 0.01), material2);
-        cube.position.set(0, 0, 0.5)
-        scene.add(cube);
-
-        let lw = 0.005
-        const cube2 = new THREE.Mesh(new THREE.BoxGeometry(10, lw, lw), material2);
-        cube2.position.set(0, 0, 0.5)
-        scene.add(cube2);
-        const cube3 = new THREE.Mesh(new THREE.BoxGeometry(lw, 10, lw), material2);
-        cube3.position.set(0, 0, 0.5)
-        scene.add(cube3);
-        const cube4 = new THREE.Mesh(new THREE.BoxGeometry(lw, lw, 10), material2);
-        cube4.position.set(0, 0, 0.5)
-        scene.add(cube4);
-
-        // Function to handle mouse click event
-function onDocumentMouseClick(event) {
-    // Calculate mouse position in normalized device coordinates (-1 to +1)
-    var canvasBounds = renderer.domElement.getBoundingClientRect();
-
-    // Adjust for canvas position and normalize mouse position to -1 to +1 range
-    mouse.x = ((event.clientX - canvasBounds.left) / canvasBounds.width) * 2 - 1;
-    mouse.y = - ((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1;
-
-    // Update the picking ray with the camera and mouse position
-    raycaster.setFromCamera(mouse, camera);
-
-    // Calculate objects intersecting the picking ray
-    var intersects = raycaster.intersectObject(mesh);
-
-    if (intersects.length > 0) {
-        // Get the first intersected object
-        var intersection = intersects[0];
-
-        // Get the closest vertex (you can also loop through vertices to find the closest one)
-        var vertexIndex = intersection.face.a;
-        document.set_active_voxel(vertexIndex);
-    }
-    else {
-        document.set_active_voxel(-1);
-    }
-}
-
-window.addEventListener('voxel_changed', function(e) {
-    update_active_voxel();
-});
-
-function update_active_voxel() {
-    let active_voxel = document.active_voxel;
-
-    var [x, y, z] = [-1000, -1000, -1000]
-    if(active_voxel !== -1) {
-        let a = mesh.geometry.getAttribute('position').array
-        x = a[active_voxel*3];
-        y = a[active_voxel*3+1];
-        z = a[active_voxel*3+2];
-    }
-
-    for(let obj of [cube, cube2, cube3, cube4]) {
-        obj.position.set(x, y, z);
-
-    }
-}
-
-        animate();
-
-        function onWindowResize() {
-            let container = document.querySelector("#plot3d").parentElement;
-            let width = container.clientWidth;
-            let height = container.clientHeight;
-
-            // Update camera aspect ratio
-            camera.aspect = width / height;
-            camera.updateProjectionMatrix();
-
-            // Update renderer size
-            renderer.setSize(width, height);
-        }
-        document.onWindowResize = onWindowResize
-        document.onWindowResize();
-
-        // Add a resize event listener
-        window.addEventListener('resize', onWindowResize, false);
+        window.addEventListener('voxel_selected_changed', async function(e) {
+            await brain_3d.set_voxel_selected(e.detail);
+        });
     </script>
 </body>
 </html>

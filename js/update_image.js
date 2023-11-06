@@ -2,16 +2,22 @@ const worker = new Worker('js/worker.js');
 
 worker.addEventListener('message', function(e) {
     if(e.data.type === 'image') {
+        console.log("voxel_data_changed event")
+        var myEvent = new CustomEvent('voxel_data_changed',  { detail: {image: e.data.data32_index} });
+        window.dispatchEvent(myEvent);
+
+        /*
         let canvas = document.getElementById("myCanvas");
         let ctx = canvas.getContext("2d");
 
-        document.set_mesh_colors(e.data.data32_colors)
+        //document.set_mesh_colors(e.data.data32_colors)
+        window.brain_3d.set_voxel_data(e.data.data32_index);
 
         const processedImageData = new ImageData(new Uint8ClampedArray(e.data.image.buffer), canvas.width, canvas.height);
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.putImageData(processedImageData, 0, 0);
-
+        */
         document.querySelectorAll(".spinner").forEach(x => x.style.display = "none");
 
     }
@@ -63,18 +69,6 @@ async function startWorker2(form_data) {
 
 
 async function getPixelValue(form_data) {
-    let x = form_data.x;
-    let y = form_data.y;
-    let canvas = document.getElementById("myCanvasPoint");
-    let ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.beginPath();
-    ctx.arc(x, y, 1, 0, 2 * Math.PI, false);
-    ctx.rect(0, y, canvas.width, 1);
-    ctx.rect(x, 0, 1, canvas.height);
-    ctx.fillStyle = 'red';
-    ctx.fill();
-
     // Start the worker with some data
     worker.postMessage({
         type: 'pixel',

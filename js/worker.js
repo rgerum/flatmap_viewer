@@ -4,10 +4,11 @@ importScripts('flat_map.js');
 
 self.addEventListener('message', async function(e) {
     if(e.data.type === 'image') {
-         const [data32, data32_colors] = await show_image(e.data);
+         const data32_index = await show_image(e.data);
+         //const data32 = await voxels_to_flatmap(data32_index);
 
         // Post the result back to the main thread
-        self.postMessage({image: data32, type: 'image', data32_colors});
+        self.postMessage({type: 'image', data32_index});
     }
     if(e.data.type === 'image2') {
          const [data32, data32_colors] = await show_image2(e.data);
@@ -16,7 +17,6 @@ self.addEventListener('message', async function(e) {
         self.postMessage({image: data32, type: 'image2', data32_colors});
     }
     if(e.data.type === 'pixel') {
-        [e.data.x, e.data.y] = await getVoxelPixel(e.data);
         let pixel = await get_components(e.data);
 
         let counts = {};
@@ -26,6 +26,6 @@ self.addEventListener('message', async function(e) {
         }
 
         // Post the result back to the main thread
-        self.postMessage({pixel: pixel, type: 'pixel', counts: counts, x: e.data.x, y: e.data.y});
+        self.postMessage({pixel: pixel, type: 'pixel', counts: counts});
     }
 });

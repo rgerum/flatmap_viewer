@@ -8,14 +8,13 @@ import time
 from flask_compress import Compress
 
 
-from plot_clean import Plotter, all_component_ids, subject_ids
+from plot_clean import  all_component_ids, subject_ids
 
 app = Flask(__name__)
 app.config["COMPRESS_REGISTER"] = False  # disable default compression of all eligible requests
 compress = Compress()
 compress.init_app(app)
 
-plotter = Plotter()
 
 @app.route('/')
 def index():
@@ -78,9 +77,9 @@ def serve_file2_folder(filename):
 
 
 
-@app.route('/top_images/<path:filename>')
+@app.route('/static_data/<path:filename>')
 def serve_static(filename):
-    return send_from_directory(MY_STATIC_PATH, filename)
+    return send_from_directory("static_data", filename)
 
 
 @app.route('/js/<path:filename>')
