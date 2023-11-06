@@ -29,9 +29,16 @@ export async function initScene({dom_elem}) {
 
 
 // Animation loop
+    const light = new THREE.PointLight(0xffffff, 1, 100);
+    light.position.set(10, 10, -10);
+    scene.add(light);
+
     const animate = () => {
         requestAnimationFrame(animate);
         controls.update();
+        light.position.x = camera.position.x;
+        light.position.y = camera.position.y;
+        light.position.z = camera.position.z;
         renderer.render(scene, camera);
     };
 
@@ -77,6 +84,8 @@ export async function initScene({dom_elem}) {
 
 // Start time
         var startTime = Date.now();
+
+
 
 
 // Animation loop
@@ -167,9 +176,20 @@ function addMesh(scene, pt, vtx) {
     geometry.setIndex(vtx);
     geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pt.data), 3));
 
-    const material = new THREE.MeshBasicMaterial({vertexColors: true, side: THREE.DoubleSide});
+    // MeshBasicMaterial
+    const material = new THREE.MeshLambertMaterial({vertexColors: true, side: THREE.DoubleSide});
+    //const material = new THREE.MeshLambertMaterial({vertexColors: true }); // red diffuse material
+
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambientLight);
+
+geometry.computeVertexNormals(); // This is important for diffuse shading
+
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
+
+
     return mesh
 }
 
@@ -231,6 +251,7 @@ export async function add_brain({scene,
             for (let j = 0; j < 3; j += 1)
                 array[i + j] = point[j];
         }
+        mesh.geometry.computeVertexNormals(); // This is important for diffuse shading
         mesh.geometry.getAttribute('position').needsUpdate = true;
         //update_active_voxel();
     }
