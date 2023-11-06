@@ -66,14 +66,6 @@ async function voxels_to_flatmap(data32_index) {
 }
 
 export function add_2D_view(dom_elem) {
-    dom_elem.innerHtml = `
-    <div class="image_centering">
-        <img src="static_data/background.png" id="plotImage1" alt="Generated Plot" class="image">
-        <canvas id="myCanvas" width="2274" height="1024" class="image"></canvas>
-        <img src="static_data/foreground.png" id="plotImage2" alt="Generated Plot" class="image">
-        <canvas id="myCanvasPoint" width="2274" height="1024"  class="image"></canvas>
-    </div>
-    `;
     let dom_centering = document.createElement("div");
     dom_centering.classList.add("image_centering");
     dom_elem.appendChild(dom_centering);
@@ -105,7 +97,7 @@ export function add_2D_view(dom_elem) {
 
     // Initialize panzoom
     const plotImage = dom_elem;
-    const panzoom = Panzoom(plotImage, { canvas: true, })
+    const panzoom = Panzoom(plotImage, { canvas: true, maxScale: 10 })
     const parent = plotImage.parentElement
     // No function bind needed
     parent.addEventListener('wheel', panzoom.zoomWithWheel)
@@ -119,15 +111,15 @@ export function add_2D_view(dom_elem) {
     let selected_pos = [-1, -1];
     function updatePointDisplay() {
         const [x, y] = selected_pos;
-        console.log("updatePointDisplay", x, y)
         let canvas = canvasPoint;
         let ctx = canvas.getContext("2d");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const line_width = Math.max(4 / zoom_scale, 1)
         if(x !== -1 || y !== -1) {
             ctx.beginPath();
-            ctx.arc(x, y, 4 / zoom_scale, 0, 2 * Math.PI, false);
-            ctx.rect(0, y, canvas.width, 4 / zoom_scale);
-            ctx.rect(x, 0, 4 / zoom_scale, canvas.height);
+            ctx.arc(x, y, line_width, 0, 2 * Math.PI, false);
+            ctx.rect(0, y, canvas.width, line_width);
+            ctx.rect(x, 0, line_width, canvas.height);
             ctx.fillStyle = 'red';
             ctx.fill();
         }
