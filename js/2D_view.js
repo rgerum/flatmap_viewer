@@ -7,7 +7,7 @@ let mapping_inverse = undefined;
 async function getMapping() {
     console.time("LoadBinary3");
     if(!mapping) {
-        mapping_inverse = (await loadNpy("../static_data/component_masks/mapping_map.npy")).data;
+        mapping_inverse = (await loadNpy("static_data/component_masks/mapping_map.npy")).data;
         mapping = [];
         for(let i = 0; i < voxel_count; i++) {
             mapping.push([]);

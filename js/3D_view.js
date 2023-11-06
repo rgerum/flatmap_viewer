@@ -190,7 +190,7 @@ export async function add_brain({scene,
     let pt3 = await loadNpy(pt_pia);
     let pt4 = await loadNpy(pt_wm);
 
-    const curvature = (await cachedLoadNpy("../static_data/curvature.npy")).data;
+    const curvature = (await cachedLoadNpy("static_data/curvature.npy")).data;
 
     let voxel_count = pt2.shape[0];
 
