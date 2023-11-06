@@ -41,17 +41,29 @@ async function getVoxelPixel({voxel}) {
     }
 }
 
+function get_cmap(color_count=9) {
+    let packedColor = new Uint32Array(color_count);
+    for(let i = 0; i < color_count; i++) {
+        let c = parseInt(i * 255 / (color_count-1));
+        let color = [cmap[c*3+0], cmap[c*3+1], cmap[c*3+2]];
+        packedColor[i] = (255 << 24) |
+            (parseInt(color[2]*255) << 16) |
+            (parseInt(color[1]*255) << 8) |
+            (parseInt(color[0]*255));
+    }
+    return packedColor
+}
 
 async function voxels_to_flatmap(data32_index) {
+    console.time("voxels_to_flatmap");
     let [mapping, mapping_inverse] = await getMapping();
 
     let [height, width] = [1024, 2274]//data_masks_all.shape;
     let data32 = new Uint32Array(width * height);
 
-    const maxColorIndex = colors.length - 1;
-    console.log("maxColorIndex", maxColorIndex)
+    let packedColor = get_cmap();
+    const maxColorIndex = packedColor.length - 1;
 
-    console.time("voxels_to_flatmap");
     for(let i = 0; i < data32_index.length; i++) {
         if(data32_index[i] >= 0) {
             let c = Math.min(data32_index[i], maxColorIndex);

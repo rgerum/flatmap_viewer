@@ -1,10 +1,3 @@
-const colors = [[48, 18, 59, 255], [70, 107, 227, 255], [40, 187, 235, 255], [50, 241, 151, 255], [164, 252, 59, 255], [237, 207, 57, 255], [250, 125, 32, 255], [208, 47, 4, 255], [122, 4, 2, 255]];
-let packedColor = [];
-for(let i = 0; i < colors.length; i++) {
-    let color = colors[i];
-    packedColor.push((color[3] << 24) | (color[2] << 16) | (color[1] << 8) | color[0]);
-}
-
 let [height, width] = [1024, 2274]//data_masks_all.shape;
 let voxel_count = 327684;
 
@@ -120,8 +113,7 @@ async function show_image({component_ids_array, subject_ids, min_subject_overlap
     const data_arrays_d = data_arrays.map(x => x.data);
 
     const data_masks_all_d = data_masks_all.data
-    const maxColorIndex = colors.length - 1;
-    console.log("maxColorIndex", maxColorIndex)
+    const maxColorIndex = 8;
 
     const layer_ids_offsets = layer_ids.map(x => x * voxel_count);
 
