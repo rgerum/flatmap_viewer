@@ -34,12 +34,28 @@ export async function initScene({dom_elem}) {
     light.position.set(10, 10, -10);
     scene.add(light);
 
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    function setLightStrength(strength, strength2) {
+        ambientLight.intensity = strength;
+        light.intensity = strength2;
+    }
+    window.setLightStrength = setLightStrength
+    scene.setLightStrength = setLightStrength
+
     const animate = () => {
         requestAnimationFrame(animate);
         controls.update();
-        light.position.x = camera.position.x;
-        light.position.y = camera.position.y;
-        light.position.z = camera.position.z;
+        // link the light to the camera
+        var campos = new THREE.Spherical().setFromVector3(camera.position);
+        var lightpos = new THREE.Spherical(
+            campos.radius,
+            campos.phi,
+            campos.theta + 30/180*Math.PI,
+        );
+        light.position.setFromSpherical(lightpos);
+
         renderer.render(scene, camera);
     };
 
@@ -203,11 +219,7 @@ function addMesh(scene, pt, vtx) {
     const material = new THREE.MeshLambertMaterial({vertexColors: true, side: THREE.DoubleSide});
     //const material = new THREE.MeshLambertMaterial({vertexColors: true }); // red diffuse material
 
-
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-scene.add(ambientLight);
-
-geometry.computeVertexNormals(); // This is important for diffuse shading
+    geometry.computeVertexNormals(); // This is important for diffuse shading
 
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
@@ -248,6 +260,9 @@ export async function add_brain({scene,
     }
 
     function set_shape(index) {
+        let flatness = 1-Math.min(index, 1);
+        setLightStrength(0.5+0.5*flatness, 1-flatness)
+
         let p = pivot;
         if (index < 1)
             p = pivot * index;
