@@ -213,7 +213,7 @@
             position: relative;
         }
         .slidecontainer {
-            width: 100px; /* Width of the outside container */
+            width: 160px; /* Width of the outside container */
             max-width: 80%;
             position: absolute;
             bottom: 5px;
@@ -279,6 +279,33 @@
     right: 5px;
     width: auto !important;
 }
+
+.slider_button {
+	border: 0px solid black;
+	border-radius: 10px;
+	padding: 5px;
+	cursor: pointer;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	background-color: gray;
+	width: 35px;
+	height: 35px;
+	/*filter: brightness(0.3);*/
+    opacity: 0.5;
+}
+.img_inflated {
+    background-image: url("img/inflated.png");
+}
+.img_flat {
+    background-image: url("img/flat.png");
+}
+.img_pia {
+    background-image: url("img/pia.png");
+}
+.img_wm {
+    background-image: url("img/wm.png");
+}
     </style>
 </head>
 <body>
@@ -336,19 +363,17 @@
             <div id="plot3dContainer" class="round-corner grow">
                 <canvas id="plot3d"></canvas>
 
-                <div class="slidecontainer" style="bottom: 55px">
+                <div class="slidecontainer" style="bottom: 70px">
                     <input type="range" class="slider" name="pivot" min="0" max="100" value="0" oninput="document.set_pivot(this.value/100)">
                 </div>
 
                 <div class="slider_buttons">
-                    <button class="slider_button" onclick="brain_3d.set_shape_animated(0)">0</button>
-                    <button class="slider_button" onclick="brain_3d.set_shape_animated(1)">1</button>
-                    <button class="slider_button" onclick="brain_3d.set_shape_animated(2)">2</button>
-                    <button class="slider_button" onclick="brain_3d.set_shape_animated(3)">3</button>
+                    <button class="slider_button img_flat" onclick="brain_3d.set_shape_animated(0)"></button>
+                    <button class="slider_button img_inflated" onclick="brain_3d.set_shape_animated(1)"></button>
+                    <button class="slider_button img_pia" onclick="brain_3d.set_shape_animated(2)"></button>
+                    <button class="slider_button img_wm" onclick="brain_3d.set_shape_animated(3)"></button>
                 </div>
                 <div class="slidecontainer">
-                    <div class="slider_marker" style="left: 33%"></div>
-                    <div class="slider_marker" style="left: 66%"></div>
                     <input type="range" class="slider" id="shape" name="shape" min="0" max="300" value="0" oninput="document.set_shape(this.value/100)">
                 </div>
                 <span class="spinner"></span>
@@ -375,10 +400,7 @@
         }
         function toggle_roi() {
             let checkbox = document.getElementById("show_roi").checked;
-            //document.getElementById("plotImage2").style.display = checkbox ? "none" : "block";
-
-
-            var myEvent = new CustomEvent('roi_show_changed',  { detail: checkbox });
+            var myEvent = new CustomEvent('roi_show_changed', { detail: checkbox });
             window.dispatchEvent(myEvent);
         }
 
@@ -465,6 +487,7 @@
             //toggle_roi();
         }
         document.update_plot = update_plot
+        window.update_plot = update_plot
 
 
         function add_check_box(placeholder, name, index, index2, invert, radio) {
@@ -587,6 +610,8 @@
         window.addEventListener('roi_show_changed', async function(e) {
             await brain_3d.set_roi_show(e.detail);
         });
+
+        update_plot();
 
     </script>
 </body>

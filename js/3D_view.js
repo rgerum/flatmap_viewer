@@ -20,9 +20,10 @@ export async function initScene({dom_elem}) {
     document.renderer = renderer;
     document.camera = camera;
 
-    camera.position.z = -1.7;
-    camera.position.z = -1.590;
-    camera.position.x = -0.601;
+    //camera.position.z = -1.7;
+    camera.position.z = -2;
+    //camera.position.z = -1.590;
+    //camera.position.x = -0.601;
 
     // Set up orbit controls
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -43,6 +44,7 @@ export async function initScene({dom_elem}) {
     }
     window.setLightStrength = setLightStrength
     scene.setLightStrength = setLightStrength
+    scene.initialized = false;
 
     const animate = () => {
         requestAnimationFrame(animate);
@@ -56,7 +58,9 @@ export async function initScene({dom_elem}) {
         );
         light.position.setFromSpherical(lightpos);
 
-        renderer.render(scene, camera);
+        if(scene.initialized) {
+            renderer.render(scene, camera);
+        }
     };
 
     animate();
@@ -155,7 +159,7 @@ export async function initScene({dom_elem}) {
             camera.lookAt(lookAtTarget);
 
             // Render and request next frame
-            renderer.render(scene, camera);
+            //renderer.render(scene, camera);
             animationRequestID = requestAnimationFrame(animate);
         }
 
@@ -216,7 +220,7 @@ function addMesh(scene, pt, vtx) {
     geometry.addGroup(606011*3, 655360*3, 1);
 
     const textureLoader = new THREE.TextureLoader();
-    const texture = textureLoader.load('static_data/foreground2.png', () => {
+    const texture = textureLoader.load('static_data/foreground.png', () => {
       // Update rendering when the texture is loaded
       scene.renderer.render(scene, scene.camera);
     });
@@ -291,7 +295,30 @@ export async function add_brain({scene,
 
     function set_shape(index) {
         let flatness = 1-Math.min(index, 1);
-        setLightStrength(0.5+0.5*flatness, 1-flatness)
+        setLightStrength(0.5+0.5*flatness, 1-flatness);
+
+        if(index === 0) {
+            scene.controls.mouseButtons = {
+                LEFT: THREE.MOUSE.PAN,
+                MIDDLE: THREE.MOUSE.DOLLY,
+                RIGHT: THREE.MOUSE.ROTATE
+            }
+            scene.controls.touches = {
+                ONE: THREE.TOUCH.PAN,
+                TWO: THREE.TOUCH.DOLLY_PAN
+            }
+        }
+        else {
+            scene.controls.mouseButtons = {
+                LEFT: THREE.MOUSE.ROTATE,
+                MIDDLE: THREE.MOUSE.DOLLY,
+                RIGHT: THREE.MOUSE.PAN
+            }
+            scene.controls.touches = {
+                ONE: THREE.TOUCH.ROTATE,
+                TWO: THREE.TOUCH.DOLLY_PAN
+            }
+        }
 
         let p = pivot;
         if (index < 1)
@@ -326,31 +353,13 @@ export async function add_brain({scene,
     function set_shape_animated(endIndex) {
         if(endIndex === 0) {
             animateCamera( new THREE.Vector3(0, 0, -2), new THREE.Vector3(0, 0, 0), 2000);
-            scene.controls.mouseButtons = {
-                LEFT: THREE.MOUSE.PAN,
-                MIDDLE: THREE.MOUSE.DOLLY,
-                RIGHT: THREE.MOUSE.ROTATE
-            }
-            scene.controls.touches = {
-                ONE: THREE.TOUCH.PAN,
-                TWO: THREE.TOUCH.DOLLY_PAN
-            }
         }
         else {
             if(last_shape_index === 0) {
                 animateCamera( new THREE.Vector3(-0.6, 0, -1.59), new THREE.Vector3(0, 0, 0), 2000);
             }
-            scene.controls.mouseButtons = {
-                LEFT: THREE.MOUSE.ROTATE,
-                MIDDLE: THREE.MOUSE.DOLLY,
-                RIGHT: THREE.MOUSE.PAN
-            }
-            scene.controls.touches = {
-                ONE: THREE.TOUCH.ROTATE,
-                TWO: THREE.TOUCH.DOLLY_PAN
-            }
         }
-        let duration = 500;
+        let duration = 1000;
         let startIndex = last_shape_index;
 
         animateShapeChange(duration, (progress) => {
@@ -362,7 +371,6 @@ export async function add_brain({scene,
             document.getElementById("shape").value = currentIndex * 100;
         })
     }
-    set_shape_animated(0)
 
     function rotateAroundY(point, angleDegrees, a, f) {
         // Convert angle to radians
@@ -518,8 +526,12 @@ export async function add_brain({scene,
         mesh.material[0].map = texture;
         mesh.material[0].needsUpdate = true;
         mesh.material[0].vertexColors = false;
+
+        scene.initialized = true;
     }
     window.set_texture = set_texture
+
+    set_shape(0);
 
     return {
         mesh,

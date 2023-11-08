@@ -86,6 +86,11 @@ def serve_static(filename):
 def serve_static_js(filename):
     return send_from_directory("js", filename)
 
+@app.route('/img/<path:filename>')
+def serve_static_img(filename):
+    return send_from_directory("img", filename)
+
+
 
 @app.route('/plot')
 def plotting():
