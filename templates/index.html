@@ -270,6 +270,15 @@
 	position: absolute;
 	left: 10px;
 }
+.grow {
+    transition: width 0.5s ease-in-out;
+}
+.button_control_top {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: auto !important;
+}
     </style>
 </head>
 <body>
@@ -317,14 +326,14 @@
             </div>
         </form>
 
-        <div class="flex-row">
-            <div id="plotContainer">
+        <div class="flex-row" style="position: relative">
+            <div id="plotContainer" class="grow" style="width: 0px">
 
                 <div id="plotImage" style="cursor: auto"></div>
                 <span id="clicked"></span>
                 <span class="spinner"></span>
             </div>
-            <div class="round-corner">
+            <div id="plot3dContainer" class="round-corner grow">
                 <canvas id="plot3d"></canvas>
 
                 <div class="slidecontainer" style="bottom: 55px">
@@ -344,6 +353,9 @@
                 </div>
                 <span class="spinner"></span>
             </div>
+            <div class="button_control_top">
+                <div class="button_transparent" onclick="toggle_3d()"></div>
+            </div>
         </div>
 
         <div id="componentExamples"></div>
@@ -351,9 +363,23 @@
 
     <script>
         let zoom_scale = 1;
+        function toggle_3d() {
+            if(document.getElementById("plot3dContainer").style.width == "") {
+                 document.getElementById("plotContainer").style.width = ""
+                 document.getElementById("plot3dContainer").style.width = "0px"
+            }
+            else {
+                 document.getElementById("plotContainer").style.width = "0px"
+                 document.getElementById("plot3dContainer").style.width = ""
+            }
+        }
         function toggle_roi() {
             let checkbox = document.getElementById("show_roi").checked;
-            document.getElementById("plotImage2").style.display = checkbox ? "none" : "block";
+            //document.getElementById("plotImage2").style.display = checkbox ? "none" : "block";
+
+
+            var myEvent = new CustomEvent('roi_show_changed',  { detail: checkbox });
+            window.dispatchEvent(myEvent);
         }
 
         fetch('static_data/all_component_ids.json', {}).then(function(response) {
@@ -558,6 +584,10 @@
         window.addEventListener('voxel_selected_changed', async function(e) {
             await brain_3d.set_voxel_selected(e.detail);
         });
+        window.addEventListener('roi_show_changed', async function(e) {
+            await brain_3d.set_roi_show(e.detail);
+        });
+
     </script>
 </body>
 </html>

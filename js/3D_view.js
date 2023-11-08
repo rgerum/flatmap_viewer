@@ -103,14 +103,12 @@ export async function initScene({dom_elem}) {
         var targetSpherical = new THREE.Spherical().setFromVector3(targetPos);
         let phi = [initialSpherical.phi, targetSpherical.phi];
         let theta = [initialSpherical.theta, targetSpherical.theta];
-        console.log(theta, theta[1] - theta[0])
         if(theta[1] - theta[0] > Math.PI) {
             theta[1] -= 2 * Math.PI;
         }
         if(theta[1] - theta[0] < -Math.PI) {
             theta[1] += 2 * Math.PI;
         }
-        console.log(theta, theta[1] - theta[0])
         duration = Math.max(
             Math.abs(theta[1] - theta[0]) * 1000,
             Math.abs(phi[1] - phi[0]) * 1000);
@@ -134,7 +132,6 @@ export async function initScene({dom_elem}) {
                 controls.reset();
                 camera.position.copy(targetPos);
                 camera.lookAt(lookAtTarget);
-                console.log("target", targetPos, lookAtTarget);
                 renderer.render(scene, camera);
                 controls.enabled = true;
                 window.controls = controls
@@ -215,13 +212,28 @@ function addMesh(scene, pt, vtx) {
     geometry.setIndex(vtx);
     geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pt.data), 3));
 
+    geometry.addGroup(0, 606011*3, 0); // Use material index 0
+    geometry.addGroup(606011*3, 655360*3, 1);
+
+    const textureLoader = new THREE.TextureLoader();
+    const texture = textureLoader.load('static_data/foreground2.png', () => {
+      // Update rendering when the texture is loaded
+      scene.renderer.render(scene, scene.camera);
+    });
+    texture.magFilter = THREE.NearestFilter
+
+
     // MeshBasicMaterial
-    const material = new THREE.MeshLambertMaterial({vertexColors: true, side: THREE.DoubleSide});
-    //const material = new THREE.MeshLambertMaterial({vertexColors: true }); // red diffuse material
+    const material = new THREE.MeshLambertMaterial({vertexColors: true,
+        map: texture,
+        side: THREE.DoubleSide});
+    material.roi_texture = texture
 
+    const material2 = new THREE.MeshLambertMaterial({vertexColors: true,
+        side: THREE.DoubleSide});
+
+    const mesh = new THREE.Mesh(geometry, [material, material2]);
     geometry.computeVertexNormals(); // This is important for diffuse shading
-
-    const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
 
 
@@ -250,6 +262,24 @@ export async function add_brain({scene,
     let voxel_count = pt2.shape[0];
 
     const mesh = addMesh(scene, pt2, vtx);
+
+    // Calculate scale and offset to normalize the UVs
+    const scaleX = -0.15743183817062445//*0 + 356/(1137.0*2);
+    const scaleY = 0.349609375//*0 + 356/(512.0*2);
+    const offsetX = 0.5//*0 + -1137.0/(1137.0*2);
+    const offsetY = 0.5//*0 + -512.0/(512.0*2);
+
+    // Now map the vertices to UV space
+    const uvs = new Float32Array(vtx_flat.length * 2);
+    for (let i = 0; i < 327684; i++) {
+        uvs[i * 2] = pt.data[i*3] * scaleX + offsetX;
+        uvs[i * 2 + 1] = pt.data[i*3+1]  * scaleY + offsetY;
+    }
+    window.uvs = uvs
+    window.vtx_flat = vtx_flat
+    window.pt = pt
+    mesh.geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+    //
 
     let last_shape_index = 1;
     let pivot = 0;
@@ -332,6 +362,7 @@ export async function add_brain({scene,
             document.getElementById("shape").value = currentIndex * 100;
         })
     }
+    set_shape_animated(0)
 
     function rotateAroundY(point, angleDegrees, a, f) {
         // Convert angle to radians
@@ -460,6 +491,36 @@ export async function add_brain({scene,
     }
     //
 
+    let show_roi = true;
+    function set_roi_show(show) {
+        show_roi = show
+        set_texture(last_data[0], last_data[1], last_data[2]);
+        return
+        if(show)
+            mesh.material[0].map = mesh.material[0].roi_texture;
+        else
+            mesh.material[0].map = null;
+        mesh.material[0].needsUpdate = true;
+    }
+
+    let last_data = null;
+    async function set_texture(data, width, height) {
+        last_data = [data, width, height];
+        if(show_roi) {
+            let foreground = await getPngData("static_data/foreground.png");
+            data = overlayImagesUint8(data, foreground, width, height);
+        }
+
+        const texture = new THREE.DataTexture(data, width, height, THREE.RGBAFormat);
+        texture.needsUpdate = true; // Update the texture
+        texture.flipY = true;
+        texture.magFilter = THREE.NearestFilter
+        mesh.material[0].map = texture;
+        mesh.material[0].needsUpdate = true;
+        mesh.material[0].vertexColors = false;
+    }
+    window.set_texture = set_texture
+
     return {
         mesh,
         set_mesh_colors,
@@ -468,6 +529,7 @@ export async function add_brain({scene,
         set_shape_animated,
         set_voxel_data,
         set_voxel_selected,
+        set_roi_show,
     };
 }
 

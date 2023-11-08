@@ -246,11 +246,13 @@ def save_3D_data():
     curv_vertices = cortex.db.get_surfinfo("fsaverage")
     np.save(f"static_data/curvature.npy", curv_vertices.data)
 
+    index_mapping = None
+
     # flat, inflated, pia, wm
     def store_3d_data(name, f=1, name_vertex=None):
         pt, vtx = cortex.db.get_surf("fsaverage", name, merge=True, nudge=True)
         pt = pt / 100 * f
-        print(pt.shape, pt.dtype, np.mean(pt, axis=0), np.max(pt, axis=0), np.min(pt, axis=0))
+        print(pt.shape, pt.dtype, vtx.dtype, np.mean(pt, axis=0), np.max(pt, axis=0), np.min(pt, axis=0))
         # center
         pt -= (np.max(pt, axis=0) + np.min(pt, axis=0)) / 2
 
@@ -262,14 +264,61 @@ def save_3D_data():
             pt = rotate_point_around_axis(pt, "y", np.pi / 2)
             #pt[:, 0] *= -1
             pt = np.ascontiguousarray(pt, dtype=np.float32)
+
+            # Define a key function to use with np.argsort that checks if a row from list2 is in set1
+            def sort_key(row):
+                return (tuple(row) not in set1,)
+
+            # Create an index array that will sort list2 with common rows first
+            contained = np.apply_along_axis(sort_key, 1, vtx)[:, 0]
+            #print(contained.shape, np.mean(contained))
+            indices = np.argsort(contained)
+
+            # Apply the sorting to list2
+            #print(indices.shape, indices)
+            vtx = np.asarray(vtx[indices])
+            #print(vtx)
+            #exit()
         else:
             pt[:, 0] *= -1
 
+        print(pt.shape, pt.dtype, vtx.shape, vtx.dtype)
+        if index_mapping is not None and 0:
+            # Apply the mapping to the faces to update the indices
+            vtx = index_mapping[vtx.ravel()].reshape(vtx.shape).astype(np.int32)
+
+            # Reorder the pt array according to the new order
+            pt = pt[new_order]
+        print(pt.shape, pt.dtype, vtx.shape, vtx.dtype)
+        print("----------")
         np.save(f"static_data/pt_{name}.npy", pt)
         if name_vertex is not None:
             np.save(f"static_data/{name_vertex}.npy", vtx)
 
     store_3d_data("flat", name_vertex="vtx_flat")
+
+    pt = np.load("static_data/pt_flat.npy")
+    faces = np.load("static_data/vtx_flat.npy")
+    # Identify the unique indices used by the faces
+    used_indices = np.unique(faces.ravel())
+
+    # Generate the complete set of point indices
+    all_indices = np.arange(len(pt))
+
+    print(len(used_indices), len(all_indices))
+
+    # Identify the unused indices
+    unused_indices = np.setdiff1d(all_indices, used_indices)
+
+    # Create a new order for the points, where used points come first
+    new_order = np.concatenate((used_indices, unused_indices))
+
+    # Create a mapping from old indices to new indices
+    index_mapping = np.argsort(new_order)
+
+    set1 = set(map(tuple, faces))
+
+    #store_3d_data("flat", name_vertex="vtx_flat")
     store_3d_data("inflated", name_vertex="vtx")
     store_3d_data("pia", f=1.2)
     store_3d_data("wm", f=1.25)
@@ -286,9 +335,37 @@ if __name__ == "__main__":
     #cache_flatmap_background("static_data")
     #cache_images("static_data/component_example_images")
 
-    load_all_new(f"static_data/component_masks/{run_name}")
+    #load_all_new(f"static_data/component_masks/{run_name}")
     #cache_mapping_voxel_pixel("static_data/component_masks")
     #load_all_new_mask("static_data/component_masks")
 
-    #save_3D_data()
-    #print_colormap("turbo")
+    save_3D_data()
+    print_colormap("gray")
+
+
+    exit()
+
+
+    im = plt.imread("static_data/background.png")
+    pt = np.load("static_data/pt_flat.npy")
+    vtx = np.load("static_data/vtx_flat.npy")
+    print(vtx.shape)
+    print(vtx.ravel()[:6])
+    #exit()
+    plt.imshow(im, extent=[0, 1, 1, 0])
+    w, h = 512, 512
+    im2 = np.linspace(0, 1, im[:, :, 0].ravel().shape[0]).reshape(im[:, :, 0].T.shape).T
+    im2b = np.linspace(0, 1, im[:, :, 0].ravel().shape[0]).reshape(im[:, :, 0].shape)
+
+    im2 = np.linspace(0, 1, w*h).reshape((w, h)).T
+    im2b = np.linspace(0, 1, w*h).reshape((h, w))
+    imm = np.dstack([im2, im2b, im2*0])
+    print(imm.shape)
+    plt.imsave("static_data/background2.png", imm)
+    f = 358
+    f1 = -f/im.shape[1]
+    f2 = -f/im.shape[0]
+    print(f1, f2)
+    idx = vtx.ravel()[:3]
+    plt.plot(pt[:, 0]*f1+0.5, pt[:, 1]*f2+0.5, 'r.')
+    plt.show()
