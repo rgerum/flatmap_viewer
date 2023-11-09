@@ -13,13 +13,13 @@ worker.addEventListener('message', function (e) {
 
     }
     if (e.data.type === 'pixel') {
+        var myEvent = new CustomEvent('display_components', {detail: {components: e.data.pixel}});
+        window.dispatchEvent(myEvent);
+
         document.getElementById("clicked").innerText = "Clicked: ";
-        let element_examples = document.getElementById("componentExamples");
-        element_examples.innerHTML = "";
         document.getElementsByName("x")[0].value = e.data.x;
         document.getElementsByName("y")[0].value = e.data.y;
         for (let i of e.data.pixel) {
-            add_row(element_examples, i);
             document.getElementById("clicked").innerText += " " + i + " (" + e.data.counts[i] + "), ";
         }
     }

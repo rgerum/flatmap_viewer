@@ -177,7 +177,9 @@ export function add_2D_view(dom_elem) {
         set_texture(data32, canvas.width, canvas.height);
     }
 
+    let last_overlay_matrix = null;
     async function plot_overlap_matrix(matrix){
+        last_overlay_matrix = matrix
         let canvas = document.getElementById("matrix");
         let w = Math.sqrt(matrix.length);
         let ctx = canvas.getContext("2d");
@@ -213,7 +215,14 @@ export function add_2D_view(dom_elem) {
         let x = parseInt(xPercent * canvas_matrix.width);
         let y = parseInt(yPercent * canvas_matrix.height);
 
-        document.getElementById("matrix_clicked").innerText = component_ids[x] + " " + component_ids[y]
+        document.getElementById("matrix_clicked").innerText = component_ids[x] + " " + component_ids[y] + " " + last_overlay_matrix[x * Math.sqrt(last_overlay_matrix.length) + y];
+
+        //var myEvent = new CustomEvent('voxel_selected_changed', {detail: {voxel: -1}});
+        //window.dispatchEvent(myEvent);
+
+        var myEvent2 = new CustomEvent('display_components', {detail: {components: [component_ids[x], component_ids[y]]}});
+        window.dispatchEvent(myEvent2);
+
         console.log(x, y)
     });
 

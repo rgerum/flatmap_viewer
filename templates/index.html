@@ -616,6 +616,14 @@
             pixelValueInformation();
         });
 
+        window.addEventListener('display_components', async function (e) {
+            let element_examples = document.getElementById("componentExamples");
+            element_examples.innerHTML = "";
+            for (let i of e.detail.components) {
+                add_row(element_examples, i);
+            }
+        });
+
     });
 </script>
 
