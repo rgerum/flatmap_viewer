@@ -1,6 +1,7 @@
 import {loadNpy} from "./numpy_to_js.mjs";
 import {get_cmap_uint32} from "./colormaps.mjs";
 import {cachedLoadNpy} from "./numpy_to_js.mjs";
+import {overlap_matrix} from "./flat_map.mjs";
 
 let mapping = undefined;
 let mapping_inverse = undefined;
@@ -176,10 +177,49 @@ export function add_2D_view(dom_elem) {
         set_texture(data32, canvas.width, canvas.height);
     }
 
+    async function plot_overlap_matrix(matrix){
+        let canvas = document.getElementById("matrix");
+        let w = Math.sqrt(matrix.length);
+        let ctx = canvas.getContext("2d");
+        canvas.width = w;
+        canvas.height = w;
+        let data = new Uint8ClampedArray(matrix.length * 4);
+        console.log(matrix)
+        let max = Math.max(...matrix);
+        for (let i = 0; i < matrix.length; i++) {
+            let c= matrix[i] /max * 255
+            data[i * 4] = c;
+            data[i * 4 + 1] = c;
+            data[i * 4 + 2] = c;
+            data[i * 4 + 3] = 255;
+        }
+
+        const processedImageData = new ImageData(data, w, w);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.putImageData(processedImageData, 0, 0);
+    }
+
+    let canvas_matrix = document.getElementById("matrix");
+    canvas_matrix.addEventListener("click", async function (event) {
+        const rect = canvas_matrix.getBoundingClientRect();
+
+        const form = document.getElementById("plotForm");
+        const formData = new URLSearchParams(new FormData(form));
+        const component_ids = formData.getAll("component_ids");
+
+        // Calculate click position as percentage of bounding box dimensions
+        const xPercent = ((event.clientX - rect.left) / rect.width);
+        const yPercent = ((event.clientY - rect.top) / rect.height);
+        let x = parseInt(xPercent * canvas_matrix.width);
+        let y = parseInt(yPercent * canvas_matrix.height);
+
+        document.getElementById("matrix_clicked").innerText = component_ids[x] + " " + component_ids[y]
+        console.log(x, y)
+    });
+
     return {
         set_voxel_data,
         set_voxel_selected,
+        plot_overlap_matrix,
     }
 }
-
-

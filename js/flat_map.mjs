@@ -86,6 +86,63 @@ export async function get_count({component_id, subject_ids, min_subject_overlap_
     return count
 }
 
+export async function overlap_matrix({component_ids_array, subject_ids, min_subject_overlap_count, layer_ids, runs}) {
+    const all_bits = convertIndexToBits(subject_ids);
+    const bitCountTable = getBitCountTable(subject_ids, min_subject_overlap_count);
+
+    console.time("LoadBinary");
+    const data_arrays = await loadAllNpyInParallel(component_ids_array, runs);
+    const data_masks_all = await cachedLoadNpy("../static_data/component_masks/data_masks_all.npy");
+    console.timeEnd("LoadBinary");
+
+    const voxel_count = data_masks_all.shape[0];
+
+    const data_masks_all_d = data_masks_all.data
+
+    const layer_ids_offsets = layer_ids.map(x => x * voxel_count);
+
+    const component_count = data_arrays.length;
+    const matrix_overlap = new Int32Array(component_count * component_count);
+
+    const current_maps = [];
+
+    console.time("group")
+    for (let j = 0; j < component_count; j++) {
+        const map = new Uint8Array(voxel_count);
+        const a = data_arrays[j].data;
+        for(let i = 0; i < voxel_count; i++) {
+            if (!(data_masks_all_d[i] & all_bits)) {
+                continue
+            }
+
+            let mask_pix = 0
+            for (let index_layer_offset of layer_ids_offsets) {
+                mask_pix |= a[i + index_layer_offset]
+            }
+            map[i] = bitCountTable[mask_pix];
+        }
+        current_maps.push(map);
+    }
+    console.timeEnd("group")
+
+    console.time("group2")
+    for (let i = 0; i < voxel_count; i++) {
+        for (let x = 0; x < component_count; x++) {
+            if(current_maps[x][i]) {
+                matrix_overlap[x * component_count + x] += 1;
+                for (let y = x + 1; y < component_count; y++) {
+                    if(current_maps[y][i]) {
+                        matrix_overlap[x * component_count + y] += 1;
+                        matrix_overlap[y * component_count + x] += 1;
+                    }
+                }
+            }
+        }
+    }
+    console.timeEnd("group2")
+    return matrix_overlap;
+}
+
 
 export async function show_image({component_ids_array, subject_ids, min_subject_overlap_count, layer_ids, runs}) {
     const all_bits = convertIndexToBits(subject_ids);

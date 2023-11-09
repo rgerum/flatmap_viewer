@@ -1,11 +1,15 @@
+import {overlap_matrix} from "./flat_map.mjs";
+
 const worker = new Worker('js/worker.mjs', {type: 'module'});
 
 worker.addEventListener('message', function (e) {
     if (e.data.type === 'image') {
-        var myEvent = new CustomEvent('voxel_data_changed', {detail: {image: e.data.data32_index}});
+        var myEvent = new CustomEvent('voxel_data_changed', {detail: {image: e.data.data32_index, matrix_overlap: e.data.matrix_overlap}});
         window.dispatchEvent(myEvent);
 
         document.querySelectorAll(".spinner").forEach(x => x.style.display = "none");
+
+
 
     }
     if (e.data.type === 'pixel') {

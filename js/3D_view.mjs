@@ -79,7 +79,8 @@ export async function initScene({dom_elem}) {
     function onWindowResize() {
         let container = dom_elem.parentElement;
         let width = container.clientWidth;
-        let height = container.clientHeight;
+        let height = container.clientHeight-4;
+        console.log("----", width, height)
 
         // Update camera aspect ratio
         camera.aspect = width / height;
@@ -88,7 +89,7 @@ export async function initScene({dom_elem}) {
         // Update renderer size
         renderer.setSize(width, height);
     }
-
+    scene.onWindowResize = onWindowResize
     document.onWindowResize = onWindowResize
     document.onWindowResize();
 
