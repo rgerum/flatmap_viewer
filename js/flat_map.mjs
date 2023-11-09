@@ -1,3 +1,4 @@
+import {cachedLoadNpy} from "./numpy_to_js.mjs";
 let [height, width] = [1024, 2274]//data_masks_all.shape;
 let voxel_count = 327684;
 
@@ -12,16 +13,7 @@ function countBits(number, positions) {
     return count;
 }
 
-const cached = {};
 
-async function cachedLoadNpy(url) {
-    if (url in cached) {
-        return cached[url];
-    }
-    const data = await loadNpy(url);
-    cached[url] = data;
-    return data;
-}
 
 
 function convertIndexToBits(subject_ids) {
@@ -48,7 +40,7 @@ function getBitCountTable(subject_ids, min_subject_overlap_count) {
     return bitCountTable
 }
 
-async function get_components({
+export async function get_components({
                                   component_ids_array,
                                   component_ids,
                                   subject_ids,
@@ -76,7 +68,7 @@ async function get_components({
     return components
 }
 
-async function get_count({component_id, subject_ids, min_subject_overlap_count, layer_ids, runs}) {
+export async function get_count({component_id, subject_ids, min_subject_overlap_count, layer_ids, runs}) {
     const bitCountTable = getBitCountTable(subject_ids, min_subject_overlap_count);
 
     let layer_ids_offsets = layer_ids.map(x => x * voxel_count);
@@ -95,7 +87,7 @@ async function get_count({component_id, subject_ids, min_subject_overlap_count, 
 }
 
 
-async function show_image({component_ids_array, subject_ids, min_subject_overlap_count, layer_ids, runs}) {
+export async function show_image({component_ids_array, subject_ids, min_subject_overlap_count, layer_ids, runs}) {
     const all_bits = convertIndexToBits(subject_ids);
     const bitCountTable = getBitCountTable(subject_ids, min_subject_overlap_count);
 
@@ -139,7 +131,7 @@ async function show_image({component_ids_array, subject_ids, min_subject_overlap
     return data32_index;
 }
 
-async function show_image2({component_index2, subject_ids, min_subject_overlap_count, layer_ids, runs}) {
+export async function show_image2({component_index2, subject_ids, min_subject_overlap_count, layer_ids, runs}) {
     let all_bits = convertIndexToBits(subject_ids);
     const bitCountTable = getBitCountTable(subject_ids, min_subject_overlap_count);
 

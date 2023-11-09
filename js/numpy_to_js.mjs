@@ -1,4 +1,4 @@
-async function loadNpy(url) {
+export async function loadNpy(url) {
     const response = await fetch(url);
     const arrayBuffer = await response.arrayBuffer();
     const dataView = new DataView(arrayBuffer);
@@ -37,7 +37,7 @@ async function loadNpy(url) {
 }
 
 
-async function getPngData(url) {
+export async function getPngData(url) {
     return new Promise((resolve, reject) => {
         // Create an image element
         const img = new Image();
@@ -73,7 +73,7 @@ async function getPngData(url) {
 }
 
 
-function overlayImagesUint8(baseArray, overlayArray, width, height) {
+export function overlayImagesUint8(baseArray, overlayArray, width, height) {
     // Create a new array to hold the result, four entries for each pixel (RGBA)
     let resultArray = new Uint8ClampedArray(width * height * 4);
 
@@ -110,4 +110,16 @@ function overlayImagesUint8(baseArray, overlayArray, width, height) {
     }
 
     return resultArray;
+}
+
+
+const cached = {};
+
+export async function cachedLoadNpy(url) {
+    if (url in cached) {
+        return cached[url];
+    }
+    const data = await loadNpy(url);
+    cached[url] = data;
+    return data;
 }

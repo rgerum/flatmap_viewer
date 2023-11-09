@@ -1,8 +1,7 @@
-const worker = new Worker('js/worker.js');
+const worker = new Worker('js/worker.mjs', {type: 'module'});
 
 worker.addEventListener('message', function (e) {
     if (e.data.type === 'image') {
-        console.log("voxel_data_changed event")
         var myEvent = new CustomEvent('voxel_data_changed', {detail: {image: e.data.data32_index}});
         window.dispatchEvent(myEvent);
 
@@ -22,7 +21,7 @@ worker.addEventListener('message', function (e) {
     }
 });
 
-async function startWorker(form_data) {
+export async function startWorker(form_data) {
     document.querySelectorAll(".spinner").forEach(x => x.style.display = "block");
 
     // Start the worker with some data
@@ -32,7 +31,7 @@ async function startWorker(form_data) {
     });
 }
 
-async function startWorker2(form_data) {
+export async function startWorker2(form_data) {
     document.querySelectorAll(".spinner").forEach(x => x.style.display = "block");
 
     // Start the worker with some data
@@ -43,7 +42,7 @@ async function startWorker2(form_data) {
 }
 
 
-async function getPixelValue(form_data) {
+export async function getPixelValue(form_data) {
     // Start the worker with some data
     worker.postMessage({
         type: 'pixel',

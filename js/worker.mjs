@@ -1,6 +1,5 @@
 // worker.js
-importScripts('numpy_to_js.js');
-importScripts('flat_map.js');
+import {show_image, show_image2, get_components, get_count} from "./flat_map.mjs";
 
 self.addEventListener('message', async function (e) {
     if (e.data.type === 'image') {

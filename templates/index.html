@@ -7,10 +7,6 @@
     <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.11/pako.min.js"></script>
 
-
-    <script src="js/numpy_to_js.js"></script>
-    <script src="js/flat_map.js"></script>
-    <script src="js/update_image.js"></script>
     <script src="js/form_to_url.js"></script>
 
     <style>
@@ -419,7 +415,9 @@
     <div id="componentExamples"></div>
 </div>
 
-<script>
+<script type="module">
+    import {startWorker, startWorker2, getPixelValue} from "./js/update_image.mjs";
+
     let zoom_scale = 1;
 
     function toggle_3d() {
@@ -602,12 +600,8 @@
 </script>
 
 
-<script src="js/numpy_to_js.js"></script>
-<script type="module" scr="js/3D_view.js"></script>
-
-
 <script type="module">
-    import {add_2D_view} from './js/2D_view.js';
+    import {add_2D_view} from './js/2D_view.mjs';
 
     const view = add_2D_view(document.getElementById("plotImage"));
 
@@ -621,7 +615,7 @@
 </script>
 
 <script type="module">
-    import {initScene, add_brain} from './js/3D_view.js'
+    import {initScene, add_brain} from './js/3D_view.mjs'
 
     const scene = await initScene({
         dom_elem: document.getElementById('plot3d'),
