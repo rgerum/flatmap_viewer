@@ -297,6 +297,23 @@ export async function add_brain({scene,
         let flatness = 1-Math.min(index, 1);
         setLightStrength(0.5+0.5*flatness, 1-flatness);
 
+        function set_button_colors(i1, i2, i3, i4) {
+            document.getElementsByClassName("img_flat")[0].style.backgroundColor = interpolateColor("#7d7d7d", "#9F2222", i1);
+            document.getElementsByClassName("img_inflated")[0].style.backgroundColor = interpolateColor("#7d7d7d", "#9F2222", i2);
+            document.getElementsByClassName("img_pia")[0].style.backgroundColor = interpolateColor("#7d7d7d", "#9F2222", i3);
+            document.getElementsByClassName("img_wm")[0].style.backgroundColor = interpolateColor("#7d7d7d", "#9F2222", i4);
+        }
+
+        if(index < 1) {
+            set_button_colors(1-index, index, 0, 0)
+        }
+        else if(index < 2) {
+            set_button_colors(0, 1-(index-1), (index-1), 0);
+        }
+        else {
+            set_button_colors(0, 0, 1-(index-2), (index-2));
+        }
+
         if(index === 0) {
             scene.controls.mouseButtons = {
                 LEFT: THREE.MOUSE.PAN,
@@ -581,4 +598,20 @@ function animateShapeChange(duration, callback) {
 
     // Start the animation
     currentAnimationFrame = requestAnimationFrame(animate);
+}
+
+
+function interpolateColor(color1, color2, factor) {
+  var result = color1.slice(1).match(/.{2}/g).map(function(hex) {
+    return parseInt(hex, 16);
+  });
+  color2 = color2.slice(1).match(/.{2}/g).map(function(hex) {
+    return parseInt(hex, 16);
+  });
+  for (var i = 0; i < 3; i++) {
+    result[i] = Math.round(result[i] + factor * (color2[i] - result[i]));
+  }
+  return '#' + result.map(function(value) {
+    return ('0' + value.toString(16)).slice(-2);
+  }).join('');
 }
