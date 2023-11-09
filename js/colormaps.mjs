@@ -17,14 +17,18 @@ export function get_cmap_uint32(name = "turbo", color_count = 9) {
     return packedColor
 }
 
+function sRGBtoLinear(c) {
+    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+
 export function get_cmap(name = "turbo", color_count = 9) {
     let my_cmap = cmap[name];
     let packedColor = new Float32Array(color_count*3);
     for (let i = 0; i < color_count; i++) {
         let c = parseInt(i * 255 / (color_count - 1));
-        packedColor[i*3+0] = my_cmap[c * 3 + 0];
-        packedColor[i*3+1] = my_cmap[c * 3 + 1];
-        packedColor[i*3+2] = my_cmap[c * 3 + 2];
+        packedColor[i*3+0] = sRGBtoLinear(my_cmap[c * 3 + 0]);
+        packedColor[i*3+1] = sRGBtoLinear(my_cmap[c * 3 + 1]);
+        packedColor[i*3+2] = sRGBtoLinear(my_cmap[c * 3 + 2]);
     }
     packedColor.get_color = (i) => {
         i = Math.max(0, Math.min(i, color_count-1));

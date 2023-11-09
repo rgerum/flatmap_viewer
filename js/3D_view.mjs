@@ -1,11 +1,10 @@
-import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r132/build/three.module.js';
-import {
-    OrbitControls
-} from 'https://threejsfundamentals.org/threejs/resources/threejs/r132/examples/jsm/controls/OrbitControls.js';
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls';
 
 import {loadNpy, cachedLoadNpy, getPngData, overlayImagesUint8} from "./numpy_to_js.mjs";
 import {get_cmap, interpolateColor} from "./colormaps.mjs";
 
+let animation_callback = {"shape_change": null}
 
 export async function initScene({dom_elem}) {
     // if no element is defined, add a new one to the body
@@ -51,8 +50,15 @@ export async function initScene({dom_elem}) {
     scene.setLightStrength = setLightStrength
     scene.initialized = false;
 
-    const animate = () => {
+    const animate = (time) => {
         requestAnimationFrame(animate);
+
+        for (let name in animation_callback) {
+            if (animation_callback[name]) {
+                animation_callback[name](time);
+            }
+        }
+
         controls.update();
         // link the light to the camera
         var campos = new THREE.Spherical().setFromVector3(camera.position);
@@ -68,7 +74,7 @@ export async function initScene({dom_elem}) {
         }
     };
 
-    animate();
+    requestAnimationFrame(animate);
 
     function onWindowResize() {
         let container = dom_elem.parentElement;
@@ -239,6 +245,7 @@ function addMesh(scene, pt, vtx) {
         map: texture,
         side: THREE.DoubleSide
     });
+    texture.colorSpace = THREE.SRGBColorSpace
     material.roi_texture = texture
 
     const material2 = new THREE.MeshLambertMaterial({
@@ -306,7 +313,7 @@ export async function add_brain({
 
     function set_shape(index) {
         let flatness = 1 - Math.min(index, 1);
-        setLightStrength(0.5 + 0.5 * flatness, 1 - flatness);
+        setLightStrength(1 + 3 * flatness, (1 - flatness)*5);
 
         function set_button_colors(i1, i2, i3, i4) {
             document.getElementsByClassName("img_flat")[0].style.backgroundColor = interpolateColor("#7d7d7d", "#9F2222", i1);
@@ -371,7 +378,8 @@ export async function add_brain({
             for (let j = 0; j < 3; j += 1)
                 array[i + j] = point[j];
         }
-        mesh.geometry.computeVertexNormals(); // This is important for diffuse shading
+        if (index % 0.5 < 0.01)
+            mesh.geometry.computeVertexNormals(); // This is important for diffuse shading
         mesh.geometry.getAttribute('position').needsUpdate = true;
         update_active_voxel();
     }
@@ -520,6 +528,7 @@ export async function add_brain({
         }
 
         const texture = new THREE.DataTexture(data, width, height, THREE.RGBAFormat);
+        texture.colorSpace = THREE.SRGBColorSpace
         texture.needsUpdate = true; // Update the texture
         texture.flipY = true;
         texture.magFilter = THREE.NearestFilter
@@ -547,15 +556,7 @@ export async function add_brain({
 }
 
 
-let currentAnimationFrame;
-
 function animateShapeChange(duration, callback) {
-
-    // Cancel any ongoing animation
-    if (currentAnimationFrame) {
-        cancelAnimationFrame(currentAnimationFrame);
-    }
-
     var startTime = null;
 
     function animate(time) {
@@ -573,13 +574,11 @@ function animateShapeChange(duration, callback) {
         callback(progress);
 
         // Continue animation until progress reaches 1 (100%)
-        if (progress < 1) {
-            currentAnimationFrame = requestAnimationFrame(animate);
-        } else {
-            currentAnimationFrame = null;
+        if (progress >= 1) {
+            animation_callback["shape_change"] = null;
         }
     }
 
-    // Start the animation
-    currentAnimationFrame = requestAnimationFrame(animate);
+    //animate();
+    animation_callback["shape_change"] = animate;
 }
