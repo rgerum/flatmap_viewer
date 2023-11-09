@@ -1,5 +1,5 @@
 import {loadNpy} from "./numpy_to_js.mjs";
-import {get_cmap} from "./colormaps.mjs";
+import {get_cmap_uint32} from "./colormaps.mjs";
 import {cachedLoadNpy} from "./numpy_to_js.mjs";
 
 let mapping = undefined;
@@ -53,8 +53,8 @@ async function voxels_to_flatmap(data32_index) {
     let [height, width] = [1024, 2274]//data_masks_all.shape;
     let data32 = new Uint32Array(width * height);
 
-    let packedColor = get_cmap();
-    let packedColor2 = get_cmap("gray", 4);
+    let packedColor = get_cmap_uint32();
+    let packedColor2 = get_cmap_uint32("gray", 4);
     const maxColorIndex = packedColor.length - 1;
 
     for (let i = 0; i < data32_index.length; i++) {
