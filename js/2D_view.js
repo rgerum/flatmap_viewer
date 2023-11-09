@@ -9,15 +9,15 @@ let mapping_inverse = undefined;
 
 async function getMapping() {
     console.time("LoadBinary3");
-    if(!mapping) {
+    if (!mapping) {
         mapping_inverse = (await loadNpy("static_data/component_masks/mapping_map.npy")).data;
         mapping = [];
-        for(let i = 0; i < voxel_count; i++) {
+        for (let i = 0; i < voxel_count; i++) {
             mapping.push([]);
         }
-        for(let i = 0; i < width*height; i++) {
+        for (let i = 0; i < width * height; i++) {
             let index = mapping_inverse[i];
-            if(index >= 0)
+            if (index >= 0)
                 mapping[mapping_inverse[i]].push(i);
         }
     }
@@ -38,22 +38,21 @@ async function getVoxelPixel({voxel}) {
         let x = index % width;
         let y = Math.floor(index / width);
         return [x, y]
-    }
-    catch (e) {
+    } catch (e) {
         return [-1, -1]
     }
 }
 
-function get_cmap(name="turbo", color_count=9) {
+function get_cmap(name = "turbo", color_count = 9) {
     let my_cmap = cmap[name];
     let packedColor = new Uint32Array(color_count);
-    for(let i = 0; i < color_count; i++) {
-        let c = parseInt(i * 255 / (color_count-1));
-        let color = [my_cmap[c*3+0], my_cmap[c*3+1], my_cmap[c*3+2]];
+    for (let i = 0; i < color_count; i++) {
+        let c = parseInt(i * 255 / (color_count - 1));
+        let color = [my_cmap[c * 3 + 0], my_cmap[c * 3 + 1], my_cmap[c * 3 + 2]];
         packedColor[i] = (255 << 24) |
-            (parseInt(color[2]*255) << 16) |
-            (parseInt(color[1]*255) << 8) |
-            (parseInt(color[0]*255));
+            (parseInt(color[2] * 255) << 16) |
+            (parseInt(color[1] * 255) << 8) |
+            (parseInt(color[0] * 255));
     }
     return packedColor
 }
@@ -71,14 +70,13 @@ async function voxels_to_flatmap(data32_index) {
     let packedColor2 = get_cmap("gray", 4);
     const maxColorIndex = packedColor.length - 1;
 
-    for(let i = 0; i < data32_index.length; i++) {
-        if(data32_index[i] >= 0) {
+    for (let i = 0; i < data32_index.length; i++) {
+        if (data32_index[i] >= 0) {
             let c = Math.min(data32_index[i], maxColorIndex);
             for (let ii of mapping[i]) {
                 data32[ii] = packedColor[c];
             }
-        }
-        else {
+        } else {
             let color = curvature[i] > 0 ? packedColor2[2] : packedColor2[1];
             for (let ii of mapping[i]) {
                 data32[ii] = color;
@@ -122,25 +120,26 @@ export function add_2D_view(dom_elem) {
 
     // Initialize panzoom
     const plotImage = dom_elem;
-    const panzoom = Panzoom(plotImage, { canvas: true, maxScale: 10 })
+    const panzoom = Panzoom(plotImage, {canvas: true, maxScale: 10})
     const parent = plotImage.parentElement
     // No function bind needed
     parent.addEventListener('wheel', panzoom.zoomWithWheel)
 
     // This demo binds to shift + wheel
-    parent.addEventListener('wheel', function(event) {
+    parent.addEventListener('wheel', function (event) {
         if (!event.shiftKey) return
         panzoom.zoomWithWheel(event)
     })
 
     let selected_pos = [-1, -1];
+
     function updatePointDisplay() {
         const [x, y] = selected_pos;
         let canvas = canvasPoint;
         let ctx = canvas.getContext("2d");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const line_width = Math.max(4 / zoom_scale, 1)
-        if(x !== -1 || y !== -1) {
+        if (x !== -1 || y !== -1) {
             ctx.beginPath();
             ctx.arc(x, y, line_width, 0, 2 * Math.PI, false);
             ctx.rect(0, y, canvas.width, line_width);
@@ -155,7 +154,7 @@ export function add_2D_view(dom_elem) {
         updatePointDisplay();
     })
 
-    canvasPoint.addEventListener("click", async function(event) {
+    canvasPoint.addEventListener("click", async function (event) {
         const rect = canvasPoint.getBoundingClientRect();
 
         // Calculate click position as percentage of bounding box dimensions
@@ -165,14 +164,14 @@ export function add_2D_view(dom_elem) {
         let y = parseInt(yPercent * 1024 / 100);
 
         let voxel = await getPixelVoxel(x, y);
-        var myEvent = new CustomEvent('voxel_selected_changed',  { detail: {voxel: voxel, x:x, y:y} });
+        var myEvent = new CustomEvent('voxel_selected_changed', {detail: {voxel: voxel, x: x, y: y}});
         window.dispatchEvent(myEvent);
     });
 
     async function set_voxel_selected({voxel, x, y}) {
-        if(x === undefined)
+        if (x === undefined)
             [x, y] = await getVoxelPixel({voxel});
-        if(voxel === -1) {
+        if (voxel === -1) {
             x = -1;
             y = -1;
         }
@@ -191,6 +190,7 @@ export function add_2D_view(dom_elem) {
 
         set_texture(data32, canvas.width, canvas.height);
     }
+
     return {
         set_voxel_data,
         set_voxel_selected,

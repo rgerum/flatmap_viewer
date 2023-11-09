@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Three.js Mesh Visualization</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+<canvas id="plot3d"></canvas>
+    <script src="js/numpy_to_js.js"></script>
+    <script type="module">
+        import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r132/build/three.module.js';
+        import {OrbitControls} from 'https://threejsfundamentals.org/threejs/resources/threejs/r132/examples/jsm/controls/OrbitControls.js';
+        import {OBJLoader} from 'https://threejsfundamentals.org/threejs/resources/threejs/r132/examples/jsm/loaders/OBJLoader.js';
+        // Ensure you have Three.js included in your project
+// Import necessary components if you're using modules
+
+// Create the scene
+const scene = new THREE.Scene();
+
+// Add a camera
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 5;
+
+// Create a renderer and add it to the DOM
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Add a light
+const light = new THREE.PointLight(0xffffff, 1, 100);
+light.position.set(10, 10, 10);
+scene.add(light);
+
+// Create a geometry
+const geometry = new THREE.BoxGeometry();
+
+// Create a material with diffuse properties
+const material = new THREE.MeshLambertMaterial({ color: 0xff0000 }); // red diffuse material
+
+// Combine the geometry and material into a mesh
+const cube = new THREE.Mesh(geometry, material);
+
+// Add the mesh to the scene
+scene.add(cube);
+
+// Render the scene
+function animate() {
+  requestAnimationFrame(animate);
+
+  // Any animations or updates go here
+  cube.rotation.x += 0.01;
+  cube.rotation.y += 0.01;
+
+  renderer.render(scene, camera);
+}
+
+// Start the animation loop
+animate();
+
+    </script>
+</body>
+</html>

@@ -1,9 +1,8 @@
-
 function form_to_url(form) {
     const formData = new FormData(form);
     const groupedData = {};
 
-    for(let input of document.getElementsByTagName("input")) {
+    for (let input of document.getElementsByTagName("input")) {
         groupedData[input.name] = [];
     }
 
@@ -19,11 +18,9 @@ function form_to_url(form) {
     for (const [key, values] of Object.entries(groupedData)) {
         if (values.length > 1) {
             paramsArray.push(`${key}=${values.join(',')}`);
-        }
-        else if(values.length === 1) {
+        } else if (values.length === 1) {
             paramsArray.push(`${key}=${values[0]}`);
-        }
-        else {
+        } else {
             paramsArray.push(`${key}=`);
         }
     }
@@ -32,8 +29,9 @@ function form_to_url(form) {
     const newUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?${paramString}`;
     history.pushState(null, '', newUrl);
 }
+
 function link_forms() {
-    document.querySelector('form').addEventListener('change', function() {
+    document.querySelector('form').addEventListener('change', function () {
         form_to_url(this);
     });
 }
@@ -50,7 +48,7 @@ function restore_form_from_url() {
 
     searchParams.forEach((value, key) => {
         const values = value.split(',');
-        if(values.length === 1 && document.querySelectorAll(`[name="${key}"]`).length === 1) {
+        if (values.length === 1 && document.querySelectorAll(`[name="${key}"]`).length === 1) {
             let val = values[0];
             const input = document.querySelector(`[name="${key}"]`);
             if (input && (input.type === 'checkbox' || input.type === 'radio')) {
@@ -58,8 +56,7 @@ function restore_form_from_url() {
             } else if (input) {
                 input.value = val;
             }
-        }
-        else {
+        } else {
             values.forEach(val => {
                 const input = document.querySelector(`[name="${key}"][value="${val}"]`);
                 if (input && (input.type === 'checkbox' || input.type === 'radio')) {
@@ -72,11 +69,11 @@ function restore_form_from_url() {
     });
 }
 
-window.addEventListener('load', function() {
+window.addEventListener('load', function () {
     link_forms();
 });
 
-window.addEventListener('popstate', function() {
+window.addEventListener('popstate', function () {
     restore_form_from_url()
     document.update_plot();
 });

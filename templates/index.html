@@ -20,6 +20,7 @@
             font-family: sans;
             margin: 10px;
         }
+
         #plotContainer {
             overflow: hidden;
             border: 1px solid black;
@@ -28,6 +29,7 @@
             position: relative;
             border-radius: 10px;
         }
+
         #plotImage {
             max-width: none;
             transform-origin: top left;
@@ -36,9 +38,11 @@
         .grid {
             display: table;
         }
+
         .row {
             display: table-row;
         }
+
         .square {
             display: table-cell;
             width: 10px;
@@ -46,6 +50,7 @@
             border: 1px solid black;
             background: rgb(128, 128, 128);
         }
+
         .square_active {
             display: table-cell;
             width: 10px;
@@ -53,24 +58,27 @@
             border: 1px solid black;
             background: red;
         }
+
         #plotImage {
             position: relative;
         }
+
         .image_centering {
             margin: 0 auto;
             /*height: 119px;
             margin: 0 auto;
             display: block;*/
-                display: flex;
-                justify-content: center; /* Horizontally centers the image */
-                align-items: center;     /* Vertically centers the image */
-                height: 400px;           /* Adjust as needed */
-                width: 300px;            /* Adjust as needed */
+            display: flex;
+            justify-content: center; /* Horizontally centers the image */
+            align-items: center; /* Vertically centers the image */
+            height: 400px; /* Adjust as needed */
+            width: 300px; /* Adjust as needed */
         }
+
         .image {
             position: absolute;
-            //top: 0;
-            //left: 0;
+        / / top: 0;
+        / / left: 0;
             max-height: 100%;
 
 
@@ -88,6 +96,7 @@
             font-size: 0.8em;
             padding-top: 13px;
         }
+
         .check_list span {
             transform: rotate(-90deg);
             height: 1em;
@@ -100,6 +109,7 @@
             display: flex;
             flex-direction: column;
         }
+
         .check_list_rows label {
             display: flex;
             flex-direction: row;
@@ -115,6 +125,7 @@
             flex-direction: column;
             gap: 3px;
         }
+
         #componentExamples div {
             display: flex;
         }
@@ -134,8 +145,12 @@
         }
 
         @keyframes spin {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
         }
 
         #clicked {
@@ -202,9 +217,11 @@
             flex-direction: row;
             gap: 10px
         }
-        .flex-row>div {
+
+        .flex-row > div {
             width: 100%;
         }
+
         .round-corner {
             border-radius: 10px;
             overflow: hidden;
@@ -212,206 +229,218 @@
             background: #151515;
             position: relative;
         }
+
         .slidecontainer {
             width: 160px; /* Width of the outside container */
             max-width: 80%;
             position: absolute;
             bottom: 5px;
             left: 5px;
-}
+        }
 
         .slider_marker {
             height: 8px;
-              width: 1px;
-              background: #bbb;
-              position: absolute;
-              top: 5px;
+            width: 1px;
+            background: #bbb;
+            position: absolute;
+            top: 5px;
         }
 
-/* The slider itself */
-.slider {
-  -webkit-appearance: none;  /* Override default CSS styles */
-  appearance: none;
-  width: 100%; /* Full-width */
-  height: 8px; /* Specified height */
-  background: #262626c9; /* Grey background */
-  outline: none; /* Remove outline */
-  opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
-  -webkit-transition: .2s; /* 0.2 seconds transition on hover */
-  transition: opacity .2s;
-    border-radius: 10px;
-}
+        /* The slider itself */
+        .slider {
+            -webkit-appearance: none; /* Override default CSS styles */
+            appearance: none;
+            width: 100%; /* Full-width */
+            height: 8px; /* Specified height */
+            background: #262626c9; /* Grey background */
+            outline: none; /* Remove outline */
+            opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+            -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+            transition: opacity .2s;
+            border-radius: 10px;
+        }
 
-/* Mouse-over effects */
-.slider:hover {
-  opacity: 1; /* Fully shown on mouse-over */
-}
+        /* Mouse-over effects */
+        .slider:hover {
+            opacity: 1; /* Fully shown on mouse-over */
+        }
 
-/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none; /* Override default look */
-  appearance: none;
-  width: 13px; /* Set a specific slider handle width */
-  height: 13px; /* Slider handle height */
-  background: #242424; /* Green background */
-  cursor: pointer; /* Cursor on hover */
-}
+        /* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none; /* Override default look */
+            appearance: none;
+            width: 13px; /* Set a specific slider handle width */
+            height: 13px; /* Slider handle height */
+            background: #242424; /* Green background */
+            cursor: pointer; /* Cursor on hover */
+        }
 
-.slider::-moz-range-thumb {
-  width: 13px; /* Set a specific slider handle width */
-  height: 13px; /* Slider handle height */
-  background: #242424; /* Green background */
-  cursor: pointer; /* Cursor on hover */
-}
+        .slider::-moz-range-thumb {
+            width: 13px; /* Set a specific slider handle width */
+            height: 13px; /* Slider handle height */
+            background: #242424; /* Green background */
+            cursor: pointer; /* Cursor on hover */
+        }
 
 
-.slider_buttons {
-	bottom: 30px;
-	position: absolute;
-	left: 10px;
-}
-.grow {
-    transition: width 0.5s ease-in-out;
-}
-.button_control_top {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    width: auto !important;
-}
+        .slider_buttons {
+            bottom: 30px;
+            position: absolute;
+            left: 10px;
+        }
 
-.slider_button {
-	border: 0px solid black;
-	border-radius: 10px;
-	padding: 5px;
-	cursor: pointer;
-	background-position: center;
-	background-repeat: no-repeat;
-	background-size: contain;
-	background-color: gray;
-	width: 35px;
-	height: 35px;
-	/*filter: brightness(0.3);*/
-    opacity: 0.5;
-    transition: background-color 0.5s ease-in-out;
-}
-.img_inflated {
-    background-image: url("img/inflated.png");
-}
-.img_flat {
-    background-image: url("img/flat.png");
-}
-.img_pia {
-    background-image: url("img/pia.png");
-}
-.img_wm {
-    background-image: url("img/wm.png");
-}
-.img_selected {
-    background-color: darkred;
-}
+        .grow {
+            transition: width 0.5s ease-in-out;
+        }
+
+        .button_control_top {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: auto !important;
+        }
+
+        .slider_button {
+            border: 0px solid black;
+            border-radius: 10px;
+            padding: 5px;
+            cursor: pointer;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-color: gray;
+            width: 35px;
+            height: 35px;
+            /*filter: brightness(0.3);*/
+            opacity: 0.5;
+            transition: background-color 0.5s ease-in-out;
+        }
+
+        .img_inflated {
+            background-image: url("img/inflated.png");
+        }
+
+        .img_flat {
+            background-image: url("img/flat.png");
+        }
+
+        .img_pia {
+            background-image: url("img/pia.png");
+        }
+
+        .img_wm {
+            background-image: url("img/wm.png");
+        }
+
+        .img_selected {
+            background-color: darkred;
+        }
     </style>
 </head>
 <body>
-    <div id="grid"></div>
-    <div class="main_column">
-        <form id="plotForm" class="controls">
-            <input type="hidden" name="show_groups" value="0"/>
-            <div class="control_box">
-                <span class="control_box_title">Runs</span>
-                <br/>
-                <div id="runs" class="check_list_rows"></div>
-            </div>
-            <div class="control_box">
-                <span class="control_box_title">Layers</span>
-                <br/>
-                <div id="layer_ids" class="check_list_rows"></div>
-            </div>
-            <div class="control_box">
-                <span class="control_box_title">Subjects</span>
-                <div id="subject_ids" class="check_list"></div>
-                Min Sub Overlap Count: <input type="number" name="min_subject_overlap_count" min="1" max="8" value="4" oninput="update_plot()">
-            </div>
-            <div class="control_box" id="box_components">
-                <span class="control_box_title">Components</span>
-                <div id="component_ids" class="check_list"></div>
-                <input type="button" value="none" id="btn_select_none">
-                <input type="button" value="all" id="btn_select_all">
-                <label><span>show roi</span><input type="checkbox" value="on" id="show_roi" name="show_roi" checked onclick="toggle_roi()"></label>
-                <input type="hidden" name="x" value="0"/>
-                <input type="hidden" name="y" value="0"/>
-                <input type="hidden" name="voxel" value="0"/>
-            </div>
-
-            <div class="control_box" id="box_concepts" style="display: none">
-                <span class="control_box_title">Concepts</span>
-                <br/>
-                <input type="checkbox" name="show_component_ids2" value="0" checked onclick="update_plot()">
-                <input type="text" value="3,26,77,101,108,119" name="component_ids2">
-                <input type="checkbox" name="show_component_ids2" value="1" checked onclick="update_plot()">
-                <input type="text" value="5,27,78,92" name="component_ids2">
-                <input type="checkbox" name="show_component_ids2" value="2" checked onclick="update_plot()">
-                <input type="text" value="3,27,92,101,108,115" name="component_ids2">
-                <input type="checkbox" name="show_component_ids2" value="3" checked onclick="update_plot()">
-                <input type="text" value="5,26,77,78,119" name="component_ids2">
-            </div>
-        </form>
-
-        <div class="flex-row" style="position: relative">
-            <div id="plotContainer" class="grow" style="width: 0px">
-
-                <div id="plotImage" style="cursor: auto"></div>
-                <span id="clicked"></span>
-                <span class="spinner"></span>
-            </div>
-            <div id="plot3dContainer" class="round-corner grow">
-                <canvas id="plot3d"></canvas>
-
-                <div class="slidecontainer" style="bottom: 70px">
-                    <input type="range" class="slider" name="pivot" min="0" max="100" value="0" oninput="document.set_pivot(this.value/100)">
-                </div>
-
-                <div class="slider_buttons">
-                    <button class="slider_button img_flat" onclick="brain_3d.set_shape_animated(0)"></button>
-                    <button class="slider_button img_inflated" onclick="brain_3d.set_shape_animated(1)"></button>
-                    <button class="slider_button img_pia" onclick="brain_3d.set_shape_animated(2)"></button>
-                    <button class="slider_button img_wm" onclick="brain_3d.set_shape_animated(3)"></button>
-                </div>
-                <div class="slidecontainer">
-                    <input type="range" class="slider" id="shape" name="shape" min="0" max="300" value="0" oninput="document.set_shape(this.value/100)">
-                </div>
-                <span class="spinner"></span>
-            </div>
-            <div class="button_control_top">
-                <div class="button_transparent" onclick="toggle_3d()"></div>
-            </div>
+<div id="grid"></div>
+<div class="main_column">
+    <form id="plotForm" class="controls">
+        <input type="hidden" name="show_groups" value="0"/>
+        <div class="control_box">
+            <span class="control_box_title">Runs</span>
+            <br/>
+            <div id="runs" class="check_list_rows"></div>
+        </div>
+        <div class="control_box">
+            <span class="control_box_title">Layers</span>
+            <br/>
+            <div id="layer_ids" class="check_list_rows"></div>
+        </div>
+        <div class="control_box">
+            <span class="control_box_title">Subjects</span>
+            <div id="subject_ids" class="check_list"></div>
+            Min Sub Overlap Count: <input type="number" name="min_subject_overlap_count" min="1" max="8" value="4"
+                                          oninput="update_plot()">
+        </div>
+        <div class="control_box" id="box_components">
+            <span class="control_box_title">Components</span>
+            <div id="component_ids" class="check_list"></div>
+            <input type="button" value="none" id="btn_select_none">
+            <input type="button" value="all" id="btn_select_all">
+            <label><span>show roi</span><input type="checkbox" value="on" id="show_roi" name="show_roi" checked
+                                               onclick="toggle_roi()"></label>
+            <input type="hidden" name="x" value="0"/>
+            <input type="hidden" name="y" value="0"/>
+            <input type="hidden" name="voxel" value="0"/>
         </div>
 
-        <div id="componentExamples"></div>
+        <div class="control_box" id="box_concepts" style="display: none">
+            <span class="control_box_title">Concepts</span>
+            <br/>
+            <input type="checkbox" name="show_component_ids2" value="0" checked onclick="update_plot()">
+            <input type="text" value="3,26,77,101,108,119" name="component_ids2">
+            <input type="checkbox" name="show_component_ids2" value="1" checked onclick="update_plot()">
+            <input type="text" value="5,27,78,92" name="component_ids2">
+            <input type="checkbox" name="show_component_ids2" value="2" checked onclick="update_plot()">
+            <input type="text" value="3,27,92,101,108,115" name="component_ids2">
+            <input type="checkbox" name="show_component_ids2" value="3" checked onclick="update_plot()">
+            <input type="text" value="5,26,77,78,119" name="component_ids2">
+        </div>
+    </form>
+
+    <div class="flex-row" style="position: relative">
+        <div id="plotContainer" class="grow" style="width: 0px">
+
+            <div id="plotImage" style="cursor: auto"></div>
+            <span id="clicked"></span>
+            <span class="spinner"></span>
+        </div>
+        <div id="plot3dContainer" class="round-corner grow">
+            <canvas id="plot3d"></canvas>
+
+            <div class="slidecontainer" style="bottom: 70px">
+                <input type="range" class="slider" name="pivot" min="0" max="100" value="0"
+                       oninput="document.set_pivot(this.value/100)">
+            </div>
+
+            <div class="slider_buttons">
+                <button class="slider_button img_flat" onclick="brain_3d.set_shape_animated(0)"></button>
+                <button class="slider_button img_inflated" onclick="brain_3d.set_shape_animated(1)"></button>
+                <button class="slider_button img_pia" onclick="brain_3d.set_shape_animated(2)"></button>
+                <button class="slider_button img_wm" onclick="brain_3d.set_shape_animated(3)"></button>
+            </div>
+            <div class="slidecontainer">
+                <input type="range" class="slider" id="shape" name="shape" min="0" max="300" value="0"
+                       oninput="document.set_shape(this.value/100)">
+            </div>
+            <span class="spinner"></span>
+        </div>
+        <div class="button_control_top">
+            <div class="button_transparent" onclick="toggle_3d()"></div>
+        </div>
     </div>
 
-    <script>
-        let zoom_scale = 1;
-        function toggle_3d() {
-            if(document.getElementById("plot3dContainer").style.width == "") {
-                 document.getElementById("plotContainer").style.width = ""
-                 document.getElementById("plot3dContainer").style.width = "0px"
-            }
-            else {
-                 document.getElementById("plotContainer").style.width = "0px"
-                 document.getElementById("plot3dContainer").style.width = ""
-            }
-        }
-        function toggle_roi() {
-            let checkbox = document.getElementById("show_roi").checked;
-            var myEvent = new CustomEvent('roi_show_changed', { detail: checkbox });
-            window.dispatchEvent(myEvent);
-        }
+    <div id="componentExamples"></div>
+</div>
 
-        fetch('static_data/all_component_ids.json', {}).then(function(response) {
-            return response.json();
-        }).then(function(init_data) {
+<script>
+    let zoom_scale = 1;
 
+    function toggle_3d() {
+        if (document.getElementById("plot3dContainer").style.width == "") {
+            document.getElementById("plotContainer").style.width = ""
+            document.getElementById("plot3dContainer").style.width = "0px"
+        } else {
+            document.getElementById("plotContainer").style.width = "0px"
+            document.getElementById("plot3dContainer").style.width = ""
+        }
+    }
+
+    function toggle_roi() {
+        let checkbox = document.getElementById("show_roi").checked;
+        var myEvent = new CustomEvent('roi_show_changed', {detail: checkbox});
+        window.dispatchEvent(myEvent);
+    }
+
+    fetch('static_data/all_component_ids.json', {}).then(function (response) {
+        return response.json();
+    }).then(function (init_data) {
 
 
         function get_form_data() {
@@ -427,7 +456,7 @@
             let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
 
             const checked = formData.getAll("show_component_ids2");
-            const component_ids2 = formData.getAll("component_ids2").map((x,i) => ((checked.indexOf(`${i}`) > -1 && x) ? x.split(',').map(y => parseInt(y)) : []));
+            const component_ids2 = formData.getAll("component_ids2").map((x, i) => ((checked.indexOf(`${i}`) > -1 && x) ? x.split(',').map(y => parseInt(y)) : []));
             const component_index2 = component_ids2.map(x => x.map(y => init_data.all_component_ids.indexOf(y)));
 
             let x = parseInt(document.getElementsByName("x")[0].value);
@@ -453,9 +482,9 @@
         function add_image(parent, src, w, h) {
             let img = document.createElement("img");
             img.src = src;
-            if(w)
+            if (w)
                 img.width = w;
-            if(h)
+            if (h)
                 img.height = h;
             parent.appendChild(img);
             return img;
@@ -472,17 +501,18 @@
             row.appendChild(title);
 
             parent.appendChild(row);
-            for(let i = 1; i < 11; i++) {
+            for (let i = 1; i < 11; i++) {
                 add_image(row, "static_data/component_example_images/" + component_id + "_" + i + ".png", 128, 128);
             }
         }
+
         window.add_row = add_row
 
         function update_plot() {
             console.time("Load");
             let form_data = get_form_data();
 
-            if(form_data.show_groups)
+            if (form_data.show_groups)
                 startWorker2(form_data);
             else
                 startWorker(form_data);
@@ -490,6 +520,7 @@
             pixelValueInformation();
             //toggle_roi();
         }
+
         document.update_plot = update_plot
         window.update_plot = update_plot
 
@@ -500,17 +531,16 @@
             text.innerText = index2 || index;
             let checkbox = document.createElement("input");
             checkbox.type = "checkbox";
-            if(radio)
+            if (radio)
                 checkbox.type = "radio";
             checkbox.name = name;
             checkbox.value = index;
             checkbox.oninput = update_plot;
             label.title = index;
-            if(invert) {
+            if (invert) {
                 label.appendChild(checkbox);
                 label.appendChild(text);
-            }
-            else {
+            } else {
                 label.appendChild(text);
                 label.appendChild(checkbox);
             }
@@ -541,19 +571,19 @@
             add_check_box(placeholder_comp, "component_ids", i);
         }
         restore_form_from_url();
-        if(document.querySelector("[name=show_groups]").value != "0") {
+        if (document.querySelector("[name=show_groups]").value != "0") {
             document.getElementById("box_components").style.display = "none";
             document.getElementById("box_concepts").style.display = "";
         }
         update_plot();
 
-        document.getElementById("btn_select_none").onclick = function() {
-            for(let elem of placeholder_comp.querySelectorAll("input"))
+        document.getElementById("btn_select_none").onclick = function () {
+            for (let elem of placeholder_comp.querySelectorAll("input"))
                 elem.checked = false;
             update_plot();
         }
-        document.getElementById("btn_select_all").onclick = function() {
-            for(let elem of placeholder_comp.querySelectorAll("input"))
+        document.getElementById("btn_select_all").onclick = function () {
+            for (let elem of placeholder_comp.querySelectorAll("input"))
                 elem.checked = true;
             update_plot();
         }
@@ -563,60 +593,63 @@
             getPixelValue(form_data);
         }
 
-        window.addEventListener('voxel_selected_changed', async function(e) {
+        window.addEventListener('voxel_selected_changed', async function (e) {
             document.getElementsByName("voxel")[0].value = e.detail.voxel;
             pixelValueInformation();
         });
 
-        });
-    </script>
+    });
+</script>
 
 
-    <script src="js/numpy_to_js.js"></script>
-    <script type="module" scr="js/3D_view.js"></script>
+<script src="js/numpy_to_js.js"></script>
+<script type="module" scr="js/3D_view.js"></script>
 
 
-    <script type="module">
-        import { add_2D_view } from './js/2D_view.js';
-        const view = add_2D_view(document.getElementById("plotImage"));
+<script type="module">
+    import {add_2D_view} from './js/2D_view.js';
 
-        window.addEventListener('voxel_data_changed', async function(e) {
-            await view.set_voxel_data(e.detail.image);
-        });
+    const view = add_2D_view(document.getElementById("plotImage"));
 
-        window.addEventListener('voxel_selected_changed', async function(e) {
-            await view.set_voxel_selected(e.detail);
-        });
-    </script>
+    window.addEventListener('voxel_data_changed', async function (e) {
+        await view.set_voxel_data(e.detail.image);
+    });
 
-    <script type="module">
-        import { initScene, add_brain } from './js/3D_view.js'
-        const scene = await initScene({
-            dom_elem: document.getElementById('plot3d'),
-        });
-        let brain_3d = await add_brain({scene,
-            pt_flat: "static_data/pt_flat.npy",
-            faces_flat: "static_data/vtx_flat.npy",
-            pt_inflated: "static_data/pt_inflated.npy",
-            faces_inflated: "static_data/vtx.npy",
-            pt_pia: "static_data/pt_pia.npy",
-            pt_wm: "static_data/pt_wm.npy",
-        });
-        window.brain_3d = brain_3d;
+    window.addEventListener('voxel_selected_changed', async function (e) {
+        await view.set_voxel_selected(e.detail);
+    });
+</script>
 
-        window.addEventListener('voxel_data_changed', async function(e) {
-            await brain_3d.set_voxel_data(e.detail.image);
-        });
+<script type="module">
+    import {initScene, add_brain} from './js/3D_view.js'
 
-        window.addEventListener('voxel_selected_changed', async function(e) {
-            await brain_3d.set_voxel_selected(e.detail);
-        });
-        window.addEventListener('roi_show_changed', async function(e) {
-            await brain_3d.set_roi_show(e.detail);
-        });
+    const scene = await initScene({
+        dom_elem: document.getElementById('plot3d'),
+    });
+    let brain_3d = await add_brain({
+        scene,
+        pt_flat: "static_data/pt_flat.npy",
+        faces_flat: "static_data/vtx_flat.npy",
+        pt_inflated: "static_data/pt_inflated.npy",
+        faces_inflated: "static_data/vtx.npy",
+        pt_pia: "static_data/pt_pia.npy",
+        pt_wm: "static_data/pt_wm.npy",
+    });
+    window.brain_3d = brain_3d;
 
-        update_plot();
+    window.addEventListener('voxel_data_changed', async function (e) {
+        await brain_3d.set_voxel_data(e.detail.image);
+    });
 
-    </script>
+    window.addEventListener('voxel_selected_changed', async function (e) {
+        await brain_3d.set_voxel_selected(e.detail);
+    });
+    window.addEventListener('roi_show_changed', async function (e) {
+        await brain_3d.set_roi_show(e.detail);
+    });
+
+    update_plot();
+
+</script>
 </body>
 </html>
