@@ -50,7 +50,6 @@ async function voxels_to_flatmap(data32_index) {
 
     const curvature = (await cachedLoadNpy("static_data/curvature.npy")).data;
 
-    let [height, width] = [1024, 2274]//data_masks_all.shape;
     let data32 = new Uint32Array(width * height);
 
     let packedColor = get_cmap_uint32();
@@ -58,16 +57,14 @@ async function voxels_to_flatmap(data32_index) {
     const maxColorIndex = packedColor.length - 1;
 
     for (let i = 0; i < data32_index.length; i++) {
-        if (data32_index[i] >= 0) {
-            let c = Math.min(data32_index[i], maxColorIndex);
-            for (let ii of mapping[i]) {
-                data32[ii] = packedColor[c];
-            }
-        } else {
-            let color = curvature[i] > 0 ? packedColor2[2] : packedColor2[1];
-            for (let ii of mapping[i]) {
-                data32[ii] = color;
-            }
+        let clr;
+        if (data32_index[i] >= 0)
+            clr = packedColor[Math.min(data32_index[i], maxColorIndex)];
+        else
+            clr = curvature[i] > 0 ? packedColor2[2] : packedColor2[1];
+
+        for (let ii of mapping[i]) {
+            data32[ii] = clr;
         }
     }
     console.timeEnd("voxels_to_flatmap");
@@ -120,6 +117,7 @@ export function add_2D_view(dom_elem) {
 
     let selected_pos = [-1, -1];
     let zoom_scale = 1;
+
     function updatePointDisplay() {
         const [x, y] = selected_pos;
         let canvas = canvasPoint;
@@ -135,6 +133,7 @@ export function add_2D_view(dom_elem) {
             ctx.fill();
         }
     }
+
     plotImage.addEventListener('panzoomzoom', (event) => {
         zoom_scale = event.detail.scale;
         updatePointDisplay();

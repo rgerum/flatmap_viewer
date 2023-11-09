@@ -433,49 +433,21 @@ export async function add_brain({
         let cmap_gray = get_cmap("gray", 4);
 
         for (let i = 0; i < c.length; i += 1) {
+            let clr;
             if (c[i] < 0) {
                 if (curvature[i] > 0) {
-                    array[i * 3 + 0] = cmap_gray[2*3 + 0];
-                    array[i * 3 + 1] = cmap_gray[2*3 + 1];
-                    array[i * 3 + 2] = cmap_gray[2*3 + 2];
+                    clr = cmap_gray.get_color(2);
                 } else {
-                    array[i * 3 + 0] = cmap_gray[1*3 + 0];
-                    array[i * 3 + 1] = cmap_gray[1*3 + 1];
-                    array[i * 3 + 2] = cmap_gray[1*3 + 2];
+                    clr = cmap_gray.get_color(1);
                 }
             } else {
-                let color_index = Math.min(c[i], 8);
-                array[i * 3 + 0] = my_cmap[color_index * 3 + 0];
-                array[i * 3 + 1] = my_cmap[color_index * 3 + 1];
-                array[i * 3 + 2] = my_cmap[color_index * 3 + 2];
+                clr = my_cmap.get_color(c[i]);
             }
+            array.set(clr, i * 3);
         }
         mesh.geometry.getAttribute('color').needsUpdate = true;
         console.timeEnd("set_voxel_data");
     }
-
-    function set_voxel_data_reset() {
-        console.time("set_voxel_data")
-        let array = mesh.geometry.getAttribute('color').array;
-        for (let i = 0; i < curvature.length; i += 1) {
-            if (curvature[i] > 0) {
-                array[i * 3 + 0] = 0.62;
-                array[i * 3 + 1] = 0.62;
-                array[i * 3 + 2] = 0.62;
-            } else {
-                array[i * 3 + 0] = 0.37;
-                array[i * 3 + 1] = 0.37;
-                array[i * 3 + 2] = 0.37;
-            }
-        }
-        mesh.geometry.getAttribute('color').needsUpdate = true;
-        console.timeEnd("set_voxel_data");
-    }
-
-    set_voxel_data_reset();
-
-    document.set_mesh_colors = set_mesh_colors;
-
 
     //---------
     const material2 = new THREE.MeshBasicMaterial({color: 0xff0000});  // greenish blue
@@ -494,7 +466,7 @@ export async function add_brain({
     cube4.position.set(0, 0, 0.5)
     scene.add(cube4);
 
-// Function to handle mouse click event
+    // Function to handle mouse click event
     add_click(mesh, scene.renderer, scene.camera, (e) => {
         var myEvent = new CustomEvent('voxel_selected_changed', {detail: {voxel: e}});
         window.dispatchEvent(myEvent);
@@ -611,5 +583,3 @@ function animateShapeChange(duration, callback) {
     // Start the animation
     currentAnimationFrame = requestAnimationFrame(animate);
 }
-
-

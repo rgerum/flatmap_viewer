@@ -26,6 +26,10 @@ export function get_cmap(name = "turbo", color_count = 9) {
         packedColor[i*3+1] = my_cmap[c * 3 + 1];
         packedColor[i*3+2] = my_cmap[c * 3 + 2];
     }
+    packedColor.get_color = (i) => {
+        i = Math.max(0, Math.min(i, color_count-1));
+        return packedColor.subarray(i*3, (i+1)*3);
+    }
     return packedColor
 }
 
