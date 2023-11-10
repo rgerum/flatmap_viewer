@@ -220,6 +220,64 @@ export async function show_image({component_ids_array, subject_ids, min_subject_
     return data32_index;
 }
 
+export async function show_image_depth({component_ids_array, subject_ids, min_subject_overlap_count, layer_ids, runs, data_select, min_val, max_val, mean_val, range_val}) {
+    console.log("show_image_depth", data_select)
+    const all_bits = convertIndexToBits(subject_ids);
+    const bitCountTable = getBitCountTable(subject_ids, min_subject_overlap_count);
+
+    let data_depth;
+    if(data_select == "min")
+        data_depth = min_val;
+    else if(data_select == "max")
+        data_depth = max_val;
+    else if(data_select == "mean")
+        data_depth = mean_val;
+    else if(data_select == "range")
+        data_depth = range_val;
+
+    console.time("LoadBinary");
+    const data_arrays = await loadAllNpyInParallel(component_ids_array, runs);
+    const data_masks_all = await cachedLoadNpy("../static_data/component_masks/data_masks_all.npy");
+    console.timeEnd("LoadBinary");
+
+    const voxel_count = data_masks_all.shape[0];
+
+    const data32_index = new Int32Array(voxel_count);
+    const data_arrays_d = data_arrays.map(x => x.data);
+
+    const data_masks_all_d = data_masks_all.data
+    const maxColorIndex = 8;
+
+    const layer_ids_offsets = layer_ids.map(x => x * voxel_count);
+
+    console.time("PixelManipulationX");
+    for (let i = 0; i < voxel_count; i++) {
+        if (!(data_masks_all_d[i] & all_bits)) {
+            data32_index[i] = -1;
+            continue
+        }
+
+        let bitsCount = 0;
+        let bitsValue = 0;
+        for (let ii in data_arrays_d) {
+            let a = data_arrays_d[ii]
+            let mask_pix = 0
+            for (let index_layer_offset of layer_ids_offsets) {
+                mask_pix |= a[i + index_layer_offset]
+            }
+            bitsCount += bitCountTable[mask_pix];
+            bitsValue += data_depth[component_ids_array[ii]] * bitCountTable[mask_pix];
+            //if (bitsCount === maxColorIndex)
+            //    break;
+        }
+
+        data32_index[i] = bitsValue / bitsCount;
+    }
+    console.timeEnd("PixelManipulationX");
+
+    return data32_index;
+}
+
 export async function show_image2({component_index2, subject_ids, min_subject_overlap_count, layer_ids, runs}) {
     let all_bits = convertIndexToBits(subject_ids);
     const bitCountTable = getBitCountTable(subject_ids, min_subject_overlap_count);

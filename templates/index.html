@@ -396,6 +396,14 @@
                                                   onclick="update_plot()"></label>
 
             <select id="matrix_select" name="matrix_select" oninput="update_plot()"></select>
+
+            <select id="data_select" name="data_select" oninput="update_plot()">
+                <option value="none">none</option>
+                <option value="min">min</option>
+                <option value="max">max</option>
+                <option value="mean">mean</option>
+                <option value="range">range</option>
+            </select>
             <input type="hidden" name="x" value="0"/>
             <input type="hidden" name="y" value="0"/>
             <input type="hidden" name="voxel" value="0"/>
@@ -479,6 +487,7 @@
     fetch('static_data/all_component_ids.json', {}).then(function (response) {
         return response.json();
     }).then(function (init_data) {
+        console.log("init_data", init_data)
 
 
         function get_form_data() {
@@ -493,6 +502,7 @@
             const min_subject_overlap_count = parseInt(formData.get("min_subject_overlap_count"));
 
             const matrix_select = formData.get("matrix_select");
+            const data_select = formData.get("data_select");
 
             let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
 
@@ -519,6 +529,11 @@
                 show_groups,
                 show_matrix,
                 matrix_select,
+                data_select,
+                min_val: init_data.min_val,
+                max_val: init_data.max_val,
+                mean_val: init_data.mean_val,
+                range_val: init_data.range_val,
             }
         }
 
@@ -534,6 +549,10 @@
         }
 
         function add_row(parent, component_id) {
+            const form = document.getElementById("plotForm");
+            const formData = new URLSearchParams(new FormData(form));
+            const data_select = formData.get("data_select");
+
             let row = document.createElement("div");
 
             let title = document.createElement("div");
@@ -545,7 +564,10 @@
 
             parent.appendChild(row);
             for (let i = 1; i < 21; i++) {
-                add_image(row, "static_data/component_example_images/" + component_id + "_" + i + ".png", 128, 128);
+                if(data_select == 'none')
+                    add_image(row, "static_data/component_example_images/" + component_id + "_" + i + ".png", 128, 128);
+                else
+                    add_image(row, "static_data/component_example_images_depth/" + component_id + "/" + i + ".png", 128, 128);
             }
         }
 

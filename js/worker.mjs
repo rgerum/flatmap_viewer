@@ -1,9 +1,19 @@
 // worker.js
-import {show_image, show_image2, get_components, get_count, overlap_matrix, sort_overlap_matrix} from "./flat_map.mjs";
+import {
+    show_image,
+    show_image2,
+    get_components,
+    get_count,
+    overlap_matrix,
+    sort_overlap_matrix,
+    show_image_depth
+} from "./flat_map.mjs";
 
 self.addEventListener('message', async function (e) {
     if (e.data.type === 'image') {
-        const data32_index = await show_image(e.data);
+        let data32_index = await show_image(e.data);
+        if(e.data.data_select !== "none")
+            data32_index = await show_image_depth(e.data);
 
         let matrix_overlap = null;
         let sort_index = null;
