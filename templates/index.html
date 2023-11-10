@@ -10,12 +10,12 @@
     <script src="js/form_to_url.js"></script>
 
     <script type="importmap">
-      {
-        "imports": {
-          "three": "https://unpkg.com/three@v0.158.0/build/three.module.js",
-          "three/addons/": "https://unpkg.com/three@v0.158.0/examples/jsm/"
+        {
+          "imports": {
+            "three": "https://unpkg.com/three@v0.158.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@v0.158.0/examples/jsm/"
+          }
         }
-      }
     </script>
 
     <style>
@@ -340,6 +340,24 @@
         .img_selected {
             background-color: darkred;
         }
+
+
+        #matrixContainer {
+            position: relative;
+            width: 400px;
+            height: 400px;
+        }
+
+        .matrixCell {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 1px; /* Width of each cell */
+            height: 1px; /* Height of each cell */
+            font-size: 0.8px;
+            text-align: right;
+            transition: transform 0.5s; /* Smooth transition for movement */
+        }
     </style>
 </head>
 <body>
@@ -372,7 +390,7 @@
                                                onclick="toggle_roi()"></label>
 
             <label><span>show matrix</span><input type="checkbox" value="on" id="show_matrix" name="show_matrix"
-                                               onclick="update_plot()"></label>
+                                                  onclick="update_plot()"></label>
 
             <select id="matrix_select" name="matrix_select" oninput="update_plot()"></select>
             <input type="hidden" name="x" value="0"/>
@@ -422,7 +440,8 @@
             <span class="spinner"></span>
         </div>
         <div>
-            <canvas id="matrix" style="width: 400px; image-rendering: pixelated;"></canvas>
+            <!--<canvas id="matrix" style="width: 400px; image-rendering: pixelated;"></canvas>-->
+            <div id="matrixContainer"></div>
             <span id="matrix_clicked"></span>
         </div>
         <div class="button_control_top">
@@ -532,7 +551,7 @@
         function update_plot() {
             console.time("Load");
             let form_data = get_form_data();
-            document.getElementById("matrix").parentElement.style.display = form_data.show_matrix ? "block" : "none";
+            document.getElementById("matrixContainer").parentElement.style.display = form_data.show_matrix ? "block" : "none";
 
             if (form_data.show_groups)
                 startWorker2(form_data);
@@ -640,7 +659,7 @@
     window.addEventListener('voxel_data_changed', async function (e) {
         console.log("voxel_data_changed", e.detail);
         await view.set_voxel_data(e.detail.image);
-        if(e.detail.matrix_overlap)
+        if (e.detail.matrix_overlap)
             await view.plot_overlap_matrix(e.detail);
     });
 

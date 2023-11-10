@@ -2,7 +2,7 @@ import {loadNpy} from "./numpy_to_js.mjs";
 import {get_cmap_uint32} from "./colormaps.mjs";
 import {cachedLoadNpy} from "./numpy_to_js.mjs";
 import {overlap_matrix} from "./flat_map.mjs";
-import {drawHeatmap} from "./draw_matrix.mjs";
+import {drawHeatmap, drawMatrix2} from "./draw_matrix.mjs";
 
 let mapping = undefined;
 let mapping_inverse = undefined;
@@ -184,6 +184,7 @@ export function add_2D_view(dom_elem) {
     async function plot_overlap_matrix({matrix_overlap, component_ids, matrix_select, sort_index}) {
         last_overlay_matrix = matrix_overlap
         last_sort_index = sort_index
+        /*
         let canvas = document.getElementById("matrix");
         let w = Math.sqrt(matrix_overlap.length);
         let ctx = canvas.getContext("2d");
@@ -204,7 +205,22 @@ export function add_2D_view(dom_elem) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.putImageData(processedImageData, 0, 0);
 
-        click_event_to_x_y = drawHeatmap(canvas, matrix_overlap, sort_index, max);
+         */
+
+        //click_event_to_x_y = drawHeatmap(canvas, matrix_overlap, sort_index, max);
+        drawMatrix2(matrix_overlap, sort_index, (x, y, i, j, v) => {
+            const form = document.getElementById("plotForm");
+            const formData = new URLSearchParams(new FormData(form));
+            const component_ids = formData.getAll("component_ids");
+
+            document.getElementById("matrix_clicked").innerText = i + " " + j + " " + v;
+
+            //var myEvent = new CustomEvent('voxel_selected_changed', {detail: {voxel: -1}});
+            //window.dispatchEvent(myEvent);
+
+            var myEvent2 = new CustomEvent('display_components', {detail: {components: [i, j]}});
+            window.dispatchEvent(myEvent2);
+        })
 
         // Array of options to add
         var options = ["none"].concat(component_ids);
@@ -240,10 +256,12 @@ export function add_2D_view(dom_elem) {
         select.selectedIndex = component_ids.indexOf(matrix_select)+1;
     }
 
+    /*
     let canvas_matrix = document.getElementById("matrix");
     canvas_matrix.addEventListener("click", async function (event) {
+        if(!click_event_to_x_y)
+            return
         let [x, y] = click_event_to_x_y(event);
-        console.log(x, y)
         if(x === -1 || y === -1)
             return
 
@@ -258,8 +276,7 @@ export function add_2D_view(dom_elem) {
 
         var myEvent2 = new CustomEvent('display_components', {detail: {components: [last_sort_index[x], last_sort_index[y]]}});
         window.dispatchEvent(myEvent2);
-
-    });
+    });*/
 
     return {
         set_voxel_data,
