@@ -386,6 +386,8 @@
             <div id="component_ids" class="check_list"></div>
             <input type="button" value="none" id="btn_select_none">
             <input type="button" value="all" id="btn_select_all">
+            <input type="button" value="copy" id="btn_copy">
+            <input type="button" value="paste" id="btn_paste">
             <label><span>show roi</span><input type="checkbox" value="on" id="show_roi" name="show_roi" checked
                                                onclick="toggle_roi()"></label>
 
@@ -618,6 +620,65 @@
         }
         update_plot();
 
+        document.getElementById("btn_copy").onclick = function () {
+            function copyTextToClipboard(text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    console.log('Text copied to clipboard');
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                });
+            }
+            let data = get_form_data();
+            let text = data.component_ids.join(",")
+            copyTextToClipboard(text)
+        }
+        document.getElementById("btn_paste").onclick = async function () {
+            async function readTextFromClipboard() {
+                try {
+                    const text = await navigator.clipboard.readText();
+                    console.log('Text from clipboard:', text);
+                    return text;
+                } catch (err) {
+                    console.error('Failed to read text from clipboard: ', err);
+                }
+            }
+            async function askClipboardReadPermission() {
+                try {
+                    // Check if the Clipboard API is available
+                    if (!navigator.clipboard) {
+                        console.error("Clipboard API not available");
+                        return false;
+                    }
+
+                    // Check the permission status
+                    const permissionStatus = await navigator.permissions.query({ name: "clipboard-read" });
+
+                    // If permission is granted, return true
+                    if (permissionStatus.state === "granted") {
+                        console.log("Clipboard read permission granted.");
+                        return true;
+                    } else {
+                        // Handle the case where permission is not granted
+                        console.log("Clipboard read permission not granted.");
+                        return false;
+                    }
+                } catch (err) {
+                    console.error("Error while checking clipboard permissions:", err);
+                    return false;
+                }
+            }
+            let canread = await askClipboardReadPermission();
+            let text = (await readTextFromClipboard()).split(",");
+            console.log(text)
+            for(let element of document.getElementsByName("component_ids")) {
+                if(text.indexOf(element.value) > -1) {
+                    element.checked = true;
+                }
+                else
+                    element.checked = false;
+            }
+            update_plot();
+        }
         document.getElementById("btn_select_none").onclick = function () {
             for (let elem of placeholder_comp.querySelectorAll("input"))
                 elem.checked = false;
