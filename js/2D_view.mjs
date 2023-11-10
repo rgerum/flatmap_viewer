@@ -2,6 +2,7 @@ import {loadNpy} from "./numpy_to_js.mjs";
 import {get_cmap_uint32} from "./colormaps.mjs";
 import {cachedLoadNpy} from "./numpy_to_js.mjs";
 import {overlap_matrix} from "./flat_map.mjs";
+import {drawHeatmap} from "./draw_matrix.mjs";
 
 let mapping = undefined;
 let mapping_inverse = undefined;
@@ -179,6 +180,7 @@ export function add_2D_view(dom_elem) {
 
     let last_overlay_matrix = null;
     let last_sort_index = null;
+    let click_event_to_x_y = null;
     async function plot_overlap_matrix({matrix_overlap, component_ids, matrix_select, sort_index}) {
         last_overlay_matrix = matrix_overlap
         last_sort_index = sort_index
@@ -201,6 +203,8 @@ export function add_2D_view(dom_elem) {
         const processedImageData = new ImageData(data, w, w);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.putImageData(processedImageData, 0, 0);
+
+        click_event_to_x_y = drawHeatmap(canvas, matrix_overlap, sort_index, max);
 
         // Array of options to add
         var options = ["none"].concat(component_ids);
@@ -238,17 +242,14 @@ export function add_2D_view(dom_elem) {
 
     let canvas_matrix = document.getElementById("matrix");
     canvas_matrix.addEventListener("click", async function (event) {
-        const rect = canvas_matrix.getBoundingClientRect();
+        let [x, y] = click_event_to_x_y(event);
+        console.log(x, y)
+        if(x === -1 || y === -1)
+            return
 
         const form = document.getElementById("plotForm");
         const formData = new URLSearchParams(new FormData(form));
         const component_ids = formData.getAll("component_ids");
-
-        // Calculate click position as percentage of bounding box dimensions
-        const xPercent = ((event.clientX - rect.left) / rect.width);
-        const yPercent = ((event.clientY - rect.top) / rect.height);
-        let x = parseInt(xPercent * canvas_matrix.width);
-        let y = parseInt(yPercent * canvas_matrix.height);
 
         document.getElementById("matrix_clicked").innerText = last_sort_index[x] + " " + last_sort_index[y] + " " + last_overlay_matrix[x * Math.sqrt(last_overlay_matrix.length) + y];
 
@@ -258,7 +259,6 @@ export function add_2D_view(dom_elem) {
         var myEvent2 = new CustomEvent('display_components', {detail: {components: [last_sort_index[x], last_sort_index[y]]}});
         window.dispatchEvent(myEvent2);
 
-        console.log(x, y)
     });
 
     return {
