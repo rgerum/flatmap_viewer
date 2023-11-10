@@ -374,6 +374,7 @@
             <label><span>show matrix</span><input type="checkbox" value="on" id="show_matrix" name="show_matrix"
                                                onclick="update_plot()"></label>
 
+            <select id="matrix_select" name="matrix_select" oninput="update_plot()"></select>
             <input type="hidden" name="x" value="0"/>
             <input type="hidden" name="y" value="0"/>
             <input type="hidden" name="voxel" value="0"/>
@@ -469,6 +470,8 @@
             const show_matrix = formData.get("show_matrix");
             const min_subject_overlap_count = parseInt(formData.get("min_subject_overlap_count"));
 
+            const matrix_select = formData.get("matrix_select");
+
             let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
 
             const checked = formData.getAll("show_component_ids2");
@@ -493,6 +496,7 @@
                 voxel,
                 show_groups,
                 show_matrix,
+                matrix_select,
             }
         }
 
@@ -518,7 +522,7 @@
             row.appendChild(title);
 
             parent.appendChild(row);
-            for (let i = 1; i < 11; i++) {
+            for (let i = 1; i < 21; i++) {
                 add_image(row, "static_data/component_example_images/" + component_id + "_" + i + ".png", 128, 128);
             }
         }
@@ -634,10 +638,10 @@
     const view = add_2D_view(document.getElementById("plotImage"));
 
     window.addEventListener('voxel_data_changed', async function (e) {
-        console.log(e.detail);
+        console.log("voxel_data_changed", e.detail);
         await view.set_voxel_data(e.detail.image);
         if(e.detail.matrix_overlap)
-            await view.plot_overlap_matrix(e.detail.matrix_overlap);
+            await view.plot_overlap_matrix(e.detail);
     });
 
     window.addEventListener('voxel_selected_changed', async function (e) {

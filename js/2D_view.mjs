@@ -178,18 +178,20 @@ export function add_2D_view(dom_elem) {
     }
 
     let last_overlay_matrix = null;
-    async function plot_overlap_matrix(matrix){
-        last_overlay_matrix = matrix
+    let last_sort_index = null;
+    async function plot_overlap_matrix({matrix_overlap, component_ids, matrix_select, sort_index}) {
+        last_overlay_matrix = matrix_overlap
+        last_sort_index = sort_index
         let canvas = document.getElementById("matrix");
-        let w = Math.sqrt(matrix.length);
+        let w = Math.sqrt(matrix_overlap.length);
         let ctx = canvas.getContext("2d");
         canvas.width = w;
         canvas.height = w;
-        let data = new Uint8ClampedArray(matrix.length * 4);
-        console.log(matrix)
-        let max = Math.max(...matrix);
-        for (let i = 0; i < matrix.length; i++) {
-            let c= matrix[i] /max * 255
+        let data = new Uint8ClampedArray(matrix_overlap.length * 4);
+
+        let max = Math.max(...matrix_overlap);
+        for (let i = 0; i < matrix_overlap.length; i++) {
+            let c= matrix_overlap[i] /max * 255
             data[i * 4] = c;
             data[i * 4 + 1] = c;
             data[i * 4 + 2] = c;
@@ -199,6 +201,39 @@ export function add_2D_view(dom_elem) {
         const processedImageData = new ImageData(data, w, w);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.putImageData(processedImageData, 0, 0);
+
+        // Array of options to add
+        var options = ["none"].concat(component_ids);
+
+
+        function checkOptions(selectId, comparisonList) {
+            // Get the select element
+            const selectElement = document.getElementById(selectId);
+
+            // Retrieve values from the select element's options
+            let selectValues = [];
+            for (let i = 0; i < selectElement.options.length; i++) {
+                selectValues.push(selectElement.options[i].value); // or .text if you need the text
+            }
+
+            // Check if each option is different from the given list
+            let differences = selectValues.filter(value => !comparisonList.includes(value));
+
+            return differences;
+        }
+
+        // Get the select element
+        var select = document.getElementById("matrix_select");
+         select.innerHTML = "";
+
+        // Add options to the select element
+        options.forEach(function(option) {
+            var opt = document.createElement('option');
+            opt.value = option;
+            opt.innerHTML = option;
+            select.appendChild(opt);
+        });
+        select.selectedIndex = component_ids.indexOf(matrix_select)+1;
     }
 
     let canvas_matrix = document.getElementById("matrix");
@@ -215,12 +250,12 @@ export function add_2D_view(dom_elem) {
         let x = parseInt(xPercent * canvas_matrix.width);
         let y = parseInt(yPercent * canvas_matrix.height);
 
-        document.getElementById("matrix_clicked").innerText = component_ids[x] + " " + component_ids[y] + " " + last_overlay_matrix[x * Math.sqrt(last_overlay_matrix.length) + y];
+        document.getElementById("matrix_clicked").innerText = last_sort_index[x] + " " + last_sort_index[y] + " " + last_overlay_matrix[x * Math.sqrt(last_overlay_matrix.length) + y];
 
         //var myEvent = new CustomEvent('voxel_selected_changed', {detail: {voxel: -1}});
         //window.dispatchEvent(myEvent);
 
-        var myEvent2 = new CustomEvent('display_components', {detail: {components: [component_ids[x], component_ids[y]]}});
+        var myEvent2 = new CustomEvent('display_components', {detail: {components: [last_sort_index[x], last_sort_index[y]]}});
         window.dispatchEvent(myEvent2);
 
         console.log(x, y)

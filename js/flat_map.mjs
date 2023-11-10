@@ -143,6 +143,38 @@ export async function overlap_matrix({component_ids_array, subject_ids, min_subj
     return matrix_overlap;
 }
 
+function argsortDesc(arr) {
+    // Create an array of indices [0, 1, ..., arr.length - 1].
+    const indices = Array.from(arr.keys());
+
+    // Sort the indices array based on comparing values in the arr.
+    indices.sort((a, b) => arr[b] - arr[a]);
+
+    return indices;
+}
+
+export async function sort_overlap_matrix(matrix_overlap, component_ids, matrix_select) {
+    let component_count = Math.sqrt(matrix_overlap.length);
+    if(!matrix_select || matrix_select == "none") {
+        return [matrix_overlap, component_ids]
+    }
+    let matrix_overlap_sorted = new Int32Array(component_count * component_count);
+    let values_to_sort = [];
+    for(let i = 0; i < component_count; i++)
+        values_to_sort.push(matrix_overlap[i * component_count + component_ids.indexOf(matrix_select)]);
+
+    let indices = argsortDesc(values_to_sort);
+
+    let component_ids_sorted = []
+    for(let i = 0; i < component_count; i++) {
+        for(let j = 0; j < component_count; j++) {
+            matrix_overlap_sorted[i * component_count + j] = matrix_overlap[indices[i] * component_count + indices[j]];
+        }
+        component_ids_sorted.push(component_ids[indices[i]]);
+    }
+    return [matrix_overlap_sorted, component_ids_sorted]
+}
+
 
 export async function show_image({component_ids_array, subject_ids, min_subject_overlap_count, layer_ids, runs}) {
     const all_bits = convertIndexToBits(subject_ids);

@@ -1,17 +1,20 @@
 // worker.js
-import {show_image, show_image2, get_components, get_count, overlap_matrix} from "./flat_map.mjs";
+import {show_image, show_image2, get_components, get_count, overlap_matrix, sort_overlap_matrix} from "./flat_map.mjs";
 
 self.addEventListener('message', async function (e) {
     if (e.data.type === 'image') {
         const data32_index = await show_image(e.data);
 
         let matrix_overlap = null;
-        if(e.data.show_matrix)
+        let sort_index = null;
+        if(e.data.show_matrix) {
             matrix_overlap = await overlap_matrix(e.data);
+            [matrix_overlap, sort_index] = await sort_overlap_matrix(matrix_overlap, e.data.component_ids, e.data.matrix_select);
+        }
         //const data32 = await voxels_to_flatmap(data32_index);
 
         // Post the result back to the main thread
-        self.postMessage({type: 'image', data32_index, matrix_overlap: matrix_overlap});
+        self.postMessage({type: 'image', data32_index, matrix_overlap: matrix_overlap, component_ids: e.data.component_ids, matrix_select: e.data.matrix_select, sort_index});
     }
     if (e.data.type === 'image2') {
         const data32_index = await show_image2(e.data);

@@ -4,11 +4,16 @@ const worker = new Worker('js/worker.mjs', {type: 'module'});
 
 worker.addEventListener('message', function (e) {
     if (e.data.type === 'image') {
-        var myEvent = new CustomEvent('voxel_data_changed', {detail: {image: e.data.data32_index, matrix_overlap: e.data.matrix_overlap}});
+        var myEvent = new CustomEvent('voxel_data_changed',
+            {
+                detail:
+                    {
+                        image: e.data.data32_index, ...e.data
+                    }
+            });
         window.dispatchEvent(myEvent);
 
         document.querySelectorAll(".spinner").forEach(x => x.style.display = "none");
-
 
 
     }
