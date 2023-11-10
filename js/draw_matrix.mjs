@@ -38,7 +38,7 @@ export function drawMatrix2(matrix, labels, callback) {
                 });
             })(i, j, labels[i], labels[j], matrix[i * w + j]);
             current_children[id].style.transform = `translate(${(j+offset) * cell_width}px, ${(i+offset) * cell_width}px) scale(${cell_width})`;
-            current_children[id].style.backgroundColor = getColorForValue(matrix[i * w + j]);
+            current_children[id].style.backgroundColor = getColorForValue(matrix[i * w + j] / max);
             delete current_children[id];
         }
 
@@ -139,7 +139,7 @@ export function drawHeatmap(canvas, matrix, labels, vmax) {
 
 const my_cmap = cmap["viridis"]
 function getColorForValue(intensity) {
-    let i = Math.max(0, Math.min(intensity, 255));
+    let i = Math.round(Math.max(0, Math.min(intensity, 1))*255);
     let r = my_cmap[i*3]*255;
     let g = my_cmap[i*3+1]*255;
     let b = my_cmap[i*3+2]*255;
