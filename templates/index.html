@@ -358,6 +358,15 @@
             text-align: right;
             transition: transform 0.5s; /* Smooth transition for movement */
         }
+        
+        @media screen and (max-width: 600px) {
+            .controls {
+                flex-direction: column;
+            }
+            .check_list_rows {
+                flex-direction: row;
+            }
+        }
     </style>
 </head>
 <body>
