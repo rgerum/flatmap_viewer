@@ -404,6 +404,8 @@
                 <option value="mean">mean</option>
                 <option value="range">range</option>
             </select>
+            cmap_max
+            <input type="number" name="cmap_max" value="8" min="8" max="80" oninput="update_plot()">
             <input type="hidden" name="x" value="0"/>
             <input type="hidden" name="y" value="0"/>
             <input type="hidden" name="voxel" value="0"/>
@@ -503,6 +505,7 @@
 
             const matrix_select = formData.get("matrix_select");
             const data_select = formData.get("data_select");
+            const cmap_max = formData.get("cmap_max");
 
             let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
 
@@ -534,6 +537,7 @@
                 max_val: init_data.max_val,
                 mean_val: init_data.mean_val,
                 range_val: init_data.range_val,
+                cmap_max,
             }
         }
 
@@ -548,11 +552,7 @@
             return img;
         }
 
-        function add_row(parent, component_id) {
-            const form = document.getElementById("plotForm");
-            const formData = new URLSearchParams(new FormData(form));
-            const data_select = formData.get("data_select");
-
+        function add_row(parent, component_id, data_select) {
             let row = document.createElement("div");
 
             let title = document.createElement("div");
@@ -567,7 +567,7 @@
                 if(data_select == 'none')
                     add_image(row, "static_data/component_example_images/" + component_id + "_" + i + ".png", 128, 128);
                 else
-                    add_image(row, "static_data/component_example_images_depth/" + component_id + "/" + i + ".png", 128, 128);
+                    add_image(row, "static_data/component_example_images_depth3/" + component_id + "/" + i + ".png", 128, 128);
             }
         }
 
@@ -737,11 +737,17 @@
 
         let last_voxel_selected_components = []
         window.addEventListener('display_components', async function (e) {
+            const form = document.getElementById("plotForm");
+            const formData = new URLSearchParams(new FormData(form));
+            const data_select = formData.get("data_select");
+
             last_voxel_selected_components = e.detail.components
             let element_examples = document.getElementById("componentExamples");
             element_examples.innerHTML = "";
             for (let i of e.detail.components) {
-                add_row(element_examples, i);
+                add_row(element_examples, i, "none");
+                if(data_select !== "none")
+                    add_row(element_examples, i, "min3");
             }
         });
 
@@ -755,8 +761,14 @@
     const view = add_2D_view(document.getElementById("plotImage"));
 
     window.addEventListener('voxel_data_changed', async function (e) {
+         const form = document.getElementById("plotForm");
+            const formData = new URLSearchParams(new FormData(form));
+            const cmap_max = formData.get("cmap_max");
+
+
+
         console.log("voxel_data_changed", e.detail);
-        await view.set_voxel_data(e.detail.image);
+        await view.set_voxel_data(e.detail.image, cmap_max);
         if (e.detail.matrix_overlap)
             await view.plot_overlap_matrix(e.detail);
     });

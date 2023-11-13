@@ -46,7 +46,7 @@ async function getVoxelPixel({voxel}) {
     }
 }
 
-async function voxels_to_flatmap(data32_index) {
+async function voxels_to_flatmap(data32_index, cmap_max) {
     console.time("voxels_to_flatmap");
     let [mapping, mapping_inverse] = await getMapping();
 
@@ -54,7 +54,7 @@ async function voxels_to_flatmap(data32_index) {
 
     let data32 = new Uint32Array(width * height);
 
-    let packedColor = get_cmap_uint32();
+    let packedColor = get_cmap_uint32("turbo", cmap_max);
     let packedColor2 = get_cmap_uint32("gray", 4);
     const maxColorIndex = packedColor.length - 1;
 
@@ -168,8 +168,8 @@ export function add_2D_view(dom_elem) {
         updatePointDisplay();
     }
 
-    async function set_voxel_data(image) {
-        const data32 = await voxels_to_flatmap(image);
+    async function set_voxel_data(image, cmap_max) {
+        const data32 = await voxels_to_flatmap(image, cmap_max);
         const processedImageData = new ImageData(data32, canvas.width, canvas.height);
         let ctx = canvas.getContext("2d");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
