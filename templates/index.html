@@ -396,13 +396,20 @@
                                                   onclick="update_plot()"></label>
 
             <select id="matrix_select" name="matrix_select" oninput="update_plot()"></select>
-
+            <br/>
+            Depth Data:
             <select id="data_select" name="data_select" oninput="update_plot()">
                 <option value="none">none</option>
                 <option value="min">min</option>
                 <option value="max">max</option>
                 <option value="mean">mean</option>
                 <option value="range">range</option>
+            </select>
+            Voxel Agg:
+            <select id="data_select2" name="data_select2" oninput="update_plot()">
+                <option value="min">min</option>
+                <option value="max">max</option>
+                <option value="mean">mean</option>
             </select>
             cmap_max
             <input type="number" name="cmap_max" value="8" min="8" max="80" oninput="update_plot()">
@@ -505,6 +512,7 @@
 
             const matrix_select = formData.get("matrix_select");
             const data_select = formData.get("data_select");
+            const data_select2 = formData.get("data_select2");
             const cmap_max = formData.get("cmap_max");
 
             let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
@@ -533,6 +541,7 @@
                 show_matrix,
                 matrix_select,
                 data_select,
+                data_select2,
                 min_val: init_data.min_val,
                 max_val: init_data.max_val,
                 mean_val: init_data.mean_val,

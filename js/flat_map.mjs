@@ -1,4 +1,5 @@
 import {cachedLoadNpy} from "./numpy_to_js.mjs";
+
 let [height, width] = [1024, 2274]//data_masks_all.shape;
 let voxel_count = 327684;
 
@@ -12,8 +13,6 @@ function countBits(number, positions) {
     }
     return count;
 }
-
-
 
 
 function convertIndexToBits(subject_ids) {
@@ -41,14 +40,14 @@ function getBitCountTable(subject_ids, min_subject_overlap_count) {
 }
 
 export async function get_components({
-                                  component_ids_array,
-                                  component_ids,
-                                  subject_ids,
-                                  min_subject_overlap_count,
-                                  layer_ids,
-                                  voxel,
-                                  runs,
-                              }) {
+                                         component_ids_array,
+                                         component_ids,
+                                         subject_ids,
+                                         min_subject_overlap_count,
+                                         layer_ids,
+                                         voxel,
+                                         runs,
+                                     }) {
     let layer_ids_offsets = layer_ids.map(x => x * voxel_count);
 
     let data_arrays = await loadAllNpyInParallel(component_ids_array, runs);
@@ -110,7 +109,7 @@ export async function overlap_matrix({component_ids_array, subject_ids, min_subj
     for (let j = 0; j < component_count; j++) {
         const map = new Uint8Array(voxel_count);
         const a = data_arrays[j].data;
-        for(let i = 0; i < voxel_count; i++) {
+        for (let i = 0; i < voxel_count; i++) {
             if (!(data_masks_all_d[i] & all_bits)) {
                 continue
             }
@@ -128,10 +127,10 @@ export async function overlap_matrix({component_ids_array, subject_ids, min_subj
     console.time("group2")
     for (let i = 0; i < voxel_count; i++) {
         for (let x = 0; x < component_count; x++) {
-            if(current_maps[x][i]) {
+            if (current_maps[x][i]) {
                 matrix_overlap[x * component_count + x] += 1;
                 for (let y = x + 1; y < component_count; y++) {
-                    if(current_maps[y][i]) {
+                    if (current_maps[y][i]) {
                         matrix_overlap[x * component_count + y] += 1;
                         matrix_overlap[y * component_count + x] += 1;
                     }
@@ -155,19 +154,19 @@ function argsortDesc(arr) {
 
 export async function sort_overlap_matrix(matrix_overlap, component_ids, matrix_select) {
     let component_count = Math.sqrt(matrix_overlap.length);
-    if(!matrix_select || matrix_select == "none") {
+    if (!matrix_select || matrix_select == "none") {
         return [matrix_overlap, component_ids]
     }
     let matrix_overlap_sorted = new Int32Array(component_count * component_count);
     let values_to_sort = [];
-    for(let i = 0; i < component_count; i++)
+    for (let i = 0; i < component_count; i++)
         values_to_sort.push(matrix_overlap[i * component_count + component_ids.indexOf(matrix_select)]);
 
     let indices = argsortDesc(values_to_sort);
 
     let component_ids_sorted = []
-    for(let i = 0; i < component_count; i++) {
-        for(let j = 0; j < component_count; j++) {
+    for (let i = 0; i < component_count; i++) {
+        for (let j = 0; j < component_count; j++) {
             matrix_overlap_sorted[i * component_count + j] = matrix_overlap[indices[i] * component_count + indices[j]];
         }
         component_ids_sorted.push(component_ids[indices[i]]);
@@ -220,19 +219,31 @@ export async function show_image({component_ids_array, subject_ids, min_subject_
     return data32_index;
 }
 
-export async function show_image_depth({component_ids_array, subject_ids, min_subject_overlap_count, layer_ids, runs, data_select, min_val, max_val, mean_val, range_val}) {
+export async function show_image_depth({
+                                           component_ids_array,
+                                           subject_ids,
+                                           min_subject_overlap_count,
+                                           layer_ids,
+                                           runs,
+                                           data_select,
+                                           min_val,
+                                           max_val,
+                                           mean_val,
+                                           range_val,
+                                           data_select2
+                                       }) {
     console.log("show_image_depth", data_select)
     const all_bits = convertIndexToBits(subject_ids);
     const bitCountTable = getBitCountTable(subject_ids, min_subject_overlap_count);
 
     let data_depth;
-    if(data_select == "min")
+    if (data_select == "min")
         data_depth = min_val;
-    else if(data_select == "max")
+    else if (data_select == "max")
         data_depth = max_val;
-    else if(data_select == "mean")
+    else if (data_select == "mean")
         data_depth = mean_val;
-    else if(data_select == "range")
+    else if (data_select == "range")
         data_depth = range_val;
 
     console.time("LoadBinary");
@@ -250,6 +261,46 @@ export async function show_image_depth({component_ids_array, subject_ids, min_su
 
     const layer_ids_offsets = layer_ids.map(x => x * voxel_count);
 
+    let bitsValue = 0;
+    let bitsCount = 0;
+    let init_agg = function () {
+        bitsValue = 0;
+        bitsCount = 0;
+    }
+    let add_agg = function (value) {
+        bitsCount += 1;
+        bitsValue += value;
+    }
+
+    let sum_agg = function () {
+        return bitsValue / bitsCount;
+    }
+
+    if(data_select2 == "min") {
+        init_agg = function () {
+            bitsValue = Infinity;
+        }
+        add_agg = function (value) {
+            if (value < bitsValue)
+                bitsValue = value
+        }
+        sum_agg = function () {
+            return bitsValue
+        }
+    }
+    else if(data_select2 == "max") {
+        init_agg = function () {
+            bitsValue = -Infinity;
+        }
+        add_agg = function (value) {
+            if (value > bitsValue)
+                bitsValue = value
+        }
+        sum_agg = function () {
+            return bitsValue
+        }
+    }
+
     console.time("PixelManipulationX");
     for (let i = 0; i < voxel_count; i++) {
         if (!(data_masks_all_d[i] & all_bits)) {
@@ -257,21 +308,22 @@ export async function show_image_depth({component_ids_array, subject_ids, min_su
             continue
         }
 
-        let bitsCount = 0;
-        let bitsValue = 0;
+        init_agg()
         for (let ii in data_arrays_d) {
             let a = data_arrays_d[ii]
             let mask_pix = 0
             for (let index_layer_offset of layer_ids_offsets) {
                 mask_pix |= a[i + index_layer_offset]
             }
-            bitsCount += bitCountTable[mask_pix];
-            bitsValue += data_depth[component_ids_array[ii]] * bitCountTable[mask_pix];
+            if(bitCountTable[mask_pix])
+                add_agg(data_depth[component_ids_array[ii]]);
+            //bitsCount += bitCountTable[mask_pix];
+            //bitsValue += data_depth[component_ids_array[ii]] * bitCountTable[mask_pix];
             //if (bitsCount === maxColorIndex)
             //    break;
         }
 
-        data32_index[i] = bitsValue / bitsCount;
+        data32_index[i] = sum_agg();
     }
     console.timeEnd("PixelManipulationX");
 
