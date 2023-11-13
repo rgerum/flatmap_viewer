@@ -2,6 +2,7 @@ import {overlap_matrix} from "./flat_map.mjs";
 
 const worker = new Worker('js/worker.mjs', {type: 'module'});
 
+let update_id = 0;
 worker.addEventListener('message', function (e) {
     if (e.data.type === 'image') {
         var myEvent = new CustomEvent('voxel_data_changed',
@@ -13,9 +14,9 @@ worker.addEventListener('message', function (e) {
             });
         window.dispatchEvent(myEvent);
 
-        document.querySelectorAll(".spinner").forEach(x => x.style.display = "none");
-
-
+        console.log("update_id", e.data.update_id, update_id)
+        if(e.data.update_id === update_id)
+            document.querySelectorAll(".spinner").forEach(x => x.style.display = "none");
     }
     if (e.data.type === 'pixel') {
         var myEvent = new CustomEvent('display_components', {detail: {components: e.data.pixel}});
@@ -36,6 +37,7 @@ export async function startWorker(form_data) {
     // Start the worker with some data
     worker.postMessage({
         type: 'image',
+        update_id: ++update_id,
         ...form_data
     });
 }

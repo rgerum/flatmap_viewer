@@ -24,7 +24,7 @@ self.addEventListener('message', async function (e) {
         //const data32 = await voxels_to_flatmap(data32_index);
 
         // Post the result back to the main thread
-        self.postMessage({type: 'image', data32_index, matrix_overlap: matrix_overlap, component_ids: e.data.component_ids, matrix_select: e.data.matrix_select, sort_index});
+        self.postMessage({type: 'image', data32_index, matrix_overlap: matrix_overlap, component_ids: e.data.component_ids, matrix_select: e.data.matrix_select, sort_index, update_id: e.data.update_id});
     }
     if (e.data.type === 'image2') {
         const data32_index = await show_image2(e.data);
