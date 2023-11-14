@@ -71,7 +71,6 @@ export function drawMatrix2(matrix, labels, callback) {
       matrixCell.innerText = padNumber(labels[i]);
       canvas.appendChild(matrixCell);
       current_children[id2] = matrixCell;
-      console.log(id, matrixCell);
     }
     current_children[id2].style.transform = `translate(${
       (i + offset) * cell_width
@@ -83,12 +82,8 @@ export function drawMatrix2(matrix, labels, callback) {
   for (let id in current_children) {
     canvas.removeChild(current_children[id]);
   }
-  console.log(current_children);
   return;
 }
-/*
-drawMatrix2([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [0, 1, 2])
- */
 
 export function drawHeatmap(canvas, matrix, labels, vmax) {
   const ctx = canvas.getContext("2d");
