@@ -212,6 +212,7 @@ export async function show_image({
   min_subject_overlap_count,
   layer_ids,
   runs,
+  cmap_max,
 }) {
   const all_bits = convertIndexToBits(subject_ids);
   const bitCountTable = getBitCountTable(
@@ -232,7 +233,7 @@ export async function show_image({
   const data_arrays_d = data_arrays.map((x) => x.data);
 
   const data_masks_all_d = data_masks_all.data;
-  const maxColorIndex = 8;
+  const maxColorIndex = cmap_max;
 
   const layer_ids_offsets = layer_ids.map((x) => x * voxel_count);
 
