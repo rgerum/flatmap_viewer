@@ -459,21 +459,23 @@
             name="matrix_select"
             oninput="update_plot()"
           ></select>
-          <br />
-          Depth Data:
+        </div>
+        <div class="control_box" id="box_data">
+          <span class="control_box_title">Data</span><br />
+          Depth&nbsp;Data:
           <select id="data_select" name="data_select" oninput="update_plot()">
             <option value="none">none</option>
             <option value="min">min</option>
             <option value="max">max</option>
             <option value="mean">mean</option>
-            <option value="range">range</option>
-          </select>
-          Voxel Agg:
+            <option value="range">range</option></select
+          ><br />
+          Voxel&nbsp;Agg:
           <select id="data_select2" name="data_select2" oninput="update_plot()">
             <option value="min">min</option>
             <option value="max">max</option>
-            <option value="mean">mean</option>
-          </select>
+            <option value="mean">mean</option></select
+          ><br />
           cmap_max
           <input
             type="number"
