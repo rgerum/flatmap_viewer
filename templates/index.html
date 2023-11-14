@@ -174,10 +174,34 @@
 
       .control_box {
           background: #262626c9;
-          padding: 7px;
           border-radius: 10px;
           overflow: hidden;
           /* margin: 5px; */
+          transition: width 0.5s;
+      }
+
+      .folded {
+        display: flex;
+        width: 34px;
+        flex-shrink: 0;
+      }
+
+      .folded .control_box_content {
+          /* width: 2px; */
+          overflow: hidden;
+          height: 0px;
+          width: 0px;
+          transition: height 0.5s;
+      }
+
+
+      .folded .control_box_title {
+        /* height: 100%; */
+        transition: height 0.5s;
+        writing-mode: vertical-lr;
+        rotate: 180deg;
+        /* align-self: stretch; */
+        overflow: clip;
       }
 
       .main_column {
@@ -190,11 +214,15 @@
           background: #393939;
           width: 100%;
           display: block;
-          margin: -10px -10px 0;
-          padding: 10px 10px 5px;
+          padding: 5px 10px 5px;
           font-variant: small-caps;
           text-overflow: ellipsis;
           overflow: hidden;
+      }
+
+      .control_box_content {
+        padding: 5px;
+        transition: height 0.5s, width 0.5s;
       }
 
       .row_title2 {
@@ -403,91 +431,103 @@
       <form id="plotForm" class="controls">
         <input type="hidden" name="show_groups" value="0" />
         <div class="control_box">
-          <span class="control_box_title">Runs</span>
-          <br />
-          <div id="runs" class="check_list_rows"></div>
+          <span class="control_box_title"><span>Runs</span></span>
+          <div class="control_box_content">
+            <div id="runs" class="check_list_rows"></div>
+          </div>
         </div>
         <div class="control_box">
           <span class="control_box_title">Layers</span>
-          <br />
-          <div id="layer_ids" class="check_list_rows"></div>
+          <div class="control_box_content">
+            <div id="layer_ids" class="check_list_rows"></div>
+          </div>
         </div>
         <div class="control_box">
           <span class="control_box_title">Subjects</span>
-          <div id="subject_ids" class="check_list"></div>
-          Min Sub Overlap Count:
-          <input
-            type="number"
-            name="min_subject_overlap_count"
-            min="1"
-            max="8"
-            value="4"
-            oninput="update_plot()"
-          />
+          <div class="control_box_content">
+            <div id="subject_ids" class="check_list"></div>
+            Min Sub Overlap Count:
+            <input
+              type="number"
+              name="min_subject_overlap_count"
+              min="1"
+              max="8"
+              value="4"
+              oninput="update_plot()"
+            />
+          </div>
         </div>
         <div class="control_box" id="box_components">
           <span class="control_box_title">Components</span>
-          <div id="component_ids" class="check_list"></div>
-          <input type="button" value="none" id="btn_select_none" />
-          <input type="button" value="all" id="btn_select_all" />
-          <input type="button" value="copy" id="btn_copy" />
-          <input type="button" value="paste" id="btn_paste" />
-          <input type="button" value="from voxel" id="btn_from_voxel" />
-          <label
-            ><span>show roi</span
-            ><input
-              type="checkbox"
-              value="on"
-              id="show_roi"
-              name="show_roi"
-              checked
-              onclick="toggle_roi()"
-          /></label>
+          <div class="control_box_content">
+            <div id="component_ids" class="check_list"></div>
+            <input type="button" value="none" id="btn_select_none" />
+            <input type="button" value="all" id="btn_select_all" />
+            <input type="button" value="copy" id="btn_copy" />
+            <input type="button" value="paste" id="btn_paste" />
+            <input type="button" value="from voxel" id="btn_from_voxel" />
+            <label
+              ><span>show roi</span
+              ><input
+                type="checkbox"
+                value="on"
+                id="show_roi"
+                name="show_roi"
+                checked
+                onclick="toggle_roi()"
+            /></label>
 
-          <label
-            ><span>show matrix</span
-            ><input
-              type="checkbox"
-              value="on"
-              id="show_matrix"
-              name="show_matrix"
-              onclick="update_plot()"
-          /></label>
+            <label
+              ><span>show matrix</span
+              ><input
+                type="checkbox"
+                value="on"
+                id="show_matrix"
+                name="show_matrix"
+                onclick="update_plot()"
+            /></label>
 
-          <select
-            id="matrix_select"
-            name="matrix_select"
-            oninput="update_plot()"
-          ></select>
+            <select
+              id="matrix_select"
+              name="matrix_select"
+              oninput="update_plot()"
+            ></select>
+          </div>
         </div>
         <div class="control_box" id="box_data">
-          <span class="control_box_title">Data</span><br />
-          Depth&nbsp;Data:
-          <select id="data_select" name="data_select" oninput="update_plot()">
-            <option value="none">none</option>
-            <option value="min">min</option>
-            <option value="max">max</option>
-            <option value="mean">mean</option>
-            <option value="range">range</option></select
-          ><br />
-          Voxel&nbsp;Agg:
-          <select id="data_select2" name="data_select2" oninput="update_plot()">
-            <option value="min">min</option>
-            <option value="max">max</option>
-            <option value="mean">mean</option></select
-          ><br />
-          cmap_max
-          <input
-            type="number"
-            name="cmap_max"
-            value="8"
-            min="8"
-            max="80"
-            oninput="update_plot()"
-          />
-          <input type="hidden" name="x" value="0" />
-          <input type="hidden" name="y" value="0" />
-          <input type="hidden" name="voxel" value="0" />
+          <span class="control_box_title">Data</span>
+          <div class="control_box_content">
+            Depth&nbsp;Data:
+            <select id="data_select" name="data_select" oninput="update_plot()">
+              <option value="none">none</option>
+              <option value="min">min</option>
+              <option value="max">max</option>
+              <option value="mean">mean</option>
+              <option value="range">range</option></select
+            ><br />
+            Voxel&nbsp;Agg:
+            <select
+              id="data_select2"
+              name="data_select2"
+              oninput="update_plot()"
+            >
+              <option value="min">min</option>
+              <option value="max">max</option>
+              <option value="mean">mean</option></select
+            ><br />
+            cmap_max
+            <input
+              type="number"
+              name="cmap_max"
+              value="8"
+              min="8"
+              max="80"
+              oninput="update_plot()"
+            />
+            <input type="hidden" name="x" value="0" />
+            <input type="hidden" name="y" value="0" />
+            <input type="hidden" name="voxel" value="0" />
+          </div>
         </div>
 
         <div class="control_box" id="box_concepts" style="display: none">
@@ -619,6 +659,16 @@
       } from "./js/update_image.mjs";
 
       let zoom_scale = 1;
+
+      document.querySelectorAll(".control_box_title").forEach((x) => {
+        x.onclick = () => {
+          if (x.parentElement.className.indexOf("folded") > 1) {
+            x.parentElement.className = "control_box";
+          } else {
+            x.parentElement.className = "control_box folded";
+          }
+        };
+      });
 
       function toggle_3d() {
         if (document.getElementById("plot3dContainer").style.width == "") {
