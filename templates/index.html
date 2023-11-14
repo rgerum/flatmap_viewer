@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Flatmap Viewer</title>
     <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.11/pako.min.js"></script>
@@ -10,567 +10,677 @@
     <script src="js/form_to_url.js"></script>
 
     <script type="importmap">
-        {
-          "imports": {
-            "three": "https://unpkg.com/three@v0.158.0/build/three.module.js",
-            "three/addons/": "https://unpkg.com/three@v0.158.0/examples/jsm/"
-          }
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@v0.158.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@v0.158.0/examples/jsm/"
         }
+      }
     </script>
 
     <style>
-        body {
-            background: #151515;
-            color: #c4c4c4;
-            font-family: sans;
-            margin: 10px;
-        }
+      body {
+          background: #151515;
+          color: #c4c4c4;
+          font-family: sans;
+          margin: 10px;
+      }
 
-        #plotContainer {
-            overflow: hidden;
-            border: 1px solid black;
-            /*width: 100%;
-            height: 400px;*/
-            position: relative;
-            border-radius: 10px;
-        }
+      #plotContainer {
+          overflow: hidden;
+          border: 1px solid black;
+          /*width: 100%;
+          height: 400px;*/
+          position: relative;
+          border-radius: 10px;
+      }
 
-        #plotImage {
-            max-width: none;
-            transform-origin: top left;
-        }
+      #plotImage {
+          max-width: none;
+          transform-origin: top left;
+      }
 
-        .grid {
-            display: table;
-        }
+      .grid {
+          display: table;
+      }
 
-        .row {
-            display: table-row;
-        }
+      .row {
+          display: table-row;
+      }
 
-        .square {
-            display: table-cell;
-            width: 10px;
-            height: 10px;
-            border: 1px solid black;
-            background: rgb(128, 128, 128);
-        }
+      .square {
+          display: table-cell;
+          width: 10px;
+          height: 10px;
+          border: 1px solid black;
+          background: rgb(128, 128, 128);
+      }
 
-        .square_active {
-            display: table-cell;
-            width: 10px;
-            height: 10px;
-            border: 1px solid black;
-            background: red;
-        }
+      .square_active {
+          display: table-cell;
+          width: 10px;
+          height: 10px;
+          border: 1px solid black;
+          background: red;
+      }
 
-        #plotImage {
-            position: relative;
-        }
+      #plotImage {
+          position: relative;
+      }
 
-        .image_centering {
-            margin: 0 auto;
-            /*height: 119px;
-            margin: 0 auto;
-            display: block;*/
-            display: flex;
-            justify-content: center; /* Horizontally centers the image */
-            align-items: center; /* Vertically centers the image */
-            height: 400px; /* Adjust as needed */
-            width: 300px; /* Adjust as needed */
-        }
+      .image_centering {
+          margin: 0 auto;
+          /*height: 119px;
+          margin: 0 auto;
+          display: block;*/
+          display: flex;
+          justify-content: center; /* Horizontally centers the image */
+          align-items: center; /* Vertically centers the image */
+          height: 400px; /* Adjust as needed */
+          width: 300px; /* Adjust as needed */
+      }
 
-        .image {
-            position: absolute;
-        / / top: 0;
-        / / left: 0;
-            max-height: 100%;
-
-
-        }
-
-        .check_list {
-            display: flex;
-            flex-wrap: wrap;
-        }
-
-        .check_list label {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 0.8em;
-            padding-top: 13px;
-        }
-
-        .check_list span {
-            transform: rotate(-90deg);
-            height: 1em;
-            width: 1em;
-            text-align: right;
-        }
-
-        .check_list_rows {
-            width: 277px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .check_list_rows label {
-            display: flex;
-            flex-direction: row;
-        }
-
-        #componentExamples {
-            width: 100%;
-            overflow-x: scroll;
-            border-radius: 10px;
-            background: #262626c9;
-            min-height: 128px;
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
-
-        #componentExamples div {
-            display: flex;
-        }
-
-        .spinner {
-            border: 8px solid rgba(255, 255, 255, 0.3); /* Light grey */
-            border-radius: 50%; /* Circular shape */
-            border-top: 8px solid #333; /* Dark grey */
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            display: none; /* Hidden by default */
-        }
-
-        @keyframes spin {
-            0% {
-                transform: translate(-50%, -50%) rotate(0deg);
-            }
-            100% {
-                transform: translate(-50%, -50%) rotate(360deg);
-            }
-        }
-
-        #clicked {
-            position: absolute;
-            background: #262626c9;
-            padding: 5px;
-            top: 5px;
-            border-radius: 10px;
-            left: 5px;
-        }
-
-        .controls {
-            display: flex;
-            gap: 10px;
-        }
-
-        .control_box {
-            background: #262626c9;
-            padding: 7px;
-            border-radius: 10px;
-            overflow: hidden;
-            /* margin: 5px; */
-        }
-
-        .main_column {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .control_box_title {
-            background: #393939;
-            width: 100%;
-            display: block;
-            margin: -10px -10px 0;
-            padding: 10px 10px 5px;
-            font-variant: small-caps;
-            text-overflow: ellipsis;
-            overflow: hidden;
-        }
-
-        .row_title2 {
-            position: relative; /* Make the box a position reference for the title */
-            padding-left: 30px; /* Space for the rotated title */
-            background: #393939;
-        }
-
-        .row_title2 div {
-            position: absolute;
-            top: 50%;
-            left: 0;
-            transform: translate(4px, 50%) rotate(-90deg);
-            transform-origin: top left;
-            white-space: nowrap;
-            padding-top: 0px;
-        }
-
-        input[type="number"], input[type="text"] {
-            max-width: calc(100% - 10px);
-        }
-
-        .flex-row {
-            display: flex;
-            flex-direction: row;
-            gap: 10px
-        }
-
-        .flex-row > div {
-            width: 100%;
-        }
-
-        .round-corner {
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid black;
-            background: #151515;
-            position: relative;
-        }
-
-        .slidecontainer {
-            width: 160px; /* Width of the outside container */
-            max-width: 80%;
-            position: absolute;
-            bottom: 5px;
-            left: 5px;
-        }
-
-        .slider_marker {
-            height: 8px;
-            width: 1px;
-            background: #bbb;
-            position: absolute;
-            top: 5px;
-        }
-
-        /* The slider itself */
-        .slider {
-            -webkit-appearance: none; /* Override default CSS styles */
-            appearance: none;
-            width: 100%; /* Full-width */
-            height: 8px; /* Specified height */
-            background: #262626c9; /* Grey background */
-            outline: none; /* Remove outline */
-            opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
-            -webkit-transition: .2s; /* 0.2 seconds transition on hover */
-            transition: opacity .2s;
-            border-radius: 10px;
-        }
-
-        /* Mouse-over effects */
-        .slider:hover {
-            opacity: 1; /* Fully shown on mouse-over */
-        }
-
-        /* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none; /* Override default look */
-            appearance: none;
-            width: 13px; /* Set a specific slider handle width */
-            height: 13px; /* Slider handle height */
-            background: #242424; /* Green background */
-            cursor: pointer; /* Cursor on hover */
-        }
-
-        .slider::-moz-range-thumb {
-            width: 13px; /* Set a specific slider handle width */
-            height: 13px; /* Slider handle height */
-            background: #242424; /* Green background */
-            cursor: pointer; /* Cursor on hover */
-        }
+      .image {
+          position: absolute;
+      / / top: 0;
+      / / left: 0;
+          max-height: 100%;
 
 
-        .slider_buttons {
-            bottom: 30px;
-            position: absolute;
-            left: 10px;
-        }
+      }
 
-        .grow {
-            transition: width 0.5s ease-in-out;
-        }
+      .check_list {
+          display: flex;
+          flex-wrap: wrap;
+      }
 
-        .button_control_top {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            width: auto !important;
-        }
+      .check_list label {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          font-size: 0.8em;
+          padding-top: 13px;
+      }
 
-        .slider_button {
-            border: 0px solid black;
-            border-radius: 10px;
-            padding: 5px;
-            cursor: pointer;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-size: contain;
-            background-color: gray;
-            width: 35px;
-            height: 35px;
-            /*filter: brightness(0.3);*/
-            opacity: 0.5;
-            transition: background-color 0.5s ease-in-out;
-        }
+      .check_list span {
+          transform: rotate(-90deg);
+          height: 1em;
+          width: 1em;
+          text-align: right;
+      }
 
-        .img_inflated {
-            background-image: url("img/inflated.png");
-        }
+      .check_list_rows {
+          width: 277px;
+          display: flex;
+          flex-direction: column;
+      }
 
-        .img_flat {
-            background-image: url("img/flat.png");
-        }
+      .check_list_rows label {
+          display: flex;
+          flex-direction: row;
+      }
 
-        .img_pia {
-            background-image: url("img/pia.png");
-        }
+      #componentExamples {
+          width: 100%;
+          overflow-x: scroll;
+          border-radius: 10px;
+          background: #262626c9;
+          min-height: 128px;
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+      }
 
-        .img_wm {
-            background-image: url("img/wm.png");
-        }
+      #componentExamples div {
+          display: flex;
+      }
 
-        .img_selected {
-            background-color: darkred;
-        }
+      .spinner {
+          border: 8px solid rgba(255, 255, 255, 0.3); /* Light grey */
+          border-radius: 50%; /* Circular shape */
+          border-top: 8px solid #333; /* Dark grey */
+          width: 50px;
+          height: 50px;
+          animation: spin 1s linear infinite;
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          display: none; /* Hidden by default */
+      }
+
+      @keyframes spin {
+          0% {
+              transform: translate(-50%, -50%) rotate(0deg);
+          }
+          100% {
+              transform: translate(-50%, -50%) rotate(360deg);
+          }
+      }
+
+      #clicked {
+          position: absolute;
+          background: #262626c9;
+          padding: 5px;
+          top: 5px;
+          border-radius: 10px;
+          left: 5px;
+      }
+
+      .controls {
+          display: flex;
+          gap: 10px;
+      }
+
+      .control_box {
+          background: #262626c9;
+          padding: 7px;
+          border-radius: 10px;
+          overflow: hidden;
+          /* margin: 5px; */
+      }
+
+      .main_column {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+      }
+
+      .control_box_title {
+          background: #393939;
+          width: 100%;
+          display: block;
+          margin: -10px -10px 0;
+          padding: 10px 10px 5px;
+          font-variant: small-caps;
+          text-overflow: ellipsis;
+          overflow: hidden;
+      }
+
+      .row_title2 {
+          position: relative; /* Make the box a position reference for the title */
+          padding-left: 30px; /* Space for the rotated title */
+          background: #393939;
+      }
+
+      .row_title2 div {
+          position: absolute;
+          top: 50%;
+          left: 0;
+          transform: translate(4px, 50%) rotate(-90deg);
+          transform-origin: top left;
+          white-space: nowrap;
+          padding-top: 0px;
+      }
+
+      input[type="number"], input[type="text"] {
+          max-width: calc(100% - 10px);
+      }
+
+      .flex-row {
+          display: flex;
+          flex-direction: row;
+          gap: 10px
+      }
+
+      .flex-row > div {
+          width: 100%;
+      }
+
+      .round-corner {
+          border-radius: 10px;
+          overflow: hidden;
+          border: 1px solid black;
+          background: #151515;
+          position: relative;
+      }
+
+      .slidecontainer {
+          width: 160px; /* Width of the outside container */
+          max-width: 80%;
+          position: absolute;
+          bottom: 5px;
+          left: 5px;
+      }
+
+      .slider_marker {
+          height: 8px;
+          width: 1px;
+          background: #bbb;
+          position: absolute;
+          top: 5px;
+      }
+
+      /* The slider itself */
+      .slider {
+          -webkit-appearance: none; /* Override default CSS styles */
+          appearance: none;
+          width: 100%; /* Full-width */
+          height: 8px; /* Specified height */
+          background: #262626c9; /* Grey background */
+          outline: none; /* Remove outline */
+          opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+          -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+          transition: opacity .2s;
+          border-radius: 10px;
+      }
+
+      /* Mouse-over effects */
+      .slider:hover {
+          opacity: 1; /* Fully shown on mouse-over */
+      }
+
+      /* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+      .slider::-webkit-slider-thumb {
+          -webkit-appearance: none; /* Override default look */
+          appearance: none;
+          width: 13px; /* Set a specific slider handle width */
+          height: 13px; /* Slider handle height */
+          background: #242424; /* Green background */
+          cursor: pointer; /* Cursor on hover */
+      }
+
+      .slider::-moz-range-thumb {
+          width: 13px; /* Set a specific slider handle width */
+          height: 13px; /* Slider handle height */
+          background: #242424; /* Green background */
+          cursor: pointer; /* Cursor on hover */
+      }
 
 
-        #matrixContainer {
-            position: relative;
-            width: 400px;
-            height: 400px;
-        }
+      .slider_buttons {
+          bottom: 30px;
+          position: absolute;
+          left: 10px;
+      }
 
-        .matrixCell {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 1px; /* Width of each cell */
-            height: 1px; /* Height of each cell */
-            font-size: 0.8px;
-            text-align: right;
-            transition: transform 0.5s; /* Smooth transition for movement */
-        }
-        
-        @media screen and (max-width: 600px) {
-            .controls {
-                flex-direction: column;
-            }
-            .check_list_rows {
-                flex-direction: row;
-            }
-        }
+      .grow {
+          transition: width 0.5s ease-in-out;
+      }
+
+      .button_control_top {
+          position: absolute;
+          top: 5px;
+          right: 5px;
+          width: auto !important;
+      }
+
+      .slider_button {
+          border: 0px solid black;
+          border-radius: 10px;
+          padding: 5px;
+          cursor: pointer;
+          background-position: center;
+          background-repeat: no-repeat;
+          background-size: contain;
+          background-color: gray;
+          width: 35px;
+          height: 35px;
+          /*filter: brightness(0.3);*/
+          opacity: 0.5;
+          transition: background-color 0.5s ease-in-out;
+      }
+
+      .img_inflated {
+          background-image: url("img/inflated.png");
+      }
+
+      .img_flat {
+          background-image: url("img/flat.png");
+      }
+
+      .img_pia {
+          background-image: url("img/pia.png");
+      }
+
+      .img_wm {
+          background-image: url("img/wm.png");
+      }
+
+      .img_selected {
+          background-color: darkred;
+      }
+
+
+      #matrixContainer {
+          position: relative;
+          width: 400px;
+          height: 400px;
+      }
+
+      .matrixCell {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 1px; /* Width of each cell */
+          height: 1px; /* Height of each cell */
+          font-size: 0.8px;
+          text-align: right;
+          transition: transform 0.5s; /* Smooth transition for movement */
+      }
+
+      @media screen and (max-width: 600px) {
+          .controls {
+              flex-direction: column;
+          }
+          .check_list_rows {
+              flex-direction: row;
+          }
+      }
     </style>
-</head>
-<body>
-<div id="grid"></div>
-<div class="main_column">
-    <form id="plotForm" class="controls">
-        <input type="hidden" name="show_groups" value="0"/>
+  </head>
+  <body>
+    <div id="grid"></div>
+    <div class="main_column">
+      <form id="plotForm" class="controls">
+        <input type="hidden" name="show_groups" value="0" />
         <div class="control_box">
-            <span class="control_box_title">Runs</span>
-            <br/>
-            <div id="runs" class="check_list_rows"></div>
+          <span class="control_box_title">Runs</span>
+          <br />
+          <div id="runs" class="check_list_rows"></div>
         </div>
         <div class="control_box">
-            <span class="control_box_title">Layers</span>
-            <br/>
-            <div id="layer_ids" class="check_list_rows"></div>
+          <span class="control_box_title">Layers</span>
+          <br />
+          <div id="layer_ids" class="check_list_rows"></div>
         </div>
         <div class="control_box">
-            <span class="control_box_title">Subjects</span>
-            <div id="subject_ids" class="check_list"></div>
-            Min Sub Overlap Count: <input type="number" name="min_subject_overlap_count" min="1" max="8" value="4"
-                                          oninput="update_plot()">
+          <span class="control_box_title">Subjects</span>
+          <div id="subject_ids" class="check_list"></div>
+          Min Sub Overlap Count:
+          <input
+            type="number"
+            name="min_subject_overlap_count"
+            min="1"
+            max="8"
+            value="4"
+            oninput="update_plot()"
+          />
         </div>
         <div class="control_box" id="box_components">
-            <span class="control_box_title">Components</span>
-            <div id="component_ids" class="check_list"></div>
-            <input type="button" value="none" id="btn_select_none">
-            <input type="button" value="all" id="btn_select_all">
-            <input type="button" value="copy" id="btn_copy">
-            <input type="button" value="paste" id="btn_paste">
-            <input type="button" value="from voxel" id="btn_from_voxel">
-            <label><span>show roi</span><input type="checkbox" value="on" id="show_roi" name="show_roi" checked
-                                               onclick="toggle_roi()"></label>
+          <span class="control_box_title">Components</span>
+          <div id="component_ids" class="check_list"></div>
+          <input type="button" value="none" id="btn_select_none" />
+          <input type="button" value="all" id="btn_select_all" />
+          <input type="button" value="copy" id="btn_copy" />
+          <input type="button" value="paste" id="btn_paste" />
+          <input type="button" value="from voxel" id="btn_from_voxel" />
+          <label
+            ><span>show roi</span
+            ><input
+              type="checkbox"
+              value="on"
+              id="show_roi"
+              name="show_roi"
+              checked
+              onclick="toggle_roi()"
+          /></label>
 
-            <label><span>show matrix</span><input type="checkbox" value="on" id="show_matrix" name="show_matrix"
-                                                  onclick="update_plot()"></label>
+          <label
+            ><span>show matrix</span
+            ><input
+              type="checkbox"
+              value="on"
+              id="show_matrix"
+              name="show_matrix"
+              onclick="update_plot()"
+          /></label>
 
-            <select id="matrix_select" name="matrix_select" oninput="update_plot()"></select>
-            <br/>
-            Depth Data:
-            <select id="data_select" name="data_select" oninput="update_plot()">
-                <option value="none">none</option>
-                <option value="min">min</option>
-                <option value="max">max</option>
-                <option value="mean">mean</option>
-                <option value="range">range</option>
-            </select>
-            Voxel Agg:
-            <select id="data_select2" name="data_select2" oninput="update_plot()">
-                <option value="min">min</option>
-                <option value="max">max</option>
-                <option value="mean">mean</option>
-            </select>
-            cmap_max
-            <input type="number" name="cmap_max" value="8" min="8" max="80" oninput="update_plot()">
-            <input type="hidden" name="x" value="0"/>
-            <input type="hidden" name="y" value="0"/>
-            <input type="hidden" name="voxel" value="0"/>
+          <select
+            id="matrix_select"
+            name="matrix_select"
+            oninput="update_plot()"
+          ></select>
+          <br />
+          Depth Data:
+          <select id="data_select" name="data_select" oninput="update_plot()">
+            <option value="none">none</option>
+            <option value="min">min</option>
+            <option value="max">max</option>
+            <option value="mean">mean</option>
+            <option value="range">range</option>
+          </select>
+          Voxel Agg:
+          <select id="data_select2" name="data_select2" oninput="update_plot()">
+            <option value="min">min</option>
+            <option value="max">max</option>
+            <option value="mean">mean</option>
+          </select>
+          cmap_max
+          <input
+            type="number"
+            name="cmap_max"
+            value="8"
+            min="8"
+            max="80"
+            oninput="update_plot()"
+          />
+          <input type="hidden" name="x" value="0" />
+          <input type="hidden" name="y" value="0" />
+          <input type="hidden" name="voxel" value="0" />
         </div>
 
         <div class="control_box" id="box_concepts" style="display: none">
-            <span class="control_box_title">Concepts</span>
-            <br/>
-            <input type="checkbox" name="show_component_ids2" value="0" checked onclick="update_plot()">
-            <input type="text" value="3,26,77,101,108,119" name="component_ids2">
-            <input type="checkbox" name="show_component_ids2" value="1" checked onclick="update_plot()">
-            <input type="text" value="5,27,78,92" name="component_ids2">
-            <input type="checkbox" name="show_component_ids2" value="2" checked onclick="update_plot()">
-            <input type="text" value="3,27,92,101,108,115" name="component_ids2">
-            <input type="checkbox" name="show_component_ids2" value="3" checked onclick="update_plot()">
-            <input type="text" value="5,26,77,78,119" name="component_ids2">
+          <span class="control_box_title">Concepts</span>
+          <br />
+          <input
+            type="checkbox"
+            name="show_component_ids2"
+            value="0"
+            checked
+            onclick="update_plot()"
+          />
+          <input
+            type="text"
+            value="3,26,77,101,108,119"
+            name="component_ids2"
+          />
+          <input
+            type="checkbox"
+            name="show_component_ids2"
+            value="1"
+            checked
+            onclick="update_plot()"
+          />
+          <input type="text" value="5,27,78,92" name="component_ids2" />
+          <input
+            type="checkbox"
+            name="show_component_ids2"
+            value="2"
+            checked
+            onclick="update_plot()"
+          />
+          <input
+            type="text"
+            value="3,27,92,101,108,115"
+            name="component_ids2"
+          />
+          <input
+            type="checkbox"
+            name="show_component_ids2"
+            value="3"
+            checked
+            onclick="update_plot()"
+          />
+          <input type="text" value="5,26,77,78,119" name="component_ids2" />
         </div>
-    </form>
+      </form>
 
-    <div class="flex-row" style="position: relative">
+      <div class="flex-row" style="position: relative">
         <div id="plotContainer" class="grow" style="width: 0px">
-
-            <div id="plotImage" style="cursor: auto"></div>
-            <span id="clicked"></span>
-            <span class="spinner"></span>
+          <div id="plotImage" style="cursor: auto"></div>
+          <span id="clicked"></span>
+          <span class="spinner"></span>
         </div>
         <div id="plot3dContainer" class="round-corner grow">
-            <canvas id="plot3d"></canvas>
+          <canvas id="plot3d"></canvas>
 
-            <div class="slidecontainer" style="bottom: 70px">
-                <input type="range" class="slider" name="pivot" min="0" max="100" value="0"
-                       oninput="document.set_pivot(this.value/100)">
-            </div>
+          <div class="slidecontainer" style="bottom: 70px">
+            <input
+              type="range"
+              class="slider"
+              name="pivot"
+              min="0"
+              max="100"
+              value="0"
+              oninput="document.set_pivot(this.value/100)"
+            />
+          </div>
 
-            <div class="slider_buttons">
-                <button class="slider_button img_flat" onclick="brain_3d.set_shape_animated(0)"></button>
-                <button class="slider_button img_inflated" onclick="brain_3d.set_shape_animated(1)"></button>
-                <button class="slider_button img_pia" onclick="brain_3d.set_shape_animated(2)"></button>
-                <button class="slider_button img_wm" onclick="brain_3d.set_shape_animated(3)"></button>
-            </div>
-            <div class="slidecontainer">
-                <input type="range" class="slider" id="shape" name="shape" min="0" max="300" value="0"
-                       oninput="document.set_shape(this.value/100)">
-            </div>
-            <span class="spinner"></span>
+          <div class="slider_buttons">
+            <button
+              class="slider_button img_flat"
+              onclick="brain_3d.set_shape_animated(0)"
+            ></button>
+            <button
+              class="slider_button img_inflated"
+              onclick="brain_3d.set_shape_animated(1)"
+            ></button>
+            <button
+              class="slider_button img_pia"
+              onclick="brain_3d.set_shape_animated(2)"
+            ></button>
+            <button
+              class="slider_button img_wm"
+              onclick="brain_3d.set_shape_animated(3)"
+            ></button>
+          </div>
+          <div class="slidecontainer">
+            <input
+              type="range"
+              class="slider"
+              id="shape"
+              name="shape"
+              min="0"
+              max="300"
+              value="0"
+              oninput="document.set_shape(this.value/100)"
+            />
+          </div>
+          <span class="spinner"></span>
         </div>
         <div>
-            <!--<canvas id="matrix" style="width: 400px; image-rendering: pixelated;"></canvas>-->
-            <div id="matrixContainer"></div>
-            <span id="matrix_clicked"></span>
+          <!--<canvas id="matrix" style="width: 400px; image-rendering: pixelated;"></canvas>-->
+          <div id="matrixContainer"></div>
+          <span id="matrix_clicked"></span>
         </div>
         <div class="button_control_top">
-            <div class="button_transparent" onclick="toggle_3d()"></div>
+          <div class="button_transparent" onclick="toggle_3d()"></div>
         </div>
+      </div>
+
+      <div id="componentExamples"></div>
     </div>
 
-    <div id="componentExamples"></div>
-</div>
+    <script type="module">
+      import {
+        startWorker,
+        startWorker2,
+        getPixelValue,
+      } from "./js/update_image.mjs";
 
-<script type="module">
-    import {startWorker, startWorker2, getPixelValue} from "./js/update_image.mjs";
+      let zoom_scale = 1;
 
-    let zoom_scale = 1;
-
-    function toggle_3d() {
+      function toggle_3d() {
         if (document.getElementById("plot3dContainer").style.width == "") {
-            document.getElementById("plotContainer").style.width = ""
-            document.getElementById("plot3dContainer").style.width = "0px"
+          document.getElementById("plotContainer").style.width = "";
+          document.getElementById("plot3dContainer").style.width = "0px";
         } else {
-            document.getElementById("plotContainer").style.width = "0px"
-            document.getElementById("plot3dContainer").style.width = ""
+          document.getElementById("plotContainer").style.width = "0px";
+          document.getElementById("plot3dContainer").style.width = "";
         }
-    }
+      }
 
-    function toggle_roi() {
+      function toggle_roi() {
         let checkbox = document.getElementById("show_roi").checked;
-        var myEvent = new CustomEvent('roi_show_changed', {detail: checkbox});
+        var myEvent = new CustomEvent("roi_show_changed", { detail: checkbox });
         window.dispatchEvent(myEvent);
-    }
+      }
 
-    fetch('static_data/all_component_ids.json', {}).then(function (response) {
-        return response.json();
-    }).then(function (init_data) {
-        console.log("init_data", init_data)
+      fetch("static_data/all_component_ids.json", {})
+        .then(function (response) {
+          return response.json();
+        })
+        .then(function (init_data) {
+          console.log("init_data", init_data);
 
-
-        function get_form_data() {
+          function get_form_data() {
             const form = document.getElementById("plotForm");
             const formData = new URLSearchParams(new FormData(form));
 
             const subject_ids = formData.getAll("subject_ids");
             const component_ids = formData.getAll("component_ids");
-            const layer_ids = formData.getAll("layer_ids").map(x => parseInt(x));
+            const layer_ids = formData
+              .getAll("layer_ids")
+              .map((x) => parseInt(x));
             const runs = formData.get("runs");
             const show_matrix = formData.get("show_matrix");
-            const min_subject_overlap_count = parseInt(formData.get("min_subject_overlap_count"));
+            const min_subject_overlap_count = parseInt(
+              formData.get("min_subject_overlap_count"),
+            );
 
             const matrix_select = formData.get("matrix_select");
             const data_select = formData.get("data_select");
             const data_select2 = formData.get("data_select2");
             const cmap_max = formData.get("cmap_max");
 
-            let component_ids_array = component_ids.map(x => init_data.all_component_ids.indexOf(parseInt(x)));
+            let component_ids_array = component_ids.map((x) =>
+              init_data.all_component_ids.indexOf(parseInt(x)),
+            );
 
             const checked = formData.getAll("show_component_ids2");
-            const component_ids2 = formData.getAll("component_ids2").map((x, i) => ((checked.indexOf(`${i}`) > -1 && x) ? x.split(',').map(y => parseInt(y)) : []));
-            const component_index2 = component_ids2.map(x => x.map(y => init_data.all_component_ids.indexOf(y)));
+            const component_ids2 = formData
+              .getAll("component_ids2")
+              .map((x, i) =>
+                checked.indexOf(`${i}`) > -1 && x
+                  ? x.split(",").map((y) => parseInt(y))
+                  : [],
+              );
+            const component_index2 = component_ids2.map((x) =>
+              x.map((y) => init_data.all_component_ids.indexOf(y)),
+            );
 
             let x = parseInt(document.getElementsByName("x")[0].value);
             let y = parseInt(document.getElementsByName("y")[0].value);
             let voxel = parseInt(document.getElementsByName("voxel")[0].value);
-            let show_groups = parseInt(document.getElementsByName("show_groups")[0].value)
+            let show_groups = parseInt(
+              document.getElementsByName("show_groups")[0].value,
+            );
 
             return {
-                component_ids_array,
-                component_ids,
-                component_index2,
-                subject_ids,
-                min_subject_overlap_count,
-                layer_ids,
-                runs,
-                x,
-                y,
-                voxel,
-                show_groups,
-                show_matrix,
-                matrix_select,
-                data_select,
-                data_select2,
-                min_val: init_data.min_val,
-                max_val: init_data.max_val,
-                mean_val: init_data.mean_val,
-                range_val: init_data.range_val,
-                cmap_max,
-            }
-        }
+              component_ids_array,
+              component_ids,
+              component_index2,
+              subject_ids,
+              min_subject_overlap_count,
+              layer_ids,
+              runs,
+              x,
+              y,
+              voxel,
+              show_groups,
+              show_matrix,
+              matrix_select,
+              data_select,
+              data_select2,
+              min_val: init_data.min_val,
+              max_val: init_data.max_val,
+              mean_val: init_data.mean_val,
+              range_val: init_data.range_val,
+              cmap_max,
+            };
+          }
 
-        function add_image(parent, src, w, h) {
+          function add_image(parent, src, w, h) {
             let img = document.createElement("img");
             img.src = src;
-            if (w)
-                img.width = w;
-            if (h)
-                img.height = h;
+            if (w) img.width = w;
+            if (h) img.height = h;
             parent.appendChild(img);
             return img;
-        }
+          }
 
-        function add_row(parent, component_id, data_select) {
+          function add_row(parent, component_id, data_select) {
             let row = document.createElement("div");
 
             let title = document.createElement("div");
@@ -582,227 +692,265 @@
 
             parent.appendChild(row);
             for (let i = 1; i < 21; i++) {
-                if(data_select == 'none')
-                    add_image(row, "static_data/component_example_images/" + component_id + "_" + i + ".png", 128, 128);
-                else
-                    add_image(row, "static_data/component_example_images_depth3/" + component_id + "/" + i + ".png", 128, 128);
+              if (data_select == "none")
+                add_image(
+                  row,
+                  "static_data/component_example_images/" +
+                    component_id +
+                    "_" +
+                    i +
+                    ".png",
+                  128,
+                  128,
+                );
+              else
+                add_image(
+                  row,
+                  "static_data/component_example_images_depth3/" +
+                    component_id +
+                    "/" +
+                    i +
+                    ".png",
+                  128,
+                  128,
+                );
             }
-        }
+          }
 
-        window.add_row = add_row
+          window.add_row = add_row;
 
-        function update_plot() {
+          function update_plot() {
             console.time("Load");
             let form_data = get_form_data();
-            document.getElementById("matrixContainer").parentElement.style.display = form_data.show_matrix ? "block" : "none";
+            document.getElementById(
+              "matrixContainer",
+            ).parentElement.style.display = form_data.show_matrix
+              ? "block"
+              : "none";
 
-            if (form_data.show_groups)
-                startWorker2(form_data);
-            else
-                startWorker(form_data);
+            if (form_data.show_groups) startWorker2(form_data);
+            else startWorker(form_data);
             //startWorker2(component_index2, subject_ids, min_subject_overlap_count);
             pixelValueInformation();
             //toggle_roi();
-        }
+          }
 
-        document.update_plot = update_plot
-        window.update_plot = update_plot
+          document.update_plot = update_plot;
+          window.update_plot = update_plot;
 
-
-        function add_check_box(placeholder, name, index, index2, invert, radio) {
+          function add_check_box(
+            placeholder,
+            name,
+            index,
+            index2,
+            invert,
+            radio,
+          ) {
             let label = document.createElement("label");
             let text = document.createElement("span");
             text.innerText = index2 || index;
             let checkbox = document.createElement("input");
             checkbox.type = "checkbox";
-            if (radio)
-                checkbox.type = "radio";
+            if (radio) checkbox.type = "radio";
             checkbox.name = name;
             checkbox.value = index;
             checkbox.oninput = update_plot;
             label.title = index;
             if (invert) {
-                label.appendChild(checkbox);
-                label.appendChild(text);
+              label.appendChild(checkbox);
+              label.appendChild(text);
             } else {
-                label.appendChild(text);
-                label.appendChild(checkbox);
+              label.appendChild(text);
+              label.appendChild(checkbox);
             }
             placeholder.appendChild(label);
             return checkbox;
-        }
+          }
 
-        let placeholder3 = document.getElementById("runs");
-        for (let i of [0, 1, 2]) {
-            let checkbox = add_check_box(placeholder3, "runs", ['run-9', 'run-22', 'run-23'][i], undefined, true, true);
+          let placeholder3 = document.getElementById("runs");
+          for (let i of [0, 1, 2]) {
+            let checkbox = add_check_box(
+              placeholder3,
+              "runs",
+              ["run-9", "run-22", "run-23"][i],
+              undefined,
+              true,
+              true,
+            );
             checkbox.checked = true;
-        }
+          }
 
-        let placeholder2 = document.getElementById("layer_ids");
-        for (let i of [0, 1, 2, 3, 4]) {
-            let checkbox = add_check_box(placeholder2, "layer_ids", i, ['white', 'layerB3', 'layerB2', 'layerB1', 'pial'][i], true);
+          let placeholder2 = document.getElementById("layer_ids");
+          for (let i of [0, 1, 2, 3, 4]) {
+            let checkbox = add_check_box(
+              placeholder2,
+              "layer_ids",
+              i,
+              ["white", "layerB3", "layerB2", "layerB1", "pial"][i],
+              true,
+            );
             checkbox.checked = true;
-        }
+          }
 
-        let placeholder = document.getElementById("subject_ids");
-        for (let i of init_data.subject_ids) {
+          let placeholder = document.getElementById("subject_ids");
+          for (let i of init_data.subject_ids) {
             let checkbox = add_check_box(placeholder, "subject_ids", i);
             checkbox.checked = true;
-        }
+          }
 
-        let placeholder_comp = document.getElementById("component_ids");
-        for (let i of init_data.all_component_ids) {
+          let placeholder_comp = document.getElementById("component_ids");
+          for (let i of init_data.all_component_ids) {
             add_check_box(placeholder_comp, "component_ids", i);
-        }
-        restore_form_from_url();
-        if (document.querySelector("[name=show_groups]").value != "0") {
+          }
+          restore_form_from_url();
+          if (document.querySelector("[name=show_groups]").value != "0") {
             document.getElementById("box_components").style.display = "none";
             document.getElementById("box_concepts").style.display = "";
-        }
-        update_plot();
+          }
+          update_plot();
 
-        document.getElementById("btn_from_voxel").onclick = function () {
+          document.getElementById("btn_from_voxel").onclick = function () {
             for (let element of document.getElementsByName("component_ids")) {
-                if (last_voxel_selected_components.indexOf(element.value) > -1) {
-                    element.checked = true;
-                } else
-                    element.checked = false;
+              if (last_voxel_selected_components.indexOf(element.value) > -1) {
+                element.checked = true;
+              } else element.checked = false;
             }
             update_plot();
-        }
+          };
 
-        document.getElementById("btn_copy").onclick = function () {
+          document.getElementById("btn_copy").onclick = function () {
             function copyTextToClipboard(text) {
-                navigator.clipboard.writeText(text).then(() => {
-                    console.log('Text copied to clipboard');
-                }).catch(err => {
-                    console.error('Failed to copy text: ', err);
+              navigator.clipboard
+                .writeText(text)
+                .then(() => {
+                  console.log("Text copied to clipboard");
+                })
+                .catch((err) => {
+                  console.error("Failed to copy text: ", err);
                 });
             }
 
             let data = get_form_data();
-            let text = data.component_ids.join(",")
-            copyTextToClipboard(text)
-        }
-        document.getElementById("btn_paste").onclick = async function () {
+            let text = data.component_ids.join(",");
+            copyTextToClipboard(text);
+          };
+          document.getElementById("btn_paste").onclick = async function () {
             async function readTextFromClipboard() {
-                try {
-                    const text = await navigator.clipboard.readText();
-                    console.log('Text from clipboard:', text);
-                    return text;
-                } catch (err) {
-                    console.error('Failed to read text from clipboard: ', err);
-                }
+              try {
+                const text = await navigator.clipboard.readText();
+                console.log("Text from clipboard:", text);
+                return text;
+              } catch (err) {
+                console.error("Failed to read text from clipboard: ", err);
+              }
             }
 
             async function askClipboardReadPermission() {
-                try {
-                    // Check if the Clipboard API is available
-                    if (!navigator.clipboard) {
-                        console.error("Clipboard API not available");
-                        return false;
-                    }
-
-                    // Check the permission status
-                    const permissionStatus = await navigator.permissions.query({name: "clipboard-read"});
-
-                    // If permission is granted, return true
-                    if (permissionStatus.state === "granted") {
-                        console.log("Clipboard read permission granted.");
-                        return true;
-                    } else {
-                        // Handle the case where permission is not granted
-                        console.log("Clipboard read permission not granted.");
-                        return false;
-                    }
-                } catch (err) {
-                    console.error("Error while checking clipboard permissions:", err);
-                    return false;
+              try {
+                // Check if the Clipboard API is available
+                if (!navigator.clipboard) {
+                  console.error("Clipboard API not available");
+                  return false;
                 }
+
+                // Check the permission status
+                const permissionStatus = await navigator.permissions.query({
+                  name: "clipboard-read",
+                });
+
+                // If permission is granted, return true
+                if (permissionStatus.state === "granted") {
+                  console.log("Clipboard read permission granted.");
+                  return true;
+                } else {
+                  // Handle the case where permission is not granted
+                  console.log("Clipboard read permission not granted.");
+                  return false;
+                }
+              } catch (err) {
+                console.error(
+                  "Error while checking clipboard permissions:",
+                  err,
+                );
+                return false;
+              }
             }
 
             let canread = await askClipboardReadPermission();
             let text = (await readTextFromClipboard()).split(",");
-            console.log(text)
+            console.log(text);
             for (let element of document.getElementsByName("component_ids")) {
-                if (text.indexOf(element.value) > -1) {
-                    element.checked = true;
-                } else
-                    element.checked = false;
+              if (text.indexOf(element.value) > -1) {
+                element.checked = true;
+              } else element.checked = false;
             }
             update_plot();
-        }
-        document.getElementById("btn_select_none").onclick = function () {
+          };
+          document.getElementById("btn_select_none").onclick = function () {
             for (let elem of placeholder_comp.querySelectorAll("input"))
-                elem.checked = false;
+              elem.checked = false;
             update_plot();
-        }
-        document.getElementById("btn_select_all").onclick = function () {
+          };
+          document.getElementById("btn_select_all").onclick = function () {
             for (let elem of placeholder_comp.querySelectorAll("input"))
-                elem.checked = true;
+              elem.checked = true;
             update_plot();
-        }
+          };
 
-        function pixelValueInformation() {
+          function pixelValueInformation() {
             let form_data = get_form_data();
             getPixelValue(form_data);
-        }
+          }
 
-        window.addEventListener('voxel_selected_changed', async function (e) {
+          window.addEventListener("voxel_selected_changed", async function (e) {
             document.getElementsByName("voxel")[0].value = e.detail.voxel;
             pixelValueInformation();
-        });
+          });
 
-        let last_voxel_selected_components = []
-        window.addEventListener('display_components', async function (e) {
+          let last_voxel_selected_components = [];
+          window.addEventListener("display_components", async function (e) {
             const form = document.getElementById("plotForm");
             const formData = new URLSearchParams(new FormData(form));
             const data_select = formData.get("data_select");
 
-            last_voxel_selected_components = e.detail.components
+            last_voxel_selected_components = e.detail.components;
             let element_examples = document.getElementById("componentExamples");
             element_examples.innerHTML = "";
             for (let i of e.detail.components) {
-                add_row(element_examples, i, "none");
-                if(data_select !== "none")
-                    add_row(element_examples, i, "min3");
+              add_row(element_examples, i, "none");
+              if (data_select !== "none") add_row(element_examples, i, "min3");
             }
+          });
         });
+    </script>
 
-    });
-</script>
+    <script type="module">
+      import { add_2D_view } from "./js/2D_view.mjs";
 
+      const view = add_2D_view(document.getElementById("plotImage"));
 
-<script type="module">
-    import {add_2D_view} from './js/2D_view.mjs';
-
-    const view = add_2D_view(document.getElementById("plotImage"));
-
-    window.addEventListener('voxel_data_changed', async function (e) {
-         const form = document.getElementById("plotForm");
-            const formData = new URLSearchParams(new FormData(form));
-            const cmap_max = formData.get("cmap_max");
-
-
+      window.addEventListener("voxel_data_changed", async function (e) {
+        const form = document.getElementById("plotForm");
+        const formData = new URLSearchParams(new FormData(form));
+        const cmap_max = formData.get("cmap_max");
 
         console.log("voxel_data_changed", e.detail);
         await view.set_voxel_data(e.detail.image, cmap_max);
-        if (e.detail.matrix_overlap)
-            await view.plot_overlap_matrix(e.detail);
-    });
+        if (e.detail.matrix_overlap) await view.plot_overlap_matrix(e.detail);
+      });
 
-    window.addEventListener('voxel_selected_changed', async function (e) {
+      window.addEventListener("voxel_selected_changed", async function (e) {
         await view.set_voxel_selected(e.detail);
-    });
-</script>
+      });
+    </script>
 
-<script type="module">
-    import {initScene, add_brain} from './js/3D_view.mjs'
+    <script type="module">
+      import { initScene, add_brain } from "./js/3D_view.mjs";
 
-    const scene = await initScene({
-        dom_elem: document.getElementById('plot3d'),
-    });
-    let brain_3d = await add_brain({
+      const scene = await initScene({
+        dom_elem: document.getElementById("plot3d"),
+      });
+      let brain_3d = await add_brain({
         scene,
         pt_flat: "static_data/pt_flat.npy",
         faces_flat: "static_data/vtx_flat.npy",
@@ -810,23 +958,22 @@
         faces_inflated: "static_data/vtx.npy",
         pt_pia: "static_data/pt_pia.npy",
         pt_wm: "static_data/pt_wm.npy",
-    });
-    window.brain_3d = brain_3d;
+      });
+      window.brain_3d = brain_3d;
 
-    window.addEventListener('voxel_data_changed', async function (e) {
+      window.addEventListener("voxel_data_changed", async function (e) {
         await brain_3d.set_voxel_data(e.detail.image);
         scene.onWindowResize();
-    });
+      });
 
-    window.addEventListener('voxel_selected_changed', async function (e) {
+      window.addEventListener("voxel_selected_changed", async function (e) {
         await brain_3d.set_voxel_selected(e.detail);
-    });
-    window.addEventListener('roi_show_changed', async function (e) {
+      });
+      window.addEventListener("roi_show_changed", async function (e) {
         await brain_3d.set_roi_show(e.detail);
-    });
+      });
 
-    update_plot();
-
-</script>
-</body>
+      update_plot();
+    </script>
+  </body>
 </html>
