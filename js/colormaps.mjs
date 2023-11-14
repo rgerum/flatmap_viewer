@@ -521,3 +521,38 @@ export function interpolateColor(color1, color2, factor) {
       .join("")
   );
 }
+
+export function get_cmap_display(name = "turbo", color_count = 9) {
+  let [w, h] = [200, 15];
+  let cmap_display = new Uint32Array(w * h);
+  let my_cmap = get_cmap_uint32(name, color_count);
+  for (let i = 0; i < w; i++) {
+    let color = my_cmap[parseInt((i * (color_count - 1)) / w)];
+    for (let j = 0; j < h; j++) {
+      cmap_display[i + j * w] = color;
+    }
+  }
+  let canvas = document.getElementById("hub");
+  for (let i = 0; i < 5; i++) {
+    let element = document
+      .getElementsByClassName("hub_right")[0]
+      .getElementsByTagName("span")[i];
+    let ratio = parseInt((i / 4) * color_count);
+    element.innerText = ratio;
+    element.style.left = `${(ratio / color_count) * 100}%`;
+    if (i === 4)
+      element.style.left = `calc(${(ratio / color_count) * 100}% - 1px)`;
+  }
+  canvas.width = w;
+  canvas.height = h;
+  let ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = "red";
+  ctx.fillRect(0, 0, w, h);
+  //return
+  ctx.putImageData(
+    new ImageData(new Uint8ClampedArray(cmap_display.buffer), w, h),
+    0,
+    0,
+  );
+}
