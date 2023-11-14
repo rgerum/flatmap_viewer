@@ -90,7 +90,6 @@ export async function initScene({ dom_elem }) {
     let container = dom_elem.parentElement;
     let width = container.clientWidth;
     let height = container.clientHeight - 4;
-    console.log("----", width, height);
 
     // Update camera aspect ratio
     camera.aspect = width / height;
@@ -399,13 +398,8 @@ export async function add_brain({
       let point = [0, 0, 0];
       for (let j = 0; j < 3; j += 1)
         point[j] = pt_a.data[i + j] * (1 - f) + pt_b.data[i + j] * f;
-      if (i >= array.length / 2)
-        point = rotateAroundY(
-          point,
-          -90 * p,
-          -1.2,
-          p,
-        ); //-0.00240851 -0.2672709   0.22112776
+      if (i >= array.length / 2) point = rotateAroundY(point, -90 * p, -1.2, p);
+      //-0.00240851 -0.2672709   0.22112776
       else point = rotateAroundY(point, 90 * p, -1.2, p); //-0.00240851 -0.2672709   0.22112776
       for (let j = 0; j < 3; j += 1) array[i + j] = point[j];
     }
@@ -472,10 +466,10 @@ export async function add_brain({
     mesh.geometry.getAttribute("color").needsUpdate = true;
   }
 
-  function set_voxel_data(c) {
+  function set_voxel_data(c, cmap_max) {
     console.time("set_voxel_data");
     let array = mesh.geometry.getAttribute("color").array;
-    let my_cmap = get_cmap("turbo", 9);
+    let my_cmap = get_cmap("turbo", cmap_max + 1);
     let cmap_gray = get_cmap("gray", 4);
 
     for (let i = 0; i < c.length; i += 1) {

@@ -639,8 +639,6 @@
           return response.json();
         })
         .then(function (init_data) {
-          console.log("init_data", init_data);
-
           function get_form_data() {
             const form = document.getElementById("plotForm");
             const formData = new URLSearchParams(new FormData(form));
@@ -972,7 +970,6 @@
         const formData = new URLSearchParams(new FormData(form));
         const cmap_max = formData.get("cmap_max");
 
-        console.log("voxel_data_changed", e.detail);
         await view.set_voxel_data(e.detail.image, cmap_max);
         if (e.detail.matrix_overlap) await view.plot_overlap_matrix(e.detail);
         get_cmap_display("turbo", cmap_max);
@@ -1001,7 +998,11 @@
       window.brain_3d = brain_3d;
 
       window.addEventListener("voxel_data_changed", async function (e) {
-        await brain_3d.set_voxel_data(e.detail.image);
+        const form = document.getElementById("plotForm");
+        const formData = new URLSearchParams(new FormData(form));
+        const cmap_max = parseInt(formData.get("cmap_max"));
+
+        await brain_3d.set_voxel_data(e.detail.image, cmap_max);
         scene.onWindowResize();
       });
 
