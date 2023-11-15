@@ -4,6 +4,11 @@ const worker = new Worker("js/worker.mjs", { type: "module" });
 
 let update_id = 0;
 worker.addEventListener("message", function (e) {
+  if (e.data.type === "progress") {
+    document.getElementsByClassName("progress")[0].style.width = `${
+      e.data.progress * 100
+    }%`;
+  }
   if (e.data.type === "image") {
     var myEvent = new CustomEvent("voxel_data_changed", {
       detail: {

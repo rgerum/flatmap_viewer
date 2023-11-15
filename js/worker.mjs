@@ -11,9 +11,14 @@ import {
 
 self.addEventListener("message", async function (e) {
   if (e.data.type === "image") {
-    let data32_index = await show_image(e.data);
-    if (e.data.data_select !== "none")
-      data32_index = await show_image_depth(e.data);
+    function update_progress(progress) {
+      self.postMessage({ type: "progress", progress });
+    }
+    update_progress(0);
+    let data32_index;
+    if (e.data.data_select === "none")
+      data32_index = await show_image(e.data, update_progress);
+    else data32_index = await show_image_depth(e.data, update_progress);
 
     let matrix_overlap = null;
     let sort_index = null;

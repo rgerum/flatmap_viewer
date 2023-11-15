@@ -206,14 +206,17 @@ export async function sort_overlap_matrix(
   return [matrix_overlap_sorted, component_ids_sorted];
 }
 
-export async function show_image({
-  component_ids_array,
-  subject_ids,
-  min_subject_overlap_count,
-  layer_ids,
-  runs,
-  cmap_max,
-}) {
+export async function show_image(
+  {
+    component_ids_array,
+    subject_ids,
+    min_subject_overlap_count,
+    layer_ids,
+    runs,
+    cmap_max,
+  },
+  callback,
+) {
   const all_bits = convertIndexToBits(subject_ids);
   const bitCountTable = getBitCountTable(
     subject_ids,
@@ -238,7 +241,9 @@ export async function show_image({
   const layer_ids_offsets = layer_ids.map((x) => x * voxel_count);
 
   console.time("PixelManipulationX");
+  let i_percent = parseInt(voxel_count / 100);
   for (let i = 0; i < voxel_count; i++) {
+    if (i % i_percent == 0) callback(i / voxel_count);
     if (!(data_masks_all_d[i] & all_bits)) {
       data32_index[i] = -1;
       continue;
@@ -261,19 +266,22 @@ export async function show_image({
   return data32_index;
 }
 
-export async function show_image_depth({
-  component_ids_array,
-  subject_ids,
-  min_subject_overlap_count,
-  layer_ids,
-  runs,
-  data_select,
-  min_val,
-  max_val,
-  mean_val,
-  range_val,
-  data_select2,
-}) {
+export async function show_image_depth(
+  {
+    component_ids_array,
+    subject_ids,
+    min_subject_overlap_count,
+    layer_ids,
+    runs,
+    data_select,
+    min_val,
+    max_val,
+    mean_val,
+    range_val,
+    data_select2,
+  },
+  callback,
+) {
   console.log("show_image_depth", data_select);
   const all_bits = convertIndexToBits(subject_ids);
   const bitCountTable = getBitCountTable(
@@ -342,7 +350,9 @@ export async function show_image_depth({
   }
 
   console.time("PixelManipulationX");
+  let i_percent = parseInt(voxel_count / 100);
   for (let i = 0; i < voxel_count; i++) {
+    if (i % i_percent == 0) callback(i / voxel_count);
     if (!(data_masks_all_d[i] & all_bits)) {
       data32_index[i] = -1;
       continue;

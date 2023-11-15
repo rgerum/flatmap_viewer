@@ -396,6 +396,15 @@
           }
       }
 
+      .progress {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 5px;
+        background: red;
+        width: 0%;
+      }
+
       .hub_right {
         position: absolute;
         bottom: 35px;
@@ -583,6 +592,7 @@
           <span class="spinner"></span>
         </div>
         <div id="plot3dContainer" class="round-corner grow">
+          <div class="progress"></div>
           <canvas id="plot3d"></canvas>
 
           <div class="hub_right">
