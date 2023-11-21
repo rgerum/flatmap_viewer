@@ -488,6 +488,7 @@ export async function add_brain({
     mesh.geometry.getAttribute("color").needsUpdate = true;
     console.timeEnd("set_voxel_data");
   }
+  set_voxel_data(new Float32Array(mesh.geometry.getAttribute("color").array.length/3), 8);
 
   //---------
   const material2 = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // greenish blue

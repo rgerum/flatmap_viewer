@@ -21,6 +21,11 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/top_images.html')
+def index2():
+    return render_template('top_images.html')
+
+
 @app.route('/init_data')
 def init_data():
     print(all_component_ids)
