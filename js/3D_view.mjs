@@ -592,6 +592,7 @@ export async function add_brain({
     set_voxel_data,
     set_voxel_selected,
     set_roi_show,
+    set_texture,
   };
 }
 

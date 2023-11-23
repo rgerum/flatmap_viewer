@@ -686,6 +686,7 @@
 
     <script type="module">
       import { initScene, add_brain } from "./js/3D_view.mjs";
+      import {getPngData} from "./js/numpy_to_js.mjs";
 
       const scene = await initScene({
         dom_elem: document.getElementById("plot3d"),
@@ -704,6 +705,8 @@
 
       window.brain_3d = brain_3d;
       brain_3d.set_voxel_data(new Float32Array(1000), 8);
+
+      brain_3d.set_texture(await getPngData("static_data/tsne__fsaverage.png"), 2274, 1024);
 
       window.addEventListener("voxel_data_changed", async function (e) {
         const form = document.getElementById("plotForm");
@@ -728,6 +731,13 @@
           `static_data/vertex_concept_averages/M_fsavg_top_images.npy`,
         );
         console.log(data);
+
+        function calc_map(index) {
+          let map = new Float32Array(data.shape[0]);
+          for(let i = 0; i < data.shape[0]; i++) {
+            map[i] = data.data[index + i];
+          }
+        }
 
         window.addEventListener("voxel_selected_changed", async function (e) {
           console.log(
