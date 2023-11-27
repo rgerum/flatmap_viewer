@@ -434,6 +434,10 @@
           margin-bottom: 2px;
           margin-top: 2px;
       }
+
+      #plot3dContainer {
+        height: 500px;
+      }
     </style>
   </head>
   <body>
@@ -441,106 +445,6 @@
     <div class="main_column">
       <form id="plotForm" class="controls">
         <input type="hidden" name="show_groups" value="0" />
-        <div class="control_box">
-          <span class="control_box_title"><span>Runs</span></span>
-          <div class="control_box_content">
-            <div id="runs" class="check_list_rows"></div>
-          </div>
-        </div>
-        <div class="control_box">
-          <span class="control_box_title">Layers</span>
-          <div class="control_box_content">
-            <div id="layer_ids" class="check_list_rows"></div>
-          </div>
-        </div>
-        <div class="control_box">
-          <span class="control_box_title">Subjects</span>
-          <div class="control_box_content">
-            <div id="subject_ids" class="check_list"></div>
-            Min Sub Overlap Count:
-            <input
-              type="number"
-              name="min_subject_overlap_count"
-              min="1"
-              max="8"
-              value="4"
-              oninput="update_plot()"
-            />
-          </div>
-        </div>
-        <div class="control_box" id="box_components">
-          <span class="control_box_title">Components</span>
-          <div class="control_box_content">
-            <div id="component_ids" class="check_list"></div>
-            <input type="button" value="none" id="btn_select_none" />
-            <input type="button" value="all" id="btn_select_all" />
-            <input type="button" value="copy" id="btn_copy" />
-            <input type="button" value="paste" id="btn_paste" />
-            <input type="button" value="from voxel" id="btn_from_voxel" />
-            <label
-              ><span>show roi</span
-              ><input
-                type="checkbox"
-                value="on"
-                id="show_roi"
-                name="show_roi"
-                checked
-                onclick="toggle_roi()"
-            /></label>
-
-            <label
-              ><span>show matrix</span
-              ><input
-                type="checkbox"
-                value="on"
-                id="show_matrix"
-                name="show_matrix"
-                onclick="update_plot()"
-            /></label>
-
-            <select
-              id="matrix_select"
-              name="matrix_select"
-              oninput="update_plot()"
-            ></select>
-          </div>
-        </div>
-        <div class="control_box" id="box_data">
-          <span class="control_box_title">Data</span>
-          <div class="control_box_content">
-            Depth&nbsp;Data:
-            <select id="data_select" name="data_select" oninput="update_plot()">
-              <option value="none">none</option>
-              <option value="min">min</option>
-              <option value="max">max</option>
-              <option value="mean">mean</option>
-              <option value="range">range</option></select
-            ><br />
-            Voxel&nbsp;Agg:
-            <select
-              id="data_select2"
-              name="data_select2"
-              oninput="update_plot()"
-            >
-              <option value="min">min</option>
-              <option value="max">max</option>
-              <option value="mean">mean</option></select
-            ><br />
-            cmap_max
-            <input
-              type="number"
-              name="cmap_max"
-              value="8"
-              min="8"
-              max="80"
-              oninput="update_plot()"
-            />
-            <input type="hidden" name="x" value="0" />
-            <input type="hidden" name="y" value="0" />
-            <input type="hidden" name="voxel" value="0" />
-          </div>
-        </div>
-
         <div class="control_box" id="box_concepts" style="display: none">
           <span class="control_box_title">Concepts</span>
           <br />
@@ -650,43 +554,16 @@
           </div>
           <span class="spinner"></span>
         </div>
-        <div>
-          <!--<canvas id="matrix" style="width: 400px; image-rendering: pixelated;"></canvas>-->
-          <div id="matrixContainer"></div>
-          <span id="matrix_clicked"></span>
-        </div>
-        <div class="button_control_top">
-          <div class="button_transparent" onclick="toggle_3d()"></div>
-        </div>
       </div>
 
       <div id="componentExamples"></div>
     </div>
 
     <script type="module">
-      import { add_2D_view } from "./js/2D_view.mjs";
-      import { get_cmap_display } from "./js/colormaps.mjs";
-      /*
-    const view = add_2D_view(document.getElementById("plotImage"));
-
-    window.addEventListener("voxel_data_changed", async function (e) {
-      const form = document.getElementById("plotForm");
-      const formData = new URLSearchParams(new FormData(form));
-      const cmap_max = formData.get("cmap_max");
-
-      await view.set_voxel_data(e.detail.image, cmap_max);
-      if (e.detail.matrix_overlap) await view.plot_overlap_matrix(e.detail);
-      get_cmap_display("turbo", cmap_max);
-    });
-
-    window.addEventListener("voxel_selected_changed", async function (e) {
-      await view.set_voxel_selected(e.detail);
-    });*/
-    </script>
-
-    <script type="module">
       import { initScene, add_brain } from "./js/3D_view.mjs";
-      import {getPngData} from "./js/numpy_to_js.mjs";
+      import { getPngData } from "./js/numpy_to_js.mjs";
+      import { voxels_to_flatmap } from "./js/2D_view.mjs";
+      import { cachedLoadNpy } from "./js/numpy_to_js.mjs";
 
       const scene = await initScene({
         dom_elem: document.getElementById("plot3d"),
@@ -706,7 +583,7 @@
       window.brain_3d = brain_3d;
       brain_3d.set_voxel_data(new Float32Array(1000), 8);
 
-      brain_3d.set_texture(await getPngData("static_data/tsne__fsaverage.png"), 2274, 1024);
+      brain_3d.set_texture(await getPngData("static_data/tsne__fsaverage.png"));
 
       window.addEventListener("voxel_data_changed", async function (e) {
         const form = document.getElementById("plotForm");
@@ -724,17 +601,31 @@
         await brain_3d.set_roi_show(e.detail);
       });
 
-      import { cachedLoadNpy } from "./js/numpy_to_js.mjs";
+      let data = await cachedLoadNpy(
+        `static_data/vertex_concept_averages/M_fsavg_top_images.npy`,
+      );
+      console.log(data);
+
+      async function image_map(image_id) {
+        console.log(image_id);
+        let voxel_image_count = new Int32Array(data.shape[0]);
+        for (let i = 0; i < voxel_image_count.length; i++) {
+          let list = data.data[i * data.shape[1]];
+          voxel_image_count[i] = 0;
+          for (let j = 0; j < data.shape[1]; j++) {
+            if (data.data[i * data.shape[1] + j] === image_id) {
+              voxel_image_count[i] = 50 - j;
+              break;
+            }
+          }
+        }
+        brain_3d.set_texture(await voxels_to_flatmap(voxel_image_count, 50));
+      }
 
       async function load_data() {
-        let data = await cachedLoadNpy(
-          `static_data/vertex_concept_averages/M_fsavg_top_images.npy`,
-        );
-        console.log(data);
-
         function calc_map(index) {
           let map = new Float32Array(data.shape[0]);
-          for(let i = 0; i < data.shape[0]; i++) {
+          for (let i = 0; i < data.shape[0]; i++) {
             map[i] = data.data[index + i];
           }
         }
@@ -752,6 +643,7 @@
             if (w) img.width = w;
             if (h) img.height = h;
             parent.appendChild(img);
+
             return img;
           }
 
@@ -773,19 +665,17 @@
                 data.data[
                   e.detail.voxel * data.shape[1] + i + component_id * 10
                 ];
-              add_image(
-                row,
-                `static_data/new_examples/${im_id}.jpg`,
-                128,
-                128,
-              );
+              let img = add_image(row, `static_data/new_examples/${im_id}.jpg`, 128, 128);
+              img.onclick = () => {
+                image_map(im_id);
+              }
             }
           }
 
           let element_examples = document.getElementById("componentExamples");
           element_examples.innerHTML = "";
 
-          if (data.data[e.detail.voxel * data.shape[1]] == -1) return;
+          if (data.data[e.detail.voxel * data.shape[1]] < 0) return;
           for (let i = 0; i < 5; i++) {
             add_row(element_examples, i);
           }

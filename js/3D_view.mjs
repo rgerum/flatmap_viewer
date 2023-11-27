@@ -556,6 +556,10 @@ export async function add_brain({
   let last_data = null;
 
   async function set_texture(data, width, height) {
+    if(typeof data === 'promise') data = await data
+    width = width || data.shape[1];
+    height = height || data.shape[0];
+
     last_data = [data, width, height];
     if (show_roi) {
       let foreground = await getPngData("static_data/foreground.png");

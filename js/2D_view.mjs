@@ -47,7 +47,7 @@ async function getVoxelPixel({ voxel }) {
   }
 }
 
-async function voxels_to_flatmap(data32_index, cmap_max) {
+export async function voxels_to_flatmap(data32_index, cmap_max) {
   console.time("voxels_to_flatmap");
   let [mapping, mapping_inverse] = await getMapping();
 
@@ -71,7 +71,9 @@ async function voxels_to_flatmap(data32_index, cmap_max) {
   }
   console.timeEnd("voxels_to_flatmap");
 
-  return new Uint8ClampedArray(data32.buffer);
+  let result_img = new Uint8ClampedArray(data32.buffer);
+  result_img.shape = [height, width, 4];
+  return result_img;
 }
 
 export function add_2D_view(dom_elem) {

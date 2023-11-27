@@ -60,6 +60,7 @@ export async function getPngData(url) {
       // Retrieve the pixel data from the canvas
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const pixelData = imageData.data; // Uint8ClampedArray of pixel data
+      pixelData.shape = [canvas.height, canvas.width, 4];
 
       // Resolve the promise with the pixel data
       resolve(pixelData);
@@ -76,6 +77,9 @@ export async function getPngData(url) {
 }
 
 export function overlayImagesUint8(baseArray, overlayArray, width, height) {
+  let width2 = overlayArray?.shape[1] || width;
+  let height2 = overlayArray?.shape[0] || height;
+
   // Create a new array to hold the result, four entries for each pixel (RGBA)
   let resultArray = new Uint8ClampedArray(width * height * 4);
 
@@ -86,11 +90,16 @@ export function overlayImagesUint8(baseArray, overlayArray, width, height) {
     let baseB = baseArray[i + 2];
     let baseA = baseArray[i + 3];
 
+    let j =
+      Math.floor(i / (width * 4)) * (width2 * 4) +
+      Math.floor((i % (width * 4)) / 4) * 4 +
+      (i % 4);
+
     // Extract RGBA components for the overlay image
-    let overlayR = overlayArray[i];
-    let overlayG = overlayArray[i + 1];
-    let overlayB = overlayArray[i + 2];
-    let overlayA = overlayArray[i + 3];
+    let overlayR = overlayArray[j];
+    let overlayG = overlayArray[j + 1];
+    let overlayB = overlayArray[j + 2];
+    let overlayA = overlayArray[j + 3];
 
     // Normalize the alpha values to the range 0-1
     baseA /= 255;
