@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Flatmap Viewer</title>
 
-    <script src="js/form_to_url.js"></script>
     <link rel="stylesheet" href="js/3D_view.css" />
 
     <script type="importmap">
@@ -151,6 +150,10 @@
 
       import { add_image, create_row } from "./js/dom_methods.mjs";
 
+      import { getUrlObject } from "./js/obj_to_url.mjs";
+
+      const url_obj = getUrlObject({});
+
       const scene = await initScene({
         dom_elem: document.getElementById("plot3dContainer"),
       });
@@ -181,24 +184,26 @@
       );
       console.log(data);
 
-      let selected_images = [];
+      url_obj.add_value("selected_images", [], image_map);
       async function add_image_to_list(image_id) {
-        if (selected_images.includes(image_id)) {
+        if (url_obj.selected_images.includes(image_id)) {
           return;
         }
-        selected_images.push(image_id);
+        url_obj.selected_images.push(image_id);
+        url_obj.selected_images = url_obj.selected_images
 
         await image_map();
       }
       async function remove_image_from_list(image_id) {
-        selected_images.splice(selected_images.indexOf(image_id), 1);
+        url_obj.selected_images.splice(url_obj.selected_images.indexOf(image_id), 1);
+        url_obj.selected_images = url_obj.selected_images
         await image_map();
       }
 
       async function image_map() {
         let elem = document.getElementById("selected_images");
         elem.innerHTML = "";
-        for (let image_id of selected_images) {
+        for (let image_id of url_obj.selected_images) {
           let im = add_image(elem, `static_data/new_examples/${image_id}.jpg`);
           im.onclick = async () => remove_image_from_list(image_id);
           im.className = "image-container image-container-minus";
@@ -209,7 +214,7 @@
         for (let i = 0; i < voxel_image_count.length; i++) {
           let list = data.data[i * data.shape[1]];
           voxel_image_count[i] = 0;
-          for (let image_id of selected_images) {
+          for (let image_id of url_obj.selected_images) {
             // find the image id
             for (let j = 0; j < data.shape[1]; j++) {
               // if found set the voxel data as the index of the image in the list
@@ -224,11 +229,12 @@
         brain_3d.set_texture(
           await voxels_to_flatmap(
             voxel_image_count,
-            selected_images.length + 1,
+            url_obj.selected_images.length + 1,
           ),
         );
-        scene.set_cmap_display("turbo", selected_images.length + 1);
+        scene.set_cmap_display("turbo", url_obj.selected_images.length + 1);
       }
+      image_map()
 
       window.addEventListener("voxel_selected_changed", async function (e) {
         // when a voxel has been clicked show the images
@@ -246,7 +252,7 @@
               data.data[e.detail.voxel * data.shape[1] + i + component_id * 10];
             let img = add_image(row, `static_data/new_examples/${im_id}.jpg`);
             img.onclick = function () {
-              if(!selected_images.includes(im_id)) {
+              if(!url_obj.selected_images.includes(im_id)) {
                 add_image_to_list(im_id);
                 img.className = "image-container image-container-minus image-selected";
               }
@@ -255,7 +261,7 @@
                 img.className = "image-container image-container-plus";
               }
             }
-            if(selected_images.includes(im_id)) {
+            if(url_obj.selected_images.includes(im_id)) {
               img.className = "image-container image-container-minus image-selected";
             }
             else

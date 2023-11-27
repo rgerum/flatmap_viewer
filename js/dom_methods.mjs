@@ -5,6 +5,8 @@ export function add_image(parent, src, w=128, h=128) {
   img.src = src;
   if (w) img.width = w;
   if (h) img.height = h;
+  container.style.width = (w+4) + "px";
+  container.style.height = (h+4) + "px";
   container.appendChild(img);
   parent.appendChild(container);
 
