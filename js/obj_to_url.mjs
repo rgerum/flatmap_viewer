@@ -1,3 +1,10 @@
+function string_to_array(str) {
+  if (!str) return undefined;
+  str = str.trim();
+  if (str === "") return undefined;
+  return str.split(",").map((v) => parseInt(v));
+}
+
 function updateUrlParams(obj) {
   const paramsArray = [];
 
@@ -5,7 +12,8 @@ function updateUrlParams(obj) {
     console.log(key, values);
     if (key === "add_value") continue;
     if (typeof values === "object") {
-      paramsArray.push(`${key}=${values.join(",")}`);
+      if(values.length > 0)
+        paramsArray.push(`${key}=${values.join(",")}`);
     } else {
       paramsArray.push(`${key}=${values}`);
     }
@@ -21,10 +29,7 @@ function updateObjectFromUrl(obj) {
   for (const key in obj) {
     if (params.has(key)) {
       if (typeof obj[key] === "object")
-        obj[key] = params
-          .get(key)
-          .split(",")
-          .map((v) => parseInt(v));
+        obj[key] = string_to_array(params.get(key));
       else obj[key] = params.get(key);
     }
   }
@@ -46,11 +51,7 @@ export function getUrlObject() {
   myObject.add_value = (key, value) => {
     console.log(typeof value, key, value);
     if (typeof value === "object")
-      myObject[key] =
-        params
-          .get(key)
-          .split(",")
-          .map((v) => parseInt(v)) || value;
+      myObject[key] = string_to_array(params.get(key)) || value;
     else myObject[key] = params.get(key) || value;
   };
 
@@ -58,9 +59,7 @@ export function getUrlObject() {
     if (event.state) {
       for (const key in myObject) {
         if (event.state[key] !== undefined) {
-          if (typeof value === "object")
-            myObject[key] = event.state[key].split(",").map((v) => parseInt(v));
-          else myObject[key] = event.state[key];
+          myObject[key] = event.state[key];
         }
       }
     } else {

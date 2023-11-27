@@ -83,52 +83,54 @@
         gap: 10px;
       }
 
-.image-container {
-    position: relative;
-    display: inline-block;
-  border: 2px solid black;
-}
+      .image-container {
+        position: relative;
+        display: inline-block;
+        border: 2px solid black;
+      }
 
-.image-container img {
-    display: block;
-    width: 100%;
-    height: auto;
-}
+      .image-container img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
 
-.image-selected {
-    border: 2px solid red;
-}
+      .image-selected {
+        border: 2px solid red;
+      }
 
-.image-container-minus::before {
-  content: "-";
-}
+      .image-container-minus::before {
+        content: "-";
+      }
 
-.image-container-plus::before {
-  content: "+";
-}
+      .image-container-plus::before {
+        content: "+";
+      }
 
-.image-container::before {
-    position: absolute;
-    top: 10px; /* Adjust as per your preference */
-    right: 10px; /* Adjust as per your preference */
-    width: 30px; /* Size of the button */
-    height: 30px; /* Size of the button */
-    background-color: #fff; /* Background color of the button */
-    border-radius: 50%; /* Makes the button round */
-    text-align: center;
-    line-height: 30px; /* Vertically center the plus sign */
-    font-size: 20px; /* Size of the plus sign */
-    opacity: 0; /* Hide by default */
-    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Smooth transition for showing the button */
-    pointer-events: none; /* Prevents the button from interfering with click events */
-    color: #484848;
-    transform: scale(0);
-}
+      .image-container::before {
+        position: absolute;
+        top: 10px; /* Adjust as per your preference */
+        right: 10px; /* Adjust as per your preference */
+        width: 30px; /* Size of the button */
+        height: 30px; /* Size of the button */
+        background-color: #fff; /* Background color of the button */
+        border-radius: 50%; /* Makes the button round */
+        text-align: center;
+        line-height: 30px; /* Vertically center the plus sign */
+        font-size: 20px; /* Size of the plus sign */
+        opacity: 0; /* Hide by default */
+        transition:
+          opacity 0.3s ease,
+          transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Smooth transition for showing the button */
+        pointer-events: none; /* Prevents the button from interfering with click events */
+        color: #484848;
+        transform: scale(0);
+      }
 
-.image-container:hover::before {
-    opacity: 1; /* Show the button on hover */
-  transform: scale(1);
-}
+      .image-container:hover::before {
+        opacity: 1; /* Show the button on hover */
+        transform: scale(1);
+      }
     </style>
   </head>
   <body>
@@ -190,13 +192,16 @@
           return;
         }
         url_obj.selected_images.push(image_id);
-        url_obj.selected_images = url_obj.selected_images
+        url_obj.selected_images = url_obj.selected_images;
 
         await image_map();
       }
       async function remove_image_from_list(image_id) {
-        url_obj.selected_images.splice(url_obj.selected_images.indexOf(image_id), 1);
-        url_obj.selected_images = url_obj.selected_images
+        url_obj.selected_images.splice(
+          url_obj.selected_images.indexOf(image_id),
+          1,
+        );
+        url_obj.selected_images = url_obj.selected_images;
         await image_map();
       }
 
@@ -207,6 +212,12 @@
           let im = add_image(elem, `static_data/new_examples/${image_id}.jpg`);
           im.onclick = async () => remove_image_from_list(image_id);
           im.className = "image-container image-container-minus";
+        }
+        if (url_obj.selected_images.length == 0) {
+          brain_3d.set_texture(
+            await getPngData("static_data/tsne__fsaverage.png"),
+          );
+          return;
         }
 
         let voxel_image_count = new Int32Array(data.shape[0]);
@@ -234,7 +245,7 @@
         );
         scene.set_cmap_display("turbo", url_obj.selected_images.length + 1);
       }
-      image_map()
+      if (url_obj.selected_images.length) image_map();
 
       window.addEventListener("voxel_selected_changed", async function (e) {
         // when a voxel has been clicked show the images
@@ -252,20 +263,19 @@
               data.data[e.detail.voxel * data.shape[1] + i + component_id * 10];
             let img = add_image(row, `static_data/new_examples/${im_id}.jpg`);
             img.onclick = function () {
-              if(!url_obj.selected_images.includes(im_id)) {
+              if (!url_obj.selected_images.includes(im_id)) {
                 add_image_to_list(im_id);
-                img.className = "image-container image-container-minus image-selected";
-              }
-              else {
+                img.className =
+                  "image-container image-container-minus image-selected";
+              } else {
                 remove_image_from_list(im_id);
                 img.className = "image-container image-container-plus";
               }
-            }
-            if(url_obj.selected_images.includes(im_id)) {
-              img.className = "image-container image-container-minus image-selected";
-            }
-            else
-              img.className = "image-container image-container-plus";
+            };
+            if (url_obj.selected_images.includes(im_id)) {
+              img.className =
+                "image-container image-container-minus image-selected";
+            } else img.className = "image-container image-container-plus";
           }
         }
 
