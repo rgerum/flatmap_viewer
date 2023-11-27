@@ -522,7 +522,7 @@ export function interpolateColor(color1, color2, factor) {
   );
 }
 
-export function get_cmap_display(name = "turbo", color_count = 9) {
+export function get_cmap_display(dom_element, name = "turbo", color_count = 9) {
   let [w, h] = [200, 15];
   let cmap_display = new Uint32Array(w * h);
   let my_cmap = get_cmap_uint32(name, color_count);
@@ -532,10 +532,9 @@ export function get_cmap_display(name = "turbo", color_count = 9) {
       cmap_display[i + j * w] = color;
     }
   }
-  let canvas = document.getElementById("hub");
+  let canvas = dom_element.querySelector("canvas");
   for (let i = 0; i < 5; i++) {
-    let element = document
-      .getElementsByClassName("hub_right")[0]
+    let element = dom_element
       .getElementsByTagName("span")[i];
     let ratio = parseInt((i / 4) * color_count);
     element.innerText = ratio;

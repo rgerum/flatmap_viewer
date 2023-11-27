@@ -7,7 +7,7 @@ import {
   getPngData,
   overlayImagesUint8,
 } from "./numpy_to_js.mjs";
-import { get_cmap, interpolateColor } from "./colormaps.mjs";
+import { get_cmap, interpolateColor, get_cmap_display } from "./colormaps.mjs";
 
 let animation_callback = { shape_change: null };
 
@@ -17,9 +17,11 @@ export async function initScene({ dom_elem }) {
     dom_elem = document.createElement("canvas");
     document.body.appendChild(dom_elem);
   }
+  let dom_controls = create_controls(dom_elem);
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x151515);
+  scene.dom_controls = dom_controls;
 
   const camera = new THREE.PerspectiveCamera(
     75,
@@ -27,7 +29,7 @@ export async function initScene({ dom_elem }) {
     0.1,
     1000,
   );
-  const renderer = new THREE.WebGLRenderer({ canvas: dom_elem });
+  const renderer = new THREE.WebGLRenderer({ canvas: dom_controls.canvas });
   scene.renderer = renderer;
   scene.camera = camera;
   document.renderer = renderer;
@@ -199,6 +201,12 @@ export async function initScene({ dom_elem }) {
   window.animateCamera = animateCamera;
   window.THREE = THREE;
 
+  function set_cmap_display(name = "turbo", color_count = 9) {
+      get_cmap_display(dom_controls.colorbar, name, color_count);
+  }
+  scene.set_cmap_display = set_cmap_display
+
+
   return scene;
 }
 
@@ -336,6 +344,9 @@ export async function add_brain({
     pivot = index;
     set_shape(last_shape_index);
   }
+  scene.dom_controls.slider_pivot_input.oninput = function () {
+    set_pivot(this.value / 100);
+  };
 
   function set_shape(index) {
     let flatness = 1 - Math.min(index, 1);
@@ -436,6 +447,12 @@ export async function add_brain({
       document.getElementById("shape").value = currentIndex * 100;
     });
   }
+  let i  = 0;
+  for(let elem of scene.dom_controls.slider_buttons.querySelectorAll("button")) {
+    let value = i;
+    elem.onclick = () => set_shape_animated(value);
+    i += 1;
+  }
 
   function rotateAroundY(point, angleDegrees, a, f) {
     // Convert angle to radians
@@ -460,6 +477,9 @@ export async function add_brain({
   document.animateShapeChange = set_shape_animated;
   document.set_pivot = set_pivot;
   document.set_shape = set_shape;
+  scene.dom_controls.slider_shape_input.oninput = function () {
+    set_shape(this.value / 100);
+  };
 
   function set_mesh_colors(c) {
     mesh.geometry.getAttribute("color").array.set(c);
@@ -488,7 +508,10 @@ export async function add_brain({
     mesh.geometry.getAttribute("color").needsUpdate = true;
     console.timeEnd("set_voxel_data");
   }
-  set_voxel_data(new Float32Array(mesh.geometry.getAttribute("color").array.length/3), 8);
+  set_voxel_data(
+    new Float32Array(mesh.geometry.getAttribute("color").array.length / 3),
+    8,
+  );
 
   //---------
   const material2 = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // greenish blue
@@ -556,7 +579,7 @@ export async function add_brain({
   let last_data = null;
 
   async function set_texture(data, width, height) {
-    if(typeof data === 'promise') data = await data
+    if (typeof data === "promise") data = await data;
     width = width || data.shape[1];
     height = height || data.shape[0];
 
@@ -625,4 +648,75 @@ function animateShapeChange(duration, callback) {
 
   //animate();
   animation_callback["shape_change"] = animate;
+}
+
+function create_controls(parent) {
+  let progress = document.createElement("div");
+  progress.className = "progress";
+  parent.appendChild(progress);
+
+  let canvas = document.createElement("canvas");
+  canvas.id = "plot3d";
+  parent.appendChild(canvas);
+
+  let slider_pivot = document.createElement("div");
+  slider_pivot.className = "slidecontainer";
+  slider_pivot.style.bottom = "70px";
+  let slider_pivot_input = document.createElement("input");
+  slider_pivot_input.type = "range";
+  slider_pivot_input.className = "slider";
+  slider_pivot_input.name = "pivot";
+  slider_pivot_input.min = "0";
+  slider_pivot_input.max = "100";
+  slider_pivot_input.value = "0";
+  slider_pivot_input.oninput = "document.set_pivot(this.value/100)";
+  slider_pivot.appendChild(slider_pivot_input);
+  parent.appendChild(slider_pivot);
+
+  let slider_buttons = document.createElement("div");
+  slider_buttons.className = "slider_buttons";
+  parent.appendChild(slider_buttons);
+  let names = ["img_flat", "img_inflated", "img_pia", "img_wm"];
+  for (let i in names) {
+    let button = document.createElement("button");
+    button.className = "slider_button " + names[i];
+    button.onclick = `brain_3d.set_shape_animated(i)`;
+    slider_buttons.appendChild(button);
+  }
+
+  let slider_shape = document.createElement("div");
+  slider_shape.className = "slidecontainer";
+  let slider_shape_input = document.createElement("input");
+  slider_shape_input.type = "range";
+  slider_shape_input.className = "slider";
+  slider_shape_input.id = "shape";
+  slider_shape_input.name = "shape";
+  slider_shape_input.min = "0";
+  slider_shape_input.max = "300";
+  slider_shape_input.value = "0";
+  slider_shape_input.oninput = "document.set_shape(this.value/100)";
+  slider_shape.appendChild(slider_shape_input);
+  parent.appendChild(slider_shape);
+
+  let colorbar = document.createElement("div");
+  colorbar.className = "colorbar";
+  let canvas_cbar = document.createElement("canvas");
+  canvas_cbar.width = 200;
+  canvas_cbar.height = 15;
+  colorbar.appendChild(canvas_cbar);
+  for(let i = 0; i < 5; i++) {
+      colorbar.appendChild(document.createElement("span"));
+  }
+  parent.appendChild(colorbar);
+
+  return {
+    progress,
+    canvas,
+    slider_pivot,
+    slider_pivot_input,
+    slider_buttons,
+    slider_shape,
+    slider_shape_input,
+    colorbar,
+  };
 }

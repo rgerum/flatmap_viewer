@@ -1,0 +1,126 @@
+.slidecontainer {
+  width: 160px; /* Width of the outside container */
+  max-width: 80%;
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+}
+
+/* The slider itself */
+.slider {
+  -webkit-appearance: none; /* Override default CSS styles */
+  appearance: none;
+  width: 100%; /* Full-width */
+  height: 8px; /* Specified height */
+  background: #262626c9; /* Grey background */
+  outline: none; /* Remove outline */
+  opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+  -webkit-transition: 0.2s; /* 0.2 seconds transition on hover */
+  transition: opacity 0.2s;
+  border-radius: 10px;
+}
+
+/* Mouse-over effects */
+.slider:hover {
+  opacity: 1; /* Fully shown on mouse-over */
+}
+
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Override default look */
+  appearance: none;
+  width: 13px; /* Set a specific slider handle width */
+  height: 13px; /* Slider handle height */
+  background: #242424; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+}
+
+.slider::-moz-range-thumb {
+  width: 13px; /* Set a specific slider handle width */
+  height: 13px; /* Slider handle height */
+  background: #242424; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+}
+
+.slider_buttons {
+  bottom: 30px;
+  position: absolute;
+  left: 10px;
+  display: flex;
+  gap: 6px;
+}
+
+.slider_button {
+  border: 0px solid black;
+  border-radius: 10px;
+  padding: 5px;
+  cursor: pointer;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-color: gray;
+  width: 35px;
+  height: 35px;
+  /*filter: brightness(0.3);*/
+  opacity: 0.5;
+  transition: background-color 0.5s ease-in-out;
+}
+
+.img_inflated {
+  background-image: url("../img/inflated.png");
+}
+
+.img_flat {
+  background-image: url("../img/flat.png");
+}
+
+.img_pia {
+  background-image: url("../img/pia.png");
+}
+
+.img_wm {
+  background-image: url("../img/wm.png");
+}
+
+.img_selected {
+  background-color: darkred;
+}
+
+.progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 5px;
+  background: red;
+  width: 0%;
+}
+
+/* Hub */
+.colorbar {
+      position: absolute;
+      bottom: 35px;
+      right: 20px;
+  }
+
+  .colorbar canvas {
+      border: 1px solid #c4c4c4;
+  }
+
+  .colorbar span {
+      position: absolute;
+      top: 15px;
+      width: 20px;
+      transform: translate(-10px, 0);
+      text-align: center;
+  }
+
+  .colorbar span:before {
+      content: '';
+      display: block;
+      background: #c4c4c4;
+      width: 1px;
+      height: 6px;
+      margin-left: 10px;
+      margin-bottom: 2px;
+      margin-top: 2px;
+  }
