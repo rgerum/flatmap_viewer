@@ -84,15 +84,20 @@
         gap: 10px;
       }
 
-      .image-container {
+.image-container {
     position: relative;
     display: inline-block;
+  border: 2px solid black;
 }
 
 .image-container img {
     display: block;
     width: 100%;
     height: auto;
+}
+
+.image-selected {
+    border: 2px solid red;
 }
 
 .image-container-minus::before {
@@ -240,8 +245,21 @@
             let im_id =
               data.data[e.detail.voxel * data.shape[1] + i + component_id * 10];
             let img = add_image(row, `static_data/new_examples/${im_id}.jpg`);
-            img.onclick = () => add_image_to_list(im_id);
-            img.className = "image-container image-container-plus";
+            img.onclick = function () {
+              if(!selected_images.includes(im_id)) {
+                add_image_to_list(im_id);
+                img.className = "image-container image-container-minus image-selected";
+              }
+              else {
+                remove_image_from_list(im_id);
+                img.className = "image-container image-container-plus";
+              }
+            }
+            if(selected_images.includes(im_id)) {
+              img.className = "image-container image-container-minus image-selected";
+            }
+            else
+              img.className = "image-container image-container-plus";
           }
         }
 
