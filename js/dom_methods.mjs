@@ -1,11 +1,14 @@
 export function add_image(parent, src, w=128, h=128) {
+  let container = document.createElement("div");
+  container.className = "image-container";
   let img = document.createElement("img");
   img.src = src;
   if (w) img.width = w;
   if (h) img.height = h;
-  parent.appendChild(img);
+  container.appendChild(img);
+  parent.appendChild(container);
 
-  return img;
+  return container;
 }
 
 export function create_row(parent, text) {

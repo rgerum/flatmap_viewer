@@ -19,59 +19,59 @@
 
     <style>
       body {
-          background: #151515;
-          color: #c4c4c4;
-          font-family: sans;
-          margin: 10px;
+        background: #151515;
+        color: #c4c4c4;
+        font-family: sans;
+        margin: 10px;
       }
 
       .flex-row {
-          display: flex;
-          flex-direction: row;
-          gap: 10px
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
       }
 
       .flex-row > div {
-          width: 100%;
+        width: 100%;
       }
 
       .round-corner {
-          border-radius: 10px;
-          overflow: hidden;
-          border: 1px solid black;
-          background: #151515;
-          position: relative;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid black;
+        background: #151515;
+        position: relative;
       }
 
       #componentExamples {
-          width: 100%;
-          overflow-x: scroll;
-          border-radius: 10px;
-          background: #262626c9;
-          min-height: 128px;
-          display: flex;
-          flex-direction: column;
-          gap: 3px;
+        width: 100%;
+        overflow-x: scroll;
+        border-radius: 10px;
+        background: #262626c9;
+        min-height: 128px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
       }
 
       #componentExamples div {
-          display: flex;
+        display: flex;
       }
 
       .row_title2 {
-          position: relative; /* Make the box a position reference for the title */
-          padding-left: 30px; /* Space for the rotated title */
-          background: #393939;
+        position: relative; /* Make the box a position reference for the title */
+        padding-left: 30px; /* Space for the rotated title */
+        background: #393939;
       }
 
       .row_title2 div {
-          position: absolute;
-          top: 50%;
-          left: 0;
-          transform: translate(4px, 50%) rotate(-90deg);
-          transform-origin: top left;
-          white-space: nowrap;
-          padding-top: 0px;
+        position: absolute;
+        top: 50%;
+        left: 0;
+        transform: translate(4px, 50%) rotate(-90deg);
+        transform-origin: top left;
+        white-space: nowrap;
+        padding-top: 0px;
       }
 
       #plot3dContainer {
@@ -79,18 +79,60 @@
       }
 
       .main_column {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
       }
+
+      .image-container {
+    position: relative;
+    display: inline-block;
+}
+
+.image-container img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.image-container-minus::before {
+  content: "-";
+}
+
+.image-container-plus::before {
+  content: "+";
+}
+
+.image-container::before {
+    position: absolute;
+    top: 10px; /* Adjust as per your preference */
+    right: 10px; /* Adjust as per your preference */
+    width: 30px; /* Size of the button */
+    height: 30px; /* Size of the button */
+    background-color: #fff; /* Background color of the button */
+    border-radius: 50%; /* Makes the button round */
+    text-align: center;
+    line-height: 30px; /* Vertically center the plus sign */
+    font-size: 20px; /* Size of the plus sign */
+    opacity: 0; /* Hide by default */
+    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Smooth transition for showing the button */
+    pointer-events: none; /* Prevents the button from interfering with click events */
+    color: #484848;
+    transform: scale(0);
+}
+
+.image-container:hover::before {
+    opacity: 1; /* Show the button on hover */
+  transform: scale(1);
+}
     </style>
   </head>
   <body>
     <div class="main_column">
-
       <div class="flex-row" style="position: relative">
-        <div id="plot3dContainer" class="round-corner grow">
-        </div>
+        <div id="plot3dContainer" class="round-corner grow"></div>
+
+        <div id="selected_images" class="round-corner"></div>
       </div>
 
       <div id="componentExamples"></div>
@@ -134,24 +176,53 @@
       );
       console.log(data);
 
-      async function image_map(image_id) {
+      let selected_images = [];
+      async function add_image_to_list(image_id) {
+        if (selected_images.includes(image_id)) {
+          return;
+        }
+        selected_images.push(image_id);
+
+        await image_map();
+      }
+      async function remove_image_from_list(image_id) {
+        selected_images.splice(selected_images.indexOf(image_id), 1);
+        await image_map();
+      }
+
+      async function image_map() {
+        let elem = document.getElementById("selected_images");
+        elem.innerHTML = "";
+        for (let image_id of selected_images) {
+          let im = add_image(elem, `static_data/new_examples/${image_id}.jpg`);
+          im.onclick = async () => remove_image_from_list(image_id);
+          im.className = "image-container image-container-minus";
+        }
+
         let voxel_image_count = new Int32Array(data.shape[0]);
         // iterate over voxels
         for (let i = 0; i < voxel_image_count.length; i++) {
           let list = data.data[i * data.shape[1]];
           voxel_image_count[i] = 0;
-          // find the image id
-          for (let j = 0; j < data.shape[1]; j++) {
-            // if found set the voxel data as the index of the image in the list
-            if (data.data[i * data.shape[1] + j] === image_id) {
-              voxel_image_count[i] = 50 - j;
-              break;
+          for (let image_id of selected_images) {
+            // find the image id
+            for (let j = 0; j < data.shape[1]; j++) {
+              // if found set the voxel data as the index of the image in the list
+              if (data.data[i * data.shape[1] + j] === image_id) {
+                voxel_image_count[i] += 1; //= 50 - j;
+                break;
+              }
             }
           }
         }
         // convert voxel data to texture
-        brain_3d.set_texture(await voxels_to_flatmap(voxel_image_count, 50));
-        scene.set_cmap_display("turbo", 50);
+        brain_3d.set_texture(
+          await voxels_to_flatmap(
+            voxel_image_count,
+            selected_images.length + 1,
+          ),
+        );
+        scene.set_cmap_display("turbo", selected_images.length + 1);
       }
 
       window.addEventListener("voxel_selected_changed", async function (e) {
@@ -169,7 +240,8 @@
             let im_id =
               data.data[e.detail.voxel * data.shape[1] + i + component_id * 10];
             let img = add_image(row, `static_data/new_examples/${im_id}.jpg`);
-            img.onclick = () => image_map(im_id);
+            img.onclick = () => add_image_to_list(im_id);
+            img.className = "image-container image-container-plus";
           }
         }
 
