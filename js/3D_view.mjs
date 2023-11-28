@@ -202,10 +202,9 @@ export async function initScene({ dom_elem }) {
   window.THREE = THREE;
 
   function set_cmap_display(name = "turbo", color_count = 9) {
-      get_cmap_display(dom_controls.colorbar, name, color_count);
+    get_cmap_display(dom_controls.colorbar, name, color_count);
   }
-  scene.set_cmap_display = set_cmap_display
-
+  scene.set_cmap_display = set_cmap_display;
 
   return scene;
 }
@@ -447,8 +446,10 @@ export async function add_brain({
       document.getElementById("shape").value = currentIndex * 100;
     });
   }
-  let i  = 0;
-  for(let elem of scene.dom_controls.slider_buttons.querySelectorAll("button")) {
+  let i = 0;
+  for (let elem of scene.dom_controls.slider_buttons.querySelectorAll(
+    "button",
+  )) {
     let value = i;
     elem.onclick = () => set_shape_animated(value);
     i += 1;
@@ -606,7 +607,36 @@ export async function add_brain({
     scene.initialized = true;
   }
 
+  async function download_last_texture(filename = "downloadedImage.png", show_roi=false) {
+    let [data, width, height] = last_data;
+    if (show_roi) {
+      let foreground = await getPngData("static_data/foreground.png");
+      data = overlayImagesUint8(data, foreground, width, height);
+    }
+    let canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    var ctx = canvas.getContext("2d");
+    var imgData = new ImageData(data, width, height);
+    ctx.putImageData(imgData, 0, 0);
+
+    // Step 3: Create Download Link
+    const downloadLink = document.createElement("a");
+    downloadLink.href = canvas.toDataURL();
+    downloadLink.download = filename; // Suggest a filename for download
+
+    // Append link to the body (optional, can be hidden)
+    document.body.appendChild(downloadLink);
+
+    // Step 4: Trigger the Download
+    downloadLink.click();
+
+    // Optional: Clean up
+    document.body.removeChild(downloadLink);
+  }
+
   window.set_texture = set_texture;
+  window.download_last_texture = download_last_texture;
 
   set_shape(0);
 
@@ -620,6 +650,7 @@ export async function add_brain({
     set_voxel_selected,
     set_roi_show,
     set_texture,
+    download_last_texture,
   };
 }
 
@@ -704,8 +735,8 @@ function create_controls(parent) {
   canvas_cbar.width = 200;
   canvas_cbar.height = 15;
   colorbar.appendChild(canvas_cbar);
-  for(let i = 0; i < 5; i++) {
-      colorbar.appendChild(document.createElement("span"));
+  for (let i = 0; i < 5; i++) {
+    colorbar.appendChild(document.createElement("span"));
   }
   parent.appendChild(colorbar);
 
