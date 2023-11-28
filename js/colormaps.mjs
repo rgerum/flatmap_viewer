@@ -527,7 +527,7 @@ export function get_cmap_display(dom_element, name = "turbo", color_count = 9) {
   let cmap_display = new Uint32Array(w * h);
   let my_cmap = get_cmap_uint32(name, color_count);
   for (let i = 0; i < w; i++) {
-    let color = my_cmap[parseInt((i * (color_count - 1)) / w)];
+    let color = my_cmap[parseInt((i * (color_count)) / w)];
     for (let j = 0; j < h; j++) {
       cmap_display[i + j * w] = color;
     }
@@ -537,10 +537,12 @@ export function get_cmap_display(dom_element, name = "turbo", color_count = 9) {
     let element = dom_element
       .getElementsByTagName("span")[i];
     let ratio = parseInt((i / 4) * color_count);
+    if(ratio > color_count - 1) ratio = color_count - 1;
     element.innerText = ratio;
-    element.style.left = `${(ratio / color_count) * 100}%`;
+    ratio += 0.5
+    element.style.left = `${((ratio) / color_count) * 100}%`;
     if (i === 4)
-      element.style.left = `calc(${(ratio / color_count) * 100}% - 1px)`;
+      element.style.left = `calc(${((ratio) / color_count) * 100}% - 1px)`;
   }
   canvas.width = w;
   canvas.height = h;
