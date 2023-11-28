@@ -224,17 +224,22 @@
         // iterate over voxels
         for (let i = 0; i < voxel_image_count.length; i++) {
           let list = data.data[i * data.shape[1]];
-          voxel_image_count[i] = 0;
+          let found = 0;
           for (let image_id of url_obj.selected_images) {
             // find the image id
             for (let j = 0; j < data.shape[1]; j++) {
               // if found set the voxel data as the index of the image in the list
               if (data.data[i * data.shape[1] + j] === image_id) {
-                voxel_image_count[i] += 1; //= 50 - j;
+                found += 1;
                 break;
               }
             }
           }
+          if (found) {
+            voxel_image_count[i] = found;
+          }
+          else
+            voxel_image_count[i] = -1;
         }
         // convert voxel data to texture
         brain_3d.set_texture(
