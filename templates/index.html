@@ -9,6 +9,8 @@
 
     <script src="js/form_to_url.js"></script>
 
+    <link rel="stylesheet" href="js/3D_view.css" />
+
     <script type="importmap">
       {
         "imports": {
@@ -263,65 +265,6 @@
           position: relative;
       }
 
-      .slidecontainer {
-          width: 160px; /* Width of the outside container */
-          max-width: 80%;
-          position: absolute;
-          bottom: 5px;
-          left: 5px;
-      }
-
-      .slider_marker {
-          height: 8px;
-          width: 1px;
-          background: #bbb;
-          position: absolute;
-          top: 5px;
-      }
-
-      /* The slider itself */
-      .slider {
-          -webkit-appearance: none; /* Override default CSS styles */
-          appearance: none;
-          width: 100%; /* Full-width */
-          height: 8px; /* Specified height */
-          background: #262626c9; /* Grey background */
-          outline: none; /* Remove outline */
-          opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
-          -webkit-transition: .2s; /* 0.2 seconds transition on hover */
-          transition: opacity .2s;
-          border-radius: 10px;
-      }
-
-      /* Mouse-over effects */
-      .slider:hover {
-          opacity: 1; /* Fully shown on mouse-over */
-      }
-
-      /* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
-      .slider::-webkit-slider-thumb {
-          -webkit-appearance: none; /* Override default look */
-          appearance: none;
-          width: 13px; /* Set a specific slider handle width */
-          height: 13px; /* Slider handle height */
-          background: #242424; /* Green background */
-          cursor: pointer; /* Cursor on hover */
-      }
-
-      .slider::-moz-range-thumb {
-          width: 13px; /* Set a specific slider handle width */
-          height: 13px; /* Slider handle height */
-          background: #242424; /* Green background */
-          cursor: pointer; /* Cursor on hover */
-      }
-
-
-      .slider_buttons {
-          bottom: 30px;
-          position: absolute;
-          left: 10px;
-      }
-
       .grow {
           transition: width 0.5s ease-in-out;
       }
@@ -331,42 +274,6 @@
           top: 5px;
           right: 5px;
           width: auto !important;
-      }
-
-      .slider_button {
-          border: 0px solid black;
-          border-radius: 10px;
-          padding: 5px;
-          cursor: pointer;
-          background-position: center;
-          background-repeat: no-repeat;
-          background-size: contain;
-          background-color: gray;
-          width: 35px;
-          height: 35px;
-          /*filter: brightness(0.3);*/
-          opacity: 0.5;
-          transition: background-color 0.5s ease-in-out;
-      }
-
-      .img_inflated {
-          background-image: url("img/inflated.png");
-      }
-
-      .img_flat {
-          background-image: url("img/flat.png");
-      }
-
-      .img_pia {
-          background-image: url("img/pia.png");
-      }
-
-      .img_wm {
-          background-image: url("img/wm.png");
-      }
-
-      .img_selected {
-          background-color: darkred;
       }
 
 
@@ -396,42 +303,8 @@
           }
       }
 
-      .progress {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 5px;
-        background: red;
-        width: 0%;
-      }
 
-      .hub_right {
-        position: absolute;
-        bottom: 35px;
-        right: 20px;
-      }
 
-      .hub_right canvas {
-        border: 1px solid #c4c4c4;
-      }
-
-      .hub_right span {
-        position: absolute;
-        top: 15px;
-        width: 20px;
-        transform: translate(-10px, 0);
-        text-align: center;
-      }
-      .hub_right span:before {
-        content: '';
-        display: block;
-        background: #c4c4c4;
-        width: 1px;
-        height: 6px;
-        margin-left: 10px;
-        margin-bottom: 2px;
-        margin-top: 2px;
-      }
     </style>
   </head>
   <body>
@@ -591,63 +464,7 @@
           <span id="clicked"></span>
           <span class="spinner"></span>
         </div>
-        <div id="plot3dContainer" class="round-corner grow">
-          <div class="progress"></div>
-          <canvas id="plot3d"></canvas>
-
-          <div class="hub_right">
-            <canvas id="hub" width="200" height="15"></canvas>
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-
-          <div class="slidecontainer" style="bottom: 70px">
-            <input
-              type="range"
-              class="slider"
-              name="pivot"
-              min="0"
-              max="100"
-              value="0"
-              oninput="document.set_pivot(this.value/100)"
-            />
-          </div>
-
-          <div class="slider_buttons">
-            <button
-              class="slider_button img_flat"
-              onclick="brain_3d.set_shape_animated(0)"
-            ></button>
-            <button
-              class="slider_button img_inflated"
-              onclick="brain_3d.set_shape_animated(1)"
-            ></button>
-            <button
-              class="slider_button img_pia"
-              onclick="brain_3d.set_shape_animated(2)"
-            ></button>
-            <button
-              class="slider_button img_wm"
-              onclick="brain_3d.set_shape_animated(3)"
-            ></button>
-          </div>
-          <div class="slidecontainer">
-            <input
-              type="range"
-              class="slider"
-              id="shape"
-              name="shape"
-              min="0"
-              max="300"
-              value="0"
-              oninput="document.set_shape(this.value/100)"
-            />
-          </div>
-          <span class="spinner"></span>
-        </div>
+        <div id="plot3dContainer" class="round-corner grow"></div>
         <div>
           <!--<canvas id="matrix" style="width: 400px; image-rendering: pixelated;"></canvas>-->
           <div id="matrixContainer"></div>
@@ -1023,7 +840,6 @@
 
     <script type="module">
       import { add_2D_view } from "./js/2D_view.mjs";
-      import { get_cmap_display } from "./js/colormaps.mjs";
 
       const view = add_2D_view(document.getElementById("plotImage"));
 
@@ -1034,7 +850,6 @@
 
         await view.set_voxel_data(e.detail.image, cmap_max);
         if (e.detail.matrix_overlap) await view.plot_overlap_matrix(e.detail);
-        get_cmap_display("turbo", cmap_max);
       });
 
       window.addEventListener("voxel_selected_changed", async function (e) {
@@ -1046,7 +861,7 @@
       import { initScene, add_brain } from "./js/3D_view.mjs";
 
       const scene = await initScene({
-        dom_elem: document.getElementById("plot3d"),
+        dom_elem: document.getElementById("plot3dContainer"),
       });
       let brain_3d = await add_brain({
         scene,
@@ -1066,6 +881,8 @@
 
         await brain_3d.set_voxel_data(e.detail.image, cmap_max);
         scene.onWindowResize();
+
+        scene.set_cmap_display("turbo", cmap_max);
       });
 
       window.addEventListener("voxel_selected_changed", async function (e) {

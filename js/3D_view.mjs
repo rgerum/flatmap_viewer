@@ -588,6 +588,9 @@ export async function add_brain({
     if (show_roi) {
       let foreground = await getPngData("static_data/foreground.png");
       data = overlayImagesUint8(data, foreground, width, height);
+
+      // Usage
+      //data = await addSvgPathToImage('static_data/overlays_floc.svg', data);
     }
 
     const texture = new THREE.DataTexture(
@@ -751,3 +754,80 @@ function create_controls(parent) {
     colorbar,
   };
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+async function addSvgPathToImage(svgUrl, data) {
+    // Load the SVG file
+    const svgResponse = await fetch(svgUrl);
+    const svgText = await svgResponse.text();
+
+    // Parse the SVG file
+    const parser = new DOMParser();
+    const svgDoc = parser.parseFromString(svgText, "image/svg+xml");
+
+    const paths = svgDoc.querySelector("#rois_shapes");
+
+    // Load the image represented by Uint8Array   // Create a canvas and draw the image
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = data.shape[1];
+    canvas.height = data.shape[0];
+    ctx.putImageData(new ImageData(data, data.shape[1], data.shape[0]), 0, 0);
+
+    // Draw the SVG path onto the canvas
+    // This step is complex and depends on your SVG. You might need to manually set path commands.
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "white";
+  for(let p of Array.from(paths.children)) {
+    console.log(p.getAttribute('inkscape:label'))
+    if(p.getAttribute('inkscape:label') === 'V1') {
+
+      for(let pp of Array.from(p.children)) {
+        console.log("pp", pp)
+        drawSvgPathOnCanvas(ctx, pp.getAttribute('d'));
+      }
+    }
+  }
+
+    return ctx.getImageData(0, 0, canvas.width, canvas.height);
+}
+
+function drawSvgPathOnCanvas(ctx, pathData) {
+    ctx.beginPath();
+
+    // Parse the SVG path data
+    // This is a simplified example. You might need a more complex parser.
+    const commands = pathData.match(/[a-df-z][^a-df-z]*/ig);
+    commands.forEach(command => {
+        const type = command[0];
+        const points = command.slice(1).trim().split(/[\s,]+/).map(Number);
+
+        switch (type) {
+            case 'M':
+                ctx.moveTo(...points);
+                break;
+            case 'L':
+                ctx.lineTo(...points);
+                break;
+            case 'C':
+                ctx.bezierCurveTo(...points);
+                break;
+            // Add other cases as needed
+        }
+    });
+
+    ctx.stroke(); // or ctx.fill()
+}
+
