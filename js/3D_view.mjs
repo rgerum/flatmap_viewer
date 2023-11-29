@@ -570,12 +570,13 @@ export async function add_brain({
 
   function set_roi_show(show) {
     show_roi = show;
-    set_texture(last_data[0], last_data[1], last_data[2]);
-    return;
-    if (show) mesh.material[0].map = mesh.material[0].roi_texture;
-    else mesh.material[0].map = null;
-    mesh.material[0].needsUpdate = true;
+    update_texture();
   }
+
+  function update_texture() {
+    set_texture(last_data[0], last_data[1], last_data[2]);
+  }
+  window.update_texture = update_texture
 
   let last_data = null;
 
@@ -587,10 +588,10 @@ export async function add_brain({
     last_data = [data, width, height];
     if (show_roi) {
       let foreground = await getPngData("static_data/foreground.png");
-      data = overlayImagesUint8(data, foreground, width, height);
+      //data = overlayImagesUint8(data, foreground, width, height);
 
       // Usage
-      //data = await addSvgPathToImage('static_data/overlays_floc.svg', data);
+      data = await addSvgPathToImage("static_data/overlays_floc.svg", data);
     }
 
     const texture = new THREE.DataTexture(
@@ -610,7 +611,10 @@ export async function add_brain({
     scene.initialized = true;
   }
 
-  async function download_last_texture(filename = "downloadedImage.png", show_roi=false) {
+  async function download_last_texture(
+    filename = "downloadedImage.png",
+    show_roi = false,
+  ) {
     let [data, width, height] = last_data;
     if (show_roi) {
       let foreground = await getPngData("static_data/foreground.png");
@@ -755,79 +759,62 @@ function create_controls(parent) {
   };
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 async function addSvgPathToImage(svgUrl, data) {
-    // Load the SVG file
-    const svgResponse = await fetch(svgUrl);
-    const svgText = await svgResponse.text();
+  // Load the SVG file
+  const svgResponse = await fetch(svgUrl);
+  const svgText = await svgResponse.text();
 
-    // Parse the SVG file
-    const parser = new DOMParser();
-    const svgDoc = parser.parseFromString(svgText, "image/svg+xml");
+  let rois = window.rois || ["V1", "V2", "V3", "V4", "OPA", "EBA", "OWFA", "FFA", "mfs-words", "PPA", "mTL-words", "RSC"];
+  window.rois = rois;
 
-    const paths = svgDoc.querySelector("#rois_shapes");
+  // Parse the SVG file
+  const parser = new DOMParser();
+  const svgDoc = parser.parseFromString(svgText, "image/svg+xml");
 
-    // Load the image represented by Uint8Array   // Create a canvas and draw the image
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = data.shape[1];
-    canvas.height = data.shape[0];
-    ctx.putImageData(new ImageData(data, data.shape[1], data.shape[0]), 0, 0);
+  const paths = svgDoc.querySelector("#rois_shapes");
 
-    // Draw the SVG path onto the canvas
-    // This step is complex and depends on your SVG. You might need to manually set path commands.
+  // Load the image represented by Uint8Array   // Create a canvas and draw the image
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = data.shape[1];
+  canvas.height = data.shape[0];
+  ctx.putImageData(new ImageData(data, data.shape[1], data.shape[0]), 0, 0);
+
+  // Draw the SVG path onto the canvas
+  // This step is complex and depends on your SVG. You might need to manually set path commands.
   ctx.lineWidth = 2;
   ctx.strokeStyle = "white";
-  for(let p of Array.from(paths.children)) {
-    console.log(p.getAttribute('inkscape:label'))
-    if(p.getAttribute('inkscape:label') === 'V1') {
+  window.all_rois = []
+  for (let p of Array.from(paths.children)) {
+    window.all_rois.push(p.getAttribute("inkscape:label"));
+    if (rois.includes(p.getAttribute("inkscape:label"))) {
+      for (let pp of Array.from(p.children)) {
+        ctx.stroke(new Path2D(pp.getAttribute("d")));
 
-      for(let pp of Array.from(p.children)) {
-        console.log("pp", pp)
-        drawSvgPathOnCanvas(ctx, pp.getAttribute('d'));
+        ctx.fillStyle = "white";
+        ctx.font = "18px sans";
+        ctx.textAlign = "center";
+        let pos = getCenterOfPath(pp)
+        ctx.fillText(p.getAttribute("inkscape:label"), pos[0], pos[1]);
+        ctx.fileStyle = "none";
+        //drawSvgPathOnCanvas(ctx, pp.getAttribute("d"));
       }
     }
   }
 
-    return ctx.getImageData(0, 0, canvas.width, canvas.height);
+  return ctx.getImageData(0, 0, canvas.width, canvas.height);
 }
 
-function drawSvgPathOnCanvas(ctx, pathData) {
-    ctx.beginPath();
 
-    // Parse the SVG path data
-    // This is a simplified example. You might need a more complex parser.
-    const commands = pathData.match(/[a-df-z][^a-df-z]*/ig);
-    commands.forEach(command => {
-        const type = command[0];
-        const points = command.slice(1).trim().split(/[\s,]+/).map(Number);
-
-        switch (type) {
-            case 'M':
-                ctx.moveTo(...points);
-                break;
-            case 'L':
-                ctx.lineTo(...points);
-                break;
-            case 'C':
-                ctx.bezierCurveTo(...points);
-                break;
-            // Add other cases as needed
-        }
-    });
-
-    ctx.stroke(); // or ctx.fill()
+function getCenterOfPath(path) {
+  let x = 0;
+  let y = 0;
+  const length = path.getTotalLength();
+  const count = 10;//Math.round(length);
+  for(let i = 0; i < count; i++) {
+    let p = path.getPointAtLength(i / count * length);
+    x += p.x/count;
+    y += p.y/count;
+  }
+  return [x, y]
 }
-
