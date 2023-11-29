@@ -135,6 +135,14 @@
   </head>
   <body>
     <div class="main_column">
+      <form id="plotForm" class="controls">
+        <input type="hidden" name="show_groups" value="0" />
+        <div class="control_box">
+          <span class="control_box_title"><span>Mode</span></span>
+          <div class="control_box_content">
+            <div id="mode" class="check_list_rows"></div>
+          </div>
+        </div>
       <div class="flex-row" style="position: relative">
         <div id="plot3dContainer" class="round-corner grow"></div>
 
@@ -172,7 +180,80 @@
       });
 
       window.brain_3d = brain_3d;
-      brain_3d.set_texture(await getPngData("static_data/tsne__fsaverage.png"));
+
+      let surface_image_file = null;
+      let top_images_file = null;
+      let top_images_data = null;
+
+      function set_file_paths(mode) {
+        if (mode == "Vertex Averaged Concepts") {
+          surface_image_file = "static_data/tsne__fsaverage.png";
+          top_images_file = "static_data/vertex_concept_averages/M_fsavg_top_images.npy"
+        }
+        else if (mode == "Betas") {
+          surface_image_file = "static_data/betas_average.png";
+          top_images_file = "static_data/vertex_concept_averages/betas__top_images__fsavg.npy"
+        }
+
+      }
+      set_file_paths("Vertex Averaged Concepts")
+
+      async function update_plot() {
+        const form = document.getElementById("plotForm");
+        const formData = new URLSearchParams(new FormData(form));
+        const mode = formData.get("mode");
+        set_file_paths(mode);
+        brain_3d.set_texture(await getPngData(surface_image_file));
+
+        top_images_data = await cachedLoadNpy(top_images_file,);
+
+      }
+      update_plot();
+
+      document.update_plot = update_plot;
+      window.update_plot = update_plot;
+
+      function add_check_box(
+          placeholder,
+          name,
+          index,
+          index2,
+          invert,
+          radio,
+        ) {
+        let label = document.createElement("label");
+        let text = document.createElement("span");
+        text.innerText = index2 || index;
+        let checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        if (radio) checkbox.type = "radio";
+        checkbox.name = name;
+        checkbox.value = index;
+        checkbox.oninput = update_plot;
+        label.title = index;
+        if (invert) {
+          label.appendChild(checkbox);
+          label.appendChild(text);
+        } else {
+          label.appendChild(text);
+          label.appendChild(checkbox);
+        }
+        placeholder.appendChild(label);
+        return checkbox;
+      }
+
+      let placeholder3 = document.getElementById("mode");
+      for (let i of [0, 1]) {
+        let checkbox = add_check_box(
+          placeholder3,
+          "mode",
+          ["Vertex Averaged Concepts", "Betas"][i],
+          undefined,
+          true,
+          true,
+        );
+        checkbox.checked = i == 0;
+      }
 
       window.addEventListener("voxel_selected_changed", async function (e) {
         await brain_3d.set_voxel_selected(e.detail);
@@ -180,11 +261,6 @@
       window.addEventListener("roi_show_changed", async function (e) {
         await brain_3d.set_roi_show(e.detail);
       });
-
-      let data = await cachedLoadNpy(
-        `static_data/vertex_concept_averages/M_fsavg_top_images.npy`,
-      );
-      console.log(data);
 
       url_obj.add_value("selected_images", [], image_map);
       async function add_image_to_list(image_id) {
@@ -215,21 +291,20 @@
         }
         if (url_obj.selected_images.length == 0) {
           brain_3d.set_texture(
-            await getPngData("static_data/tsne__fsaverage.png"),
+            await getPngData(surface_image_file),
           );
           return;
         }
-
-        let voxel_image_count = new Int32Array(data.shape[0]);
+        let voxel_image_count = new Int32Array(top_images_data.shape[0]);
         // iterate over voxels
         for (let i = 0; i < voxel_image_count.length; i++) {
-          let list = data.data[i * data.shape[1]];
+          let list = top_images_data.data[i * top_images_data.shape[1]];
           let found = 0;
           for (let image_id of url_obj.selected_images) {
             // find the image id
-            for (let j = 0; j < data.shape[1]; j++) {
+            for (let j = 0; j < top_images_data.shape[1]; j++) {
               // if found set the voxel data as the index of the image in the list
-              if (data.data[i * data.shape[1] + j] === image_id) {
+              if (top_images_data.data[i * top_images_data.shape[1] + j] === image_id) {
                 found += 1;
                 break;
               }
@@ -265,7 +340,7 @@
           // add the images and add an onclick function
           for (let i = 0; i < 10; i++) {
             let im_id =
-              data.data[e.detail.voxel * data.shape[1] + i + component_id * 10];
+            top_images_data.data[e.detail.voxel * top_images_data.shape[1] + i + component_id * 10];
             let img = add_image(row, `static_data/new_examples/${im_id}.jpg`);
             img.onclick = function () {
               if (!url_obj.selected_images.includes(im_id)) {
@@ -289,7 +364,7 @@
         element_examples.innerHTML = "";
 
         // add the rows
-        if (data.data[e.detail.voxel * data.shape[1]] < 0) return;
+        if (top_images_data.data[e.detail.voxel * top_images_data.shape[1]] < 0) return;
         for (let i = 0; i < 5; i++) {
           add_row(element_examples, i);
         }
