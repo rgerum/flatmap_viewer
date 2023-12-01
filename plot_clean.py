@@ -8,7 +8,8 @@ import json
 
 
 subject_ids = [0, 1, 2, 3, 4, 5, 6, 7]
-space = 'fsavg'
+#space = 'fsavg'
+space = 'fssubject'
 roi_names = {'prf-visualrois': ['V1', 'V2', 'V3', 'V4'],
  'floc-bodies': ['mTL-bodies', 'FBA-1', 'FBA-2', 'EBA'],
  'floc-faces': ['aTL-faces', 'mTL-faces', 'FFA-2', 'FFA-1', 'OFA'],
@@ -119,10 +120,11 @@ def load_all_new(output_folder):
             data_all.append(dataAllLayers.ravel().astype(np.uint8) << subject_id)
 
         mask = np.sum(data_all, axis=0).astype(np.uint8)
+
         np.save(Path(output_folder) / f"mask_data_{index}.npy", mask)
 
 
-def cache_mapping_voxel_pixel(output_folder):
+def cache_mapping_voxel_pixel_old(output_folder):
     Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     component_id = all_component_ids[0]
@@ -134,7 +136,46 @@ def cache_mapping_voxel_pixel(output_folder):
     x = np.arange(data.shape[0])
     data2 = data_to_flatmap(x, subject_id)
     data2[np.isnan(data2)] = -1
+    plt.imshow(data2)
+    plt.show()
     np.save(Path(output_folder) / "mapping_map.npy", data2.astype(np.int32).ravel())
+
+
+def cache_mapping_voxel_pixel(output_folder, subject_id):
+    import cortex
+    from cortex.quickflat.view import composite
+
+    x = np.arange(100)
+
+    # create the vertex data object
+    space = 'fssubject'
+    if subject_id == -1:
+        subject_name = 'fsaverage'
+        subject_id = 1
+    subject_name = f'subj0{subject_id}'
+
+    try:
+        braindata = cortex.dataset.Vertex(x, subject_name if space == 'fssubject' else 'fsaverage', cmap='jet',
+                                          vmin=0, vmax=8)
+    except ValueError as e:
+        import re
+        m = re.match(r".*or (\d*) for both.*", str(e))
+        x = np.arange(int(m.group(1)))
+        braindata = cortex.dataset.Vertex(x, subject_name if space == 'fssubject' else 'fsaverage', cmap='jet',
+                                          vmin=0, vmax=8)
+    # and create the flatmap image
+    im, extents = composite.make_flatmap_image(braindata, height=1024)
+
+    data2 = im
+
+    data2[np.isnan(data2)] = -1
+    #fig,axs = plt.subplots(1, 2, sharex=True, sharey=True)
+    #plt.sca(axs[0])
+    #plt.imshow(data2)
+    #plt.sca(axs[1])
+    #cache_mapping_voxel_pixel_old(output_folder)
+    #plt.show()
+    np.save(Path(output_folder) / "mapping_map.npy", data2.astype(np.int32))
 
 
 def load_all_new_mask(output_folder):
@@ -171,6 +212,7 @@ def cache_flatmap_background(output_folder):
 
     print(cortex.options.usercfg)
     print(cortex.database.default_filestore)
+    print(Path(cortex.database.default_filestore) / overlay_file)
     cortex.quickflat.make_figure(braindata, with_rois=True, with_curvature=True, with_colorbar=True,
                                  colorbar_location=(0.01, 0.05, 0.2, 0.05),
                                  height=height,
@@ -186,7 +228,16 @@ def cache_flatmap_background(output_folder):
 
 def cache_images(output_folder):
     Path(output_folder).mkdir(parents=True, exist_ok=True)
-    im = plt.imread("run-9/top_images_73k.png")
+    #im = plt.imread("run-9/top_images_73k.png")
+    im = plt.imread("top_images_test.png")
+
+    if 0:
+        count = 113
+        im2 = im[count * 256:(count + 1) *256]
+        plt.imshow(im2)
+        plt.show()
+        exit()
+
     w, h, c = im.shape
     if not os.path.exists("cache_top_image"):
         os.mkdir("cache_top_image")
@@ -240,17 +291,28 @@ def rotate_point_around_axis(point, axis, theta):
     return rotated_point
 
 
-def save_3D_data():
+def save_3D_data(surf_name="fsaverage", output_folder="static_data"):
     import cortex
 
-    curv_vertices = cortex.db.get_surfinfo("fsaverage")
-    np.save(f"static_data/curvature.npy", curv_vertices.data)
+    output_folder = Path(output_folder)
+    output_folder.mkdir(parents=True, exist_ok=True)
+
+    curv_vertices = cortex.db.get_surfinfo(surf_name)
+    np.save(output_folder / f"curvature.npy", curv_vertices.data)
 
     index_mapping = None
 
+    counts = {}
+
     # flat, inflated, pia, wm
     def store_3d_data(name, f=1, name_vertex=None):
-        pt, vtx = cortex.db.get_surf("fsaverage", name, merge=True, nudge=True)
+        pt, vtx = cortex.db.get_surf(surf_name, name, merge=True, nudge=True)
+        if name == "flat":
+            pt1, vtx1 = cortex.db.get_surf(surf_name, name, hemisphere="lh", merge=True, nudge=True)
+            pt2, vtx2 = cortex.db.get_surf(surf_name, name, hemisphere="rh", merge=True, nudge=True)
+            print(pt1.shape, pt2.shape, vtx1.shape, vtx2.shape)
+            counts["lh_count"] = pt1.shape[0]
+            counts["rh_count"] = pt2.shape[0]
         pt = pt / 100 * f
         print(pt.shape, pt.dtype, vtx.dtype, np.mean(pt, axis=0), np.max(pt, axis=0), np.min(pt, axis=0))
         # center
@@ -291,14 +353,17 @@ def save_3D_data():
             pt = pt[new_order]
         print(pt.shape, pt.dtype, vtx.shape, vtx.dtype)
         print("----------")
-        np.save(f"static_data/pt_{name}.npy", pt)
+        name1 = output_folder / f"pt_{name}.npy"
+        np.save(name1, pt)
         if name_vertex is not None:
-            np.save(f"static_data/{name_vertex}.npy", vtx)
+            name2 = output_folder / f"{name_vertex}.npy"
+            np.save(name2, vtx)
+            return name1, name2
 
-    store_3d_data("flat", name_vertex="vtx_flat")
+    name1, name2 = store_3d_data("flat", name_vertex="faces_flat")
 
-    pt = np.load("static_data/pt_flat.npy")
-    faces = np.load("static_data/vtx_flat.npy")
+    pt = np.load(name1)
+    faces = np.load(name2)
     # Identify the unique indices used by the faces
     used_indices = np.unique(faces.ravel())
 
@@ -319,9 +384,11 @@ def save_3D_data():
     set1 = set(map(tuple, faces))
 
     #store_3d_data("flat", name_vertex="vtx_flat")
-    store_3d_data("inflated", name_vertex="vtx")
+    store_3d_data("inflated", name_vertex="faces")
     store_3d_data("pia", f=1.2)
     store_3d_data("wm", f=1.25)
+    with open(output_folder / "counts.json", "w") as f:
+        json.dump(counts, f)
 
 
 def print_colormap(cmap_name):
@@ -331,6 +398,67 @@ def print_colormap(cmap_name):
 
 
 if __name__ == "__main__":
+    save_3D_data("fsaverage", f"static_data/fsaverage")
+    for i in range(1, 9):
+        save_3D_data(f"subj0{i}", f"static_data/subj0{i}")
+    cache_mapping_voxel_pixel(f"static_data/fsaverage", -1)
+    for i in range(1, 9):
+        cache_mapping_voxel_pixel(f"static_data/subj0{i}", i)
+
+
+    exit()
+    height = 1024
+    width = 2274
+    def get_connections(i):
+        data = []
+        for di in [-1, width, -width, 1]:
+            try:
+                data.append(mask[i+di])
+            except IndexError:
+                pass
+        return np.unique(data)
+
+    output_folder = "static_data/component_masks"
+    mask = np.load(Path(output_folder) / "mapping_map.npy")
+    data_masks_all = np.load(Path(output_folder) / "data_masks_all.npy")
+    connections = {}
+    print(mask.shape)
+    print(np.max(mask))
+    for i in np.unique(mask):
+        if i == -1:
+            continue
+        if data_masks_all[i] == 0:
+            continue
+        print(i)
+        points = np.where(mask == i)[0]
+        if len(points) == 0:
+            exit()
+            connections.append([])
+            continue
+        #print(points, len(points))
+        all = np.unique(np.hstack([get_connections(p) for p in points]))
+        all = [x for x in all if i != x]
+        connections[i] = all
+        continue
+        print(all)
+
+        m = (mask == i).astype(np.int64)
+        for j in range(len(all)):
+            print(all[j], np.sum(mask == all[j]))
+            m[mask == all[j]] += j+3
+            print(np.unique(m))
+        plt.imshow(m.reshape(height, width))
+        plt.show()
+    print(connections)
+    import pickle
+    with open("static_data/connections.pkl", "wb") as f:
+        pickle.dump(connections, f)
+    exit()
+        #connections.append()
+
+    print(mask.shape, np.max(mask), np.min(mask))
+    exit()
+
     #cache_component_list("static_data")
     #cache_flatmap_background("static_data")
     #cache_images("static_data/component_example_images")
@@ -339,8 +467,8 @@ if __name__ == "__main__":
     #cache_mapping_voxel_pixel("static_data/component_masks")
     #load_all_new_mask("static_data/component_masks")
 
-    save_3D_data()
-    print_colormap("gray")
+    #save_3D_data()
+    print_colormap("viridis")
 
 
     exit()

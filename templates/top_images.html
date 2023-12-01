@@ -143,19 +143,19 @@
             <div id="mode" class="check_list_rows"></div>
           </div>
         </div>
-      <div class="flex-row" style="position: relative">
-        <div id="plot3dContainer" class="round-corner grow"></div>
+        <div class="flex-row" style="position: relative">
+          <div id="plot3dContainer" class="round-corner grow"></div>
 
-        <div id="selected_images" class="round-corner"></div>
-      </div>
+          <div id="selected_images" class="round-corner"></div>
+        </div>
 
-      <div id="componentExamples"></div>
+        <div id="componentExamples"></div>
+      </form>
     </div>
 
     <script type="module">
       import { initScene, add_brain } from "./js/3D_view.mjs";
       import { getPngData } from "./js/numpy_to_js.mjs";
-      import { voxels_to_flatmap } from "./js/2D_view.mjs";
       import { cachedLoadNpy } from "./js/numpy_to_js.mjs";
 
       import { add_image, create_row } from "./js/dom_methods.mjs";
@@ -168,16 +168,49 @@
         dom_elem: document.getElementById("plot3dContainer"),
       });
       scene.initialized = true;
-
-      let brain_3d = await add_brain({
+      let a = {
         scene,
-        pt_flat: "static_data/pt_flat.npy",
-        faces_flat: "static_data/vtx_flat.npy",
-        pt_inflated: "static_data/pt_inflated.npy",
-        faces_inflated: "static_data/vtx.npy",
-        pt_pia: "static_data/pt_pia.npy",
-        pt_wm: "static_data/pt_wm.npy",
-      });
+        pt_flat: "static_data/fsaverage/fsaverage_pt_flat.npy",
+        faces_flat: "static_data/fsaverage/fsaverage_vtx_flat.npy",
+        pt_inflated: "static_data/fsaverage/fsaverage_pt_inflated.npy",
+        faces_inflated: "static_data/fsaverage/fsaverage_vtx.npy",
+        pt_pia: "static_data/fsaverage/fsaverage_pt_pia.npy",
+        pt_wm: "static_data/fsaverage/fsaverage_pt_wm.npy",
+        curvature_path: "static_data/fsaverage/fsaverage_curvature.npy",
+        overlays_path: "static_data/overlays_floc.svg",
+        mapping_path: "static_data/fsaverage/mapping_map.npy",
+        counts: "static_data/fsaverage/counts.json",
+      };
+      let b = {
+        scene,
+        pt_flat: "static_data/subj01/pt_flat.npy",
+        faces_flat: "static_data/subj01/faces_flat.npy",
+        pt_inflated: "static_data/subj01/pt_inflated.npy",
+        faces_inflated: "static_data/subj01/faces.npy",
+        pt_pia: "static_data/subj01/pt_pia.npy",
+        pt_wm: "static_data/subj01/pt_wm.npy",
+        curvature_path: "static_data/subj01/curvature.npy",
+        mapping_path: "static_data/subj01/mapping_map.npy",
+        overlays_path: "static_data/subj01/overlays-version1.svg",
+        counts: "static_data/subj01/counts.json",
+      };
+
+      let c = {
+        scene,
+        pt_flat: "static_data/subj02/pt_flat.npy",
+        faces_flat: "static_data/subj02/faces_flat.npy",
+        pt_inflated: "static_data/subj02/pt_inflated.npy",
+        faces_inflated: "static_data/subj02/faces.npy",
+        pt_pia: "static_data/subj02/pt_pia.npy",
+        pt_wm: "static_data/subj02/pt_wm.npy",
+        curvature_path: "static_data/subj02/curvature.npy",
+        mapping_path: "static_data/subj02/mapping_map.npy",
+        overlays_path: "static_data/subj02/overlays-version1.svg",
+        counts: "static_data/subj02/counts.json",
+      };
+
+
+      let brain_3d = await add_brain(c);
 
       window.brain_3d = brain_3d;
 
@@ -187,40 +220,33 @@
 
       function set_file_paths(mode) {
         if (mode == "Vertex Averaged Concepts") {
-          surface_image_file = "static_data/tsne__fsaverage.png";
-          top_images_file = "static_data/vertex_concept_averages/M_fsavg_top_images.npy"
+          surface_image_file = "static_data/background.png";
+          top_images_file =
+            "static_data/vertex_concept_averages/M_fssubject_binary_top_images__subj02.npy";
+        } else if (mode == "Betas") {
+          surface_image_file = "static_data/foreground.png";
+          top_images_file =
+            "static_data/vertex_concept_averages/betas__top_images__fsavg.npy";
         }
-        else if (mode == "Betas") {
-          surface_image_file = "static_data/betas_average.png";
-          top_images_file = "static_data/vertex_concept_averages/betas__top_images__fsavg.npy"
-        }
-
       }
-      set_file_paths("Vertex Averaged Concepts")
+      set_file_paths("Vertex Averaged Concepts");
 
       async function update_plot() {
+        if (!top_images_file) return;
         const form = document.getElementById("plotForm");
         const formData = new URLSearchParams(new FormData(form));
         const mode = formData.get("mode");
         set_file_paths(mode);
         brain_3d.set_texture(await getPngData(surface_image_file));
 
-        top_images_data = await cachedLoadNpy(top_images_file,);
-
+        top_images_data = await cachedLoadNpy(top_images_file);
       }
       update_plot();
 
       document.update_plot = update_plot;
       window.update_plot = update_plot;
 
-      function add_check_box(
-          placeholder,
-          name,
-          index,
-          index2,
-          invert,
-          radio,
-        ) {
+      function add_check_box(placeholder, name, index, index2, invert, radio) {
         let label = document.createElement("label");
         let text = document.createElement("span");
         text.innerText = index2 || index;
@@ -282,6 +308,7 @@
       }
 
       async function image_map() {
+        if (!top_images_data) return;
         let elem = document.getElementById("selected_images");
         elem.innerHTML = "";
         for (let image_id of url_obj.selected_images) {
@@ -290,9 +317,7 @@
           im.className = "image-container image-container-minus";
         }
         if (url_obj.selected_images.length == 0) {
-          brain_3d.set_texture(
-            await getPngData(surface_image_file),
-          );
+          brain_3d.set_texture(await getPngData(surface_image_file));
           return;
         }
         let voxel_image_count = new Int32Array(top_images_data.shape[0]);
@@ -304,7 +329,10 @@
             // find the image id
             for (let j = 0; j < top_images_data.shape[1]; j++) {
               // if found set the voxel data as the index of the image in the list
-              if (top_images_data.data[i * top_images_data.shape[1] + j] === image_id) {
+              if (
+                top_images_data.data[i * top_images_data.shape[1] + j] ===
+                image_id
+              ) {
                 found += 1;
                 break;
               }
@@ -312,13 +340,11 @@
           }
           if (found) {
             voxel_image_count[i] = found;
-          }
-          else
-            voxel_image_count[i] = -1;
+          } else voxel_image_count[i] = -1;
         }
         // convert voxel data to texture
         brain_3d.set_texture(
-          await voxels_to_flatmap(
+          await brain_3d.voxels_to_flatmap(
             voxel_image_count,
             url_obj.selected_images.length + 1,
           ),
@@ -340,7 +366,11 @@
           // add the images and add an onclick function
           for (let i = 0; i < 10; i++) {
             let im_id =
-            top_images_data.data[e.detail.voxel * top_images_data.shape[1] + i + component_id * 10];
+              top_images_data.data[
+                e.detail.voxel * top_images_data.shape[1] +
+                  i +
+                  component_id * 10
+              ];
             let img = add_image(row, `static_data/new_examples/${im_id}.jpg`);
             img.onclick = function () {
               if (!url_obj.selected_images.includes(im_id)) {
@@ -364,7 +394,8 @@
         element_examples.innerHTML = "";
 
         // add the rows
-        if (top_images_data.data[e.detail.voxel * top_images_data.shape[1]] < 0) return;
+        if (top_images_data.data[e.detail.voxel * top_images_data.shape[1]] < 0)
+          return;
         for (let i = 0; i < 5; i++) {
           add_row(element_examples, i);
         }

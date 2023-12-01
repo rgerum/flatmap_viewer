@@ -8,7 +8,7 @@ export async function loadNpy(url) {
     .map((byte) => String.fromCharCode(byte))
     .join("");
   if (magic !== "\x93NUMPY") {
-    throw new Error("Not a .npy file");
+    throw new Error(`Not a .npy file filename: ${url}`);
   }
 
   // Parse header
