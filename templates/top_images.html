@@ -143,6 +143,12 @@
             <div id="mode" class="check_list_rows"></div>
           </div>
         </div>
+        <div class="control_box">
+          <span class="control_box_title"><span>Subject</span></span>
+          <div class="control_box_content">
+            <div id="subject" class="check_list_subjects"></div>
+          </div>
+        </div>
         <div class="flex-row" style="position: relative">
           <div id="plot3dContainer" class="round-corner grow"></div>
 
@@ -208,9 +214,38 @@
         overlays_path: "static_data/subj02/overlays-version1.svg",
         counts: "static_data/subj02/counts.json",
       };
+      let last_subject = 0;
+      let brains = {};
+      async function set_subject(subject) {
+        console.log("set_subject", subject);
+        if (last_subject == subject) return;
+        if(brain_3d) {
+            brain_3d.set_inactive()
+        }
+        last_subject = subject;
+        if (!brains[subject]) {
+          let params = {
+            scene,
+            pt_flat: `static_data/${subject}/pt_flat.npy`,
+            faces_flat: `static_data/${subject}/faces_flat.npy`,
+            pt_inflated: `static_data/${subject}/pt_inflated.npy`,
+            faces_inflated: `static_data/${subject}/faces.npy`,
+            pt_pia: `static_data/${subject}/pt_pia.npy`,
+            pt_wm: `static_data/${subject}/pt_wm.npy`,
+            curvature_path: `static_data/${subject}/curvature.npy`,
+            mapping_path: `static_data/${subject}/mapping_map.npy`,
+            overlays_path: `static_data/${subject}/overlays-version1.svg`,
+            counts: `static_data/${subject}/counts.json`,
+          };
+          brains[subject] = await add_brain(params);
+        }
+        brain_3d = brains[subject];
+        brain_3d.set_active();
+        window.brain_3d = brain_3d;
+      }
 
-
-      let brain_3d = await add_brain(c);
+      let brain_3d = null;
+      await set_subject("subj01");
 
       window.brain_3d = brain_3d;
 
@@ -218,26 +253,29 @@
       let top_images_file = null;
       let top_images_data = null;
 
-      function set_file_paths(mode) {
+      function set_file_paths(mode, subject) {
         if (mode == "Vertex Averaged Concepts") {
           surface_image_file = "static_data/background.png";
           top_images_file =
-            "static_data/vertex_concept_averages/M_fssubject_binary_top_images__subj02.npy";
+            `static_data/vertex_concept_averages/M_fssubject_binary_top_images__${subject}.npy`;
         } else if (mode == "Betas") {
           surface_image_file = "static_data/foreground.png";
           top_images_file =
             "static_data/vertex_concept_averages/betas__top_images__fsavg.npy";
         }
       }
-      set_file_paths("Vertex Averaged Concepts");
+      set_file_paths("Vertex Averaged Concepts", "subj01");
 
       async function update_plot() {
         if (!top_images_file) return;
         const form = document.getElementById("plotForm");
         const formData = new URLSearchParams(new FormData(form));
         const mode = formData.get("mode");
-        set_file_paths(mode);
-        brain_3d.set_texture(await getPngData(surface_image_file));
+        const subject = formData.get("subject");
+        if(subject === null)
+          return
+        await set_subject(subject);
+        set_file_paths(mode, subject);
 
         top_images_data = await cachedLoadNpy(top_images_file);
       }
@@ -274,6 +312,19 @@
           placeholder3,
           "mode",
           ["Vertex Averaged Concepts", "Betas"][i],
+          undefined,
+          true,
+          true,
+        );
+        checkbox.checked = i == 0;
+      }
+
+      let placeholder3b = document.getElementById("subject");
+      for (let i = 0; i < 8; i++) {
+        let checkbox = add_check_box(
+          placeholder3b,
+          "subject",
+          `subj0${i + 1}`, // i,
           undefined,
           true,
           true,
@@ -351,6 +402,7 @@
         );
         scene.set_cmap_display("turbo", url_obj.selected_images.length + 1);
       }
+      window.image_map = image_map
       if (url_obj.selected_images.length) image_map();
 
       window.addEventListener("voxel_selected_changed", async function (e) {
