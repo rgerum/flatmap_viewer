@@ -323,7 +323,7 @@ export async function add_brain({
     curvature: cachedLoadNpy(curvature_path),
     cached_map: loadNpy(mapping_path),
   });
-  console.log("brain_data", brain_data)
+  console.log("brain_data", brain_data);
   brain_data.curvature = brain_data.curvature.data;
 
   brain_data.count_a = brain_data.faces_flat.shape[0];
@@ -334,7 +334,13 @@ export async function add_brain({
   );
   brain_data.faces = Array.prototype.slice.call(brain_data.faces.data);
 
-  const mesh = addMesh(scene, brain_data.pt2, brain_data.faces, brain_data.count_a, brain_data.count_b);
+  const mesh = addMesh(
+    scene,
+    brain_data.pt2,
+    brain_data.faces,
+    brain_data.count_a,
+    brain_data.count_b,
+  );
 
   let max_x = 0;
   let max_y = 0;
@@ -418,11 +424,17 @@ export async function add_brain({
 
     let p = pivot;
     if (index < 1) p = pivot * index;
-    if (index < 1 && last_shape_index >= 1) mesh.geometry.setIndex(brain_data.faces_flat);
-    if (index >= 1 && last_shape_index < 1) mesh.geometry.setIndex(brain_data.faces);
+    if (index < 1 && last_shape_index >= 1)
+      mesh.geometry.setIndex(brain_data.faces_flat);
+    if (index >= 1 && last_shape_index < 1)
+      mesh.geometry.setIndex(brain_data.faces);
     last_shape_index = index;
-    let pt_a = [brain_data.pt, brain_data.pt2, brain_data.pt3, brain_data.pt4][Math.floor(index)];
-    let pt_b = [brain_data.pt, brain_data.pt2, brain_data.pt3, brain_data.pt4][Math.ceil(index)];
+    let pt_a = [brain_data.pt, brain_data.pt2, brain_data.pt3, brain_data.pt4][
+      Math.floor(index)
+    ];
+    let pt_b = [brain_data.pt, brain_data.pt2, brain_data.pt3, brain_data.pt4][
+      Math.ceil(index)
+    ];
     let f = index % 1;
     let array = mesh.geometry.getAttribute("position").array;
 
@@ -551,7 +563,7 @@ export async function add_brain({
 
   // Function to handle mouse click event
   add_click(mesh, scene.renderer, scene.camera, (e) => {
-    if(!mesh.visible) return;
+    if (!mesh.visible) return;
     var myEvent = new CustomEvent("voxel_selected_changed", {
       detail: { voxel: e },
     });
@@ -671,7 +683,7 @@ export async function add_brain({
 
   async function getMapping() {
     if (!mapping) {
-          console.time("LoadBinary3");
+      console.time("LoadBinary3");
       let cached_map = brain_data.cached_map;
       width = cached_map.shape[1];
       height = cached_map.shape[0];
@@ -681,19 +693,21 @@ export async function add_brain({
       voxel_count = 0;
       for (let i = 0; i < width * height; i++) {
         let index = mapping_inverse[i];
-        if (index > voxel_count) {
+        if (index >= voxel_count) {
           voxel_count = index + 1;
+          console.log("voxel_count", voxel_count);
         }
       }
 
-      for (let i = 0; i < voxel_count; i++) { // brain_data.pt.shape[0]
+      for (let i = 0; i < voxel_count; i++) {
+        // brain_data.pt.shape[0]
         mapping.push([]);
       }
       for (let i = 0; i < width * height; i++) {
         let index = mapping_inverse[i];
         if (index >= 0) mapping[mapping_inverse[i]].push(i);
       }
-          console.timeEnd("LoadBinary3");
+      console.timeEnd("LoadBinary3");
     }
     return [mapping, mapping_inverse, voxel_count];
   }
@@ -708,10 +722,11 @@ export async function add_brain({
     const maxColorIndex = packedColor.length - 1;
 
     if (data32_index.length != voxel_count) {
-      if(data32_index.length)
+      if (data32_index.length)
         console.error("data32_index.length != voxel_count");
       for (let i = 0; i < voxel_count; i++) {
-        let clr = brain_data.curvature[i] > 0 ? packedColor2[2] : packedColor2[1];
+        let clr =
+          brain_data.curvature[i] > 0 ? packedColor2[2] : packedColor2[1];
 
         for (let ii of mapping[i]) {
           data32[ii] = clr;
@@ -722,7 +737,8 @@ export async function add_brain({
         let clr;
         if (data32_index[i] >= 0)
           clr = packedColor[Math.min(data32_index[i], maxColorIndex)];
-        else clr = brain_data.curvature[i] > 0 ? packedColor2[2] : packedColor2[1];
+        else
+          clr = brain_data.curvature[i] > 0 ? packedColor2[2] : packedColor2[1];
 
         for (let ii of mapping[i]) {
           data32[ii] = clr;
@@ -751,7 +767,10 @@ export async function add_brain({
     let i = 0;
     for (let elem of scene.dom_controls.slider_buttons.children) {
       let value = i;
-      elem.onclick = function (e) {set_shape_animated(value); e.preventDefault()};
+      elem.onclick = function (e) {
+        set_shape_animated(value);
+        e.preventDefault();
+      };
       i += 1;
     }
     window.download_last_texture = download_last_texture;
