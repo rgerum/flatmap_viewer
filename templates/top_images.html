@@ -174,46 +174,7 @@
         dom_elem: document.getElementById("plot3dContainer"),
       });
       scene.initialized = true;
-      let a = {
-        scene,
-        pt_flat: "static_data/fsaverage/fsaverage_pt_flat.npy",
-        faces_flat: "static_data/fsaverage/fsaverage_vtx_flat.npy",
-        pt_inflated: "static_data/fsaverage/fsaverage_pt_inflated.npy",
-        faces_inflated: "static_data/fsaverage/fsaverage_vtx.npy",
-        pt_pia: "static_data/fsaverage/fsaverage_pt_pia.npy",
-        pt_wm: "static_data/fsaverage/fsaverage_pt_wm.npy",
-        curvature_path: "static_data/fsaverage/fsaverage_curvature.npy",
-        overlays_path: "static_data/overlays_floc.svg",
-        mapping_path: "static_data/fsaverage/mapping_map.npy",
-        counts: "static_data/fsaverage/counts.json",
-      };
-      let b = {
-        scene,
-        pt_flat: "static_data/subj01/pt_flat.npy",
-        faces_flat: "static_data/subj01/faces_flat.npy",
-        pt_inflated: "static_data/subj01/pt_inflated.npy",
-        faces_inflated: "static_data/subj01/faces.npy",
-        pt_pia: "static_data/subj01/pt_pia.npy",
-        pt_wm: "static_data/subj01/pt_wm.npy",
-        curvature_path: "static_data/subj01/curvature.npy",
-        mapping_path: "static_data/subj01/mapping_map.npy",
-        overlays_path: "static_data/subj01/overlays-version1.svg",
-        counts: "static_data/subj01/counts.json",
-      };
 
-      let c = {
-        scene,
-        pt_flat: "static_data/subj02/pt_flat.npy",
-        faces_flat: "static_data/subj02/faces_flat.npy",
-        pt_inflated: "static_data/subj02/pt_inflated.npy",
-        faces_inflated: "static_data/subj02/faces.npy",
-        pt_pia: "static_data/subj02/pt_pia.npy",
-        pt_wm: "static_data/subj02/pt_wm.npy",
-        curvature_path: "static_data/subj02/curvature.npy",
-        mapping_path: "static_data/subj02/mapping_map.npy",
-        overlays_path: "static_data/subj02/overlays-version1.svg",
-        counts: "static_data/subj02/counts.json",
-      };
       let last_subject = 0;
       let brains = {};
       async function set_subject(subject) {
@@ -245,46 +206,67 @@
       }
 
       let brain_3d = null;
-      await set_subject("subj01");
+      await set_subject("fsaverage");
 
       window.brain_3d = brain_3d;
 
       let surface_image_file = null;
       let top_images_file = null;
       let top_images_data = null;
+      let selection_changed_event = null;
 
-      function set_file_paths(mode, subject) {
+
+      async function set_file_paths(mode, subject) {
         if (mode == "Vertex Averaged Concepts") {
-          surface_image_file = "static_data/background.png";
-          top_images_file =
-            `static_data/vertex_concept_averages/M_fssubject_binary_top_images__${subject}.npy`;
-        } else if (mode == "Betas") {
-          surface_image_file = "static_data/foreground.png";
-          top_images_file =
-            "static_data/vertex_concept_averages/betas__top_images__fsavg.npy";
+          surface_image_file = "static_data/tsne__fsaverage.png";
+          if(subject !== "fsaverage")
+            top_images_file = `static_data/vertex_concept_averages/M_fsavg_top_images__${subject}.npy`;
+          else
+            top_images_file = "static_data/vertex_concept_averages/M_fsavg_top_images.npy";
         }
+        else if (mode == "Betas") {
+          surface_image_file = "static_data/betas_average.png";
+          top_images_file = "static_data/vertex_concept_averages/betas__top_images__fsavg.npy";
+        }
+        else if (mode == "Linear Encoder") {
+          surface_image_file = "static_data/linear_encoding__tsne__fsaverage.png"
+          top_images_file = 'static_data/vertex_concept_averages/linear_encoding__fsavg__top_images.npy';
+        }
+        else if (mode == "Linear Decoder") {
+          surface_image_file = "static_data/linear_decoding__tsne__fsaverage.png"
+          top_images_file = 'static_data/vertex_concept_averages/linear_decoding__fsavg__top_images.npy';
+        }
+
       }
-      set_file_paths("Vertex Averaged Concepts", "subj01");
+      set_file_paths("Vertex Averaged Concepts", last_subject);
 
       async function update_plot() {
-        if (!top_images_file) return;
         const form = document.getElementById("plotForm");
         const formData = new URLSearchParams(new FormData(form));
         const mode = formData.get("mode");
-        const subject = formData.get("subject");
-        if(subject === null)
-          return
+        const subject = formData.get("subject") || last_subject;
         await set_subject(subject);
         set_file_paths(mode, subject);
+        //brain_3d.set_texture(await getPngData(surface_image_file));
 
-        top_images_data = await cachedLoadNpy(top_images_file);
+        top_images_data = await cachedLoadNpy(top_images_file,);
+        await image_map();
+        if (selection_changed_event !== null)
+          await update_images(selection_changed_event);
       }
       update_plot();
 
       document.update_plot = update_plot;
       window.update_plot = update_plot;
 
-      function add_check_box(placeholder, name, index, index2, invert, radio) {
+function add_check_box(
+          placeholder,
+          name,
+          index,
+          index2,
+          invert,
+          radio,
+        ) {
         let label = document.createElement("label");
         let text = document.createElement("span");
         text.innerText = index2 || index;
@@ -307,11 +289,11 @@
       }
 
       let placeholder3 = document.getElementById("mode");
-      for (let i of [0, 1]) {
+      for (let i of [0, 1, 2, 3]) {
         let checkbox = add_check_box(
           placeholder3,
           "mode",
-          ["Vertex Averaged Concepts", "Betas"][i],
+          ["Vertex Averaged Concepts", "Betas", "Linear Encoder", "Linear Decoder"][i],
           undefined,
           true,
           true,
@@ -320,11 +302,11 @@
       }
 
       let placeholder3b = document.getElementById("subject");
-      for (let i = 0; i < 8; i++) {
+      for (let i = 0; i < 9; i++) {
         let checkbox = add_check_box(
           placeholder3b,
           "subject",
-          `subj0${i + 1}`, // i,
+          i == 0 ? "fsaverage" : `subj0${i}`, // i,
           undefined,
           true,
           true,
@@ -359,7 +341,7 @@
       }
 
       async function image_map() {
-        if (!top_images_data) return;
+        if (!top_images_data) return console.error("top_images_data not loaded");
         let elem = document.getElementById("selected_images");
         elem.innerHTML = "";
         for (let image_id of url_obj.selected_images) {
@@ -368,7 +350,9 @@
           im.className = "image-container image-container-minus";
         }
         if (url_obj.selected_images.length == 0) {
-          brain_3d.set_texture(await getPngData(surface_image_file));
+          brain_3d.set_texture(
+            await getPngData(surface_image_file),
+          );
           return;
         }
         let voxel_image_count = new Int32Array(top_images_data.shape[0]);
@@ -380,10 +364,7 @@
             // find the image id
             for (let j = 0; j < top_images_data.shape[1]; j++) {
               // if found set the voxel data as the index of the image in the list
-              if (
-                top_images_data.data[i * top_images_data.shape[1] + j] ===
-                image_id
-              ) {
+              if (top_images_data.data[i * top_images_data.shape[1] + j] === image_id) {
                 found += 1;
                 break;
               }
@@ -391,7 +372,9 @@
           }
           if (found) {
             voxel_image_count[i] = found;
-          } else voxel_image_count[i] = -1;
+          }
+          else
+            voxel_image_count[i] = -1;
         }
         // convert voxel data to texture
         brain_3d.set_texture(
@@ -402,10 +385,10 @@
         );
         scene.set_cmap_display("turbo", url_obj.selected_images.length + 1);
       }
-      window.image_map = image_map
       if (url_obj.selected_images.length) image_map();
 
-      window.addEventListener("voxel_selected_changed", async function (e) {
+      async function update_images(e) {
+        if(!top_images_data) return console.error("top_images_data not loaded");
         // when a voxel has been clicked show the images
 
         function add_row(parent, component_id) {
@@ -418,11 +401,7 @@
           // add the images and add an onclick function
           for (let i = 0; i < 10; i++) {
             let im_id =
-              top_images_data.data[
-                e.detail.voxel * top_images_data.shape[1] +
-                  i +
-                  component_id * 10
-              ];
+            top_images_data.data[e.detail.voxel * top_images_data.shape[1] + i + component_id * 10];
             let img = add_image(row, `static_data/new_examples/${im_id}.jpg`);
             img.onclick = function () {
               if (!url_obj.selected_images.includes(im_id)) {
@@ -446,12 +425,18 @@
         element_examples.innerHTML = "";
 
         // add the rows
-        if (top_images_data.data[e.detail.voxel * top_images_data.shape[1]] < 0)
-          return;
+        if (top_images_data.data[e.detail.voxel * top_images_data.shape[1]] < 0) return;
         for (let i = 0; i < 5; i++) {
           add_row(element_examples, i);
         }
+      }
+
+      window.addEventListener("voxel_selected_changed", async function (e) {
+        selection_changed_event = e;
+        update_images(e);
       });
+
+
     </script>
   </body>
 </html>

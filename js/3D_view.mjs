@@ -680,18 +680,10 @@ export async function add_brain({
           voxel_count = cached_map.data[i] + 1;
         }
       }
-      console.log(
-        "voxelcount",
-        brain_data.pt.shape,
-        voxel_count,
-        brain_data.faces.length,
-        brain_data.faces_flat.length,
-        brain_data.pt2.shape,
-      );
 
       mapping_inverse = cached_map.data;
       mapping = [];
-      for (let i = 0; i < brain_data.pt.shape[0]; i++) {
+      for (let i = 0; i < voxel_count; i++) { // brain_data.pt.shape[0]
         mapping.push([]);
       }
       for (let i = 0; i < width * height; i++) {
@@ -712,8 +704,10 @@ export async function add_brain({
     let packedColor2 = get_cmap_uint32("gray", 4);
     const maxColorIndex = packedColor.length - 1;
 
+    voxel_count = 327684
     if (data32_index.length != voxel_count) {
-      console.error("data32_index.length != voxel_count");
+      if(data32_index.length)
+        console.error("data32_index.length != voxel_count");
       for (let i = 0; i < voxel_count; i++) {
         let clr = brain_data.curvature[i] > 0 ? packedColor2[2] : packedColor2[1];
 
@@ -726,7 +720,7 @@ export async function add_brain({
         let clr;
         if (data32_index[i] >= 0)
           clr = packedColor[Math.min(data32_index[i], maxColorIndex)];
-        else clr = curvature[i] > 0 ? packedColor2[2] : packedColor2[1];
+        else clr = brain_data.curvature[i] > 0 ? packedColor2[2] : packedColor2[1];
 
         for (let ii of mapping[i]) {
           data32[ii] = clr;

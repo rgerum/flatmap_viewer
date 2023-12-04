@@ -8,8 +8,8 @@ import json
 
 
 subject_ids = [0, 1, 2, 3, 4, 5, 6, 7]
-#space = 'fsavg'
-space = 'fssubject'
+space = 'fsavg'
+#space = 'fssubject'
 roi_names = {'prf-visualrois': ['V1', 'V2', 'V3', 'V4'],
  'floc-bodies': ['mTL-bodies', 'FBA-1', 'FBA-2', 'EBA'],
  'floc-faces': ['aTL-faces', 'mTL-faces', 'FFA-2', 'FFA-1', 'OFA'],
@@ -134,11 +134,21 @@ def cache_mapping_voxel_pixel_old(output_folder):
     dataAllLayers, data = load_subject_component(subject_id, component_id)
 
     x = np.arange(data.shape[0])
+    print(data.shape[0])
     data2 = data_to_flatmap(x, subject_id)
     data2[np.isnan(data2)] = -1
+
+    surf_name = f'fsaverage'
+    import cortex
+    curv_vertices = cortex.db.get_surfinfo(surf_name)
+    plt.subplot(121)
     plt.imshow(data2)
+    plt.subplot(122)
+    plt.imshow(data_to_flatmap(curv_vertices.data, subject_id))
     plt.show()
-    np.save(Path(output_folder) / "mapping_map.npy", data2.astype(np.int32).ravel())
+    print(data2.shape) # 1024, 2274
+    print(np.max(data2))
+    np.save(Path(output_folder) / "mapping_map.npy", data2.astype(np.int32))
 
 
 def cache_mapping_voxel_pixel(output_folder, subject_id):
@@ -398,6 +408,9 @@ def print_colormap(cmap_name):
 
 
 if __name__ == "__main__":
+    #cache_mapping_voxel_pixel(f"static_data/fsaverage", -1)
+    cache_mapping_voxel_pixel_old(f"static_data/fsaverage")
+    exit()
     save_3D_data("fsaverage", f"static_data/fsaverage")
     for i in range(1, 9):
         save_3D_data(f"subj0{i}", f"static_data/subj0{i}")
