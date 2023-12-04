@@ -704,7 +704,6 @@ export async function add_brain({
     let packedColor2 = get_cmap_uint32("gray", 4);
     const maxColorIndex = packedColor.length - 1;
 
-    voxel_count = 327684
     if (data32_index.length != voxel_count) {
       if(data32_index.length)
         console.error("data32_index.length != voxel_count");
