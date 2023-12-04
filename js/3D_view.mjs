@@ -95,7 +95,7 @@ export async function initScene({ dom_elem }) {
   requestAnimationFrame(animate);
 
   function onWindowResize() {
-    let container = dom_elem.parentElement;
+    let container = dom_controls.canvas.parentElement;
     let width = container.clientWidth;
     let height = container.clientHeight - 4;
 
