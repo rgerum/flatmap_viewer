@@ -746,11 +746,9 @@ export async function add_brain({
     set_shape(scene.dom_controls.slider_shape_input.value / 100);
 
     let i = 0;
-    for (let elem of scene.dom_controls.slider_buttons.querySelectorAll(
-      "button",
-    )) {
+    for (let elem of scene.dom_controls.slider_buttons.children) {
       let value = i;
-      elem.onclick = () => set_shape_animated(value);
+      elem.onclick = function (e) {set_shape_animated(value); e.preventDefault()};
       i += 1;
     }
   }
