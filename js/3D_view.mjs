@@ -551,6 +551,7 @@ export async function add_brain({
 
   // Function to handle mouse click event
   add_click(mesh, scene.renderer, scene.camera, (e) => {
+    if(!mesh.visible) return;
     var myEvent = new CustomEvent("voxel_selected_changed", {
       detail: { voxel: e },
     });
@@ -674,15 +675,17 @@ export async function add_brain({
       let cached_map = brain_data.cached_map;
       width = cached_map.shape[1];
       height = cached_map.shape[0];
+      mapping_inverse = cached_map.data;
+      mapping = [];
+
       voxel_count = 0;
       for (let i = 0; i < width * height; i++) {
-        if (cached_map.data[i] > voxel_count) {
-          voxel_count = cached_map.data[i] + 1;
+        let index = mapping_inverse[i];
+        if (index > voxel_count) {
+          voxel_count = index + 1;
         }
       }
 
-      mapping_inverse = cached_map.data;
-      mapping = [];
       for (let i = 0; i < voxel_count; i++) { // brain_data.pt.shape[0]
         mapping.push([]);
       }
@@ -751,6 +754,7 @@ export async function add_brain({
       elem.onclick = function (e) {set_shape_animated(value); e.preventDefault()};
       i += 1;
     }
+    window.download_last_texture = download_last_texture;
   }
   function set_inactive() {
     for (let obj of [mesh, cube, cube2, cube3, cube4]) obj.visible = false;
